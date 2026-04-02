@@ -1429,7 +1429,7 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '1.5.129';
+const BUILD_VERSION = '1.5.130';
 const BUILD_PATCHNOTE = {
   title: '최근조회 카드 상세 버튼 + CP/IL 표시 개선',
   content: '• 최근조회 카드에 상세 버튼 추가.\n• CP/IL 미보완 항목(구버전 저장 데이터)에 ··· 플레이스홀더 표시.\n• 즐겨찾기·최근조회 name 특수문자 이스케이프 버그 수정.'
@@ -1535,6 +1535,8 @@ const _PATCH_HISTORY = [
     content:'• 검색 결과 카드 스탯 별도 API 호출 완전 제거 → 스피너 없음.\n• 검색 API 응답 데이터만으로 즉시 렌더 (전투력/아이템레벨 있으면 표시).\n• 상세 스탯(장비·스킬 등)은 상세 버튼 클릭 시에만 로드.' },
   { version:'1.5.113', title:'캐릭터 검색 네임카드 즉시 렌더 + 직업/전투력/IL 백그라운드 로드',
     content:'• 카드 즉시 렌더 (아바타/닉네임/서버) → 직업·전투력·IL은 3개씩 배치로 백그라운드 업데이트.\n• 5초 타임아웃 적용, 실패 시 — 표시.\n• 스피너 제거, placeholder(···) 방식으로 변경.' },
+  { version:'1.5.130', title:'카드 로딩 pulse 애니메이션 + 전체 병렬 스탯 로드',
+    content:'• 전투력/직업 미로드 시 ··· → pulse 애니메이션 바 표시 (즐겨찾기/최근조회 포함).\n• _csLoadStats 배치 순차 → 전체 Promise.all 병렬 처리, 결과 표시 속도 개선.' },
 ];
 
 // 시맨틱 버전 비교 (날짜형 구버전 호환)
@@ -2430,7 +2432,7 @@ function _csMiniCard(item) {
     ? '<span style="font-size:11px;color:var(--gold-l);font-weight:600;">'+(+cp).toLocaleString()+' 전투력'
       +(il?'<br><span style="font-size:10px;color:var(--muted);">아이템레벨 '+(+il).toLocaleString()+'</span>':'')
       +'</span>'
-    : (hasCpData ? '' : '<span class="cs-mcp-'+cidSafe+'" style="font-size:11px;color:var(--muted);">···</span>');
+    : (hasCpData ? '' : '<span class="cs-mcp-'+cidSafe+'" style="display:inline-block;width:80px;height:9px;background:var(--border);border-radius:3px;animation:imgPulse 1.2s ease infinite;vertical-align:middle;"></span>');
 
   return '<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:4px;">'
     +_csAvatar(item.profile_img, cls, 32)
@@ -2528,14 +2530,14 @@ function _csResultCard(c) {
   var clsHtml = cls0
     ? '<span style="font-size:12px;flex-shrink:0;">'+(CLS_ICON[cls0]||'')+'</span>'
       +'<span style="font-size:10px;color:'+(CLS_COLOR[cls0]||'var(--muted)')+';white-space:nowrap;flex-shrink:0;">'+cls0+'</span>'
-    : '<span class="cs-cls-'+cidSafe+'" style="font-size:12px;color:var(--muted);">···</span>';
+    : '<span class="cs-cls-'+cidSafe+'" style="display:inline-block;width:36px;height:10px;background:var(--border);border-radius:3px;animation:imgPulse 1.2s ease infinite;vertical-align:middle;"></span>';
 
   var cpHtml = cp0
     ? '<div class="cs-cp-'+cidSafe+'" style="margin-top:1px;">'
       +'<span style="font-size:11px;font-weight:600;color:var(--gold-l);">'+(+cp0).toLocaleString()+' 전투력'
       +(il0?'<br><span style="font-size:10px;color:var(--muted);">아이템레벨 '+(+il0).toLocaleString()+'</span>':'')
       +'</span></div>'
-    : '<div class="cs-cp-'+cidSafe+'" style="margin-top:1px;font-size:11px;color:var(--muted);">···</div>';
+    : '<div class="cs-cp-'+cidSafe+'" style="margin-top:3px;"><span style="display:inline-block;width:80px;height:9px;background:var(--border);border-radius:3px;animation:imgPulse 1.2s ease infinite;"></span></div>';
 
   var favStyle = isFav
     ? 'background:rgba(255,180,0,0.18);border:1px solid rgba(255,180,0,0.5);'
@@ -2558,12 +2560,10 @@ function _csResultCard(c) {
     +'</div>';
 }
 
-// 배치 백그라운드 스탯 로드 (10개씩, 6초 타임아웃)
+// 전체 병렬 백그라운드 스탯 로드 (6초 타임아웃)
 async function _csLoadStats(list) {
   var items = list.filter(function(c){ return c.characterId; });
-  for(var i=0; i<items.length; i+=5) {
-    var batch = items.slice(i, i+5);
-    await Promise.all(batch.map(function(c) {
+  await Promise.all(items.map(function(c) {
       var cid     = String(c.characterId);
       var cidSafe = cid.replace(/[^a-zA-Z0-9]/g, '_');
       var sid     = String(c.serverId||'');
@@ -2605,8 +2605,7 @@ async function _csLoadStats(list) {
           var cpEl = document.querySelector('.cs-cp-'+cidSafe);
           if(cpEl) cpEl.outerHTML = '<div style="font-size:12px;color:var(--muted);">—</div>';
         });
-    }));
-  }
+  }));
 }
 
 // 천족/마족 좌우 2컬럼 분리 (즉시 렌더 후 미완료 항목만 백그라운드 스탯 로드)
