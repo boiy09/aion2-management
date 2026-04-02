@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Turso CSV 임포터</title>
+<style>
+  body { font-family: sans-serif; max-width: 700px; margin: 40px auto; padding: 20px; background: #1a1a2e; color: #eee; }
+  h2 { color: #e8c030; }
+  .card { background: #252540; border-radius: 10px; padding: 20px; margin: 16px 0; }
+  label { display: block; margin-bottom: 6px; font-size: 13px; color: #aaa; }
+  select, input[type=file] { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #444; background: #1a1a2e; color: #eee; margin-bottom: 10px; }
+  button { background: #e8c030; color: #1a1a2e; border: none; padding: 10px 24px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .log { background: #111; border-radius: 6px; padding: 12px; font-size: 12px; font-family: monospace; min-height: 60px; max-height: 300px; overflow-y: auto; margin-top: 12px; }
+  .ok { color: #4caf50; } .err { color: #f44336; } .info { color: #90caf9; }
+</style>
+</head>
+<body>
+<h2>Turso CSV 임포터</h2>
+<p style="font-size:13px;color:#aaa;">Supabase SQL Editor에서 내보낸 CSV 파일을 Turso로 가져옵니다.</p>
+
+<div class="card">
+  <label>테이블 선택</label>
+  <select id="table">
+    <option value="members">members</option>
+    <option value="recruits">recruits</option>
+    <option value="notices">notices</option>
+    <option value="war_surveys">war_surveys</option>
+    <option value="boss_timers">boss_timers</option>
+    <option value="config">config</option>
+  </select>
+  <label>CSV 파일</label>
+  <input type="file" id="csvFile" accept=".csv">
+  <button id="importBtn" onclick="doImport()">임포트 시작</button>
+  <div class="log" id="log">로그가 여기에 표시됩니다...</div>
+</div>
+
+<script>
+function parseCSV(text) {
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+  if (lines.length < 2) return [];
+  const headers = parseCSVLine(lines[0]);
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const vals = parseCSVLine(lines[i]);
+    const row = {};
+    headers.forEach((h, idx) => {
+      let v = vals[idx] ?? '';
+      if (v === '' || v === 'null' || v === 'NULL') { row[h] = null; return; }
+      row[h] = v;
+    });
+    rows.push(row);
+  }
+  return rows;
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQ) {
+      if (ch === '"' && line[i+1] === '"') { cur += '"'; i++; }
+      else if (ch === '"') { inQ = false; }
+      else { cur += ch; }
+    } else {
+      if (ch === '"') { inQ = true; }
+      else if (ch === ',') { result.push(cur); cur = ''; }
+      else { cur += ch; }
+    }
+  }
+  result.push(cur);
+  return result;
+}
+
+function log(msg, cls) {
+  const el = document.getElementById('log');
+  const line = document.createElement('div');
+  line.className = cls || '';
+  line.textContent = new Date().toLocaleTimeString() + ' ' + msg;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+async function doImport() {
+  const table = document.getElementById('table').value;
+  const file = document.getElementById('csvFile').files[0];
+  if (!file) { alert('CSV 파일을 선택하세요'); return; }
+
+  const btn = document.getElementById('importBtn');
+  btn.disabled = true;
+  document.getElementById('log').innerHTML = '';
+  log('파일 읽는 중...', 'info');
+
+  const text = await file.text();
+  const rows = parseCSV(text);
+  log(`[${table}] ${rows.length}건 파싱 완료`, 'info');
+
+  try {
+    const res = await fetch('/api/db-import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ table, rows })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      log(`✅ 완료! inserted: ${d.inserted}, errors: ${d.errors}`, 'ok');
+    } else {
+      log('❌ 오류: ' + d.error, 'err');
+    }
+  } catch(e) {
+    log('❌ 네트워크 오류: ' + e.message, 'err');
+  }
+  btn.disabled = false;
+}
+</script>
+</body>
+</html>
