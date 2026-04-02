@@ -1429,7 +1429,7 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '1.5.128';
+const BUILD_VERSION = '1.5.129';
 const BUILD_PATCHNOTE = {
   title: '최근조회 카드 상세 버튼 + CP/IL 표시 개선',
   content: '• 최근조회 카드에 상세 버튼 추가.\n• CP/IL 미보완 항목(구버전 저장 데이터)에 ··· 플레이스홀더 표시.\n• 즐겨찾기·최근조회 name 특수문자 이스케이프 버그 수정.'
@@ -2428,7 +2428,7 @@ function _csMiniCard(item) {
 
   var cpLine = cp
     ? '<span style="font-size:11px;color:var(--gold-l);font-weight:600;">'+(+cp).toLocaleString()+' 전투력'
-      +(il?'<span style="color:var(--muted);font-weight:400;margin-left:6px;">· 아이템레벨 '+(+il).toLocaleString()+'</span>':'')
+      +(il?'<br><span style="font-size:10px;color:var(--muted);">아이템레벨 '+(+il).toLocaleString()+'</span>':'')
       +'</span>'
     : (hasCpData ? '' : '<span class="cs-mcp-'+cidSafe+'" style="font-size:11px;color:var(--muted);">···</span>');
 
@@ -2533,7 +2533,7 @@ function _csResultCard(c) {
   var cpHtml = cp0
     ? '<div class="cs-cp-'+cidSafe+'" style="margin-top:1px;">'
       +'<span style="font-size:11px;font-weight:600;color:var(--gold-l);">'+(+cp0).toLocaleString()+' 전투력'
-      +(il0?'<span style="color:var(--muted);font-weight:400;margin-left:6px;">· 아이템레벨 '+(+il0).toLocaleString()+'</span>':'')
+      +(il0?'<br><span style="font-size:10px;color:var(--muted);">아이템레벨 '+(+il0).toLocaleString()+'</span>':'')
       +'</span></div>'
     : '<div class="cs-cp-'+cidSafe+'" style="margin-top:1px;font-size:11px;color:var(--muted);">···</div>';
 
@@ -2587,7 +2587,7 @@ async function _csLoadStats(list) {
           if(cpEl) cpEl.outerHTML = cp
             ? '<div class="cs-cp-'+cidSafe+'" style="margin-top:1px;">'
               +'<span style="font-size:11px;font-weight:600;color:var(--gold-l);">'+(+cp).toLocaleString()+' 전투력'
-              +(il?'<span style="color:var(--muted);font-weight:400;margin-left:6px;">· 아이템레벨 '+(+il).toLocaleString()+'</span>':'')
+              +(il?'<br><span style="font-size:10px;color:var(--muted);">아이템레벨 '+(+il).toLocaleString()+'</span>':'')
               +'</span></div>'
             : '<div style="font-size:11px;color:var(--muted);">—</div>';
           // 즐겨찾기에 CP/IL 갱신 저장
