@@ -1479,7 +1479,7 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '1.5.132';
+const BUILD_VERSION = '1.5.133';
 const BUILD_PATCHNOTE = {
   title: '최근조회 카드 상세 버튼 + CP/IL 표시 개선',
   content: '• 최근조회 카드에 상세 버튼 추가.\n• CP/IL 미보완 항목(구버전 저장 데이터)에 ··· 플레이스홀더 표시.\n• 즐겨찾기·최근조회 name 특수문자 이스케이프 버그 수정.'
@@ -1591,6 +1591,8 @@ const _PATCH_HISTORY = [
     content:'• reg-server 하드코딩(2001) → 서버 선택 드롭다운 (천족/마족 개별 서버 + 전체).\n• 전체 선택 시 검색 결과의 실제 serverId로 character API 호출 → 찾을 수 없음 버그 수정.\n• DB 저장 시 실제 server_name 사용.' },
   { version:'1.5.132', title:'멤버 등록 조회 실패 버그 수정',
     content:'• 서버 드롭다운 전체 옵션 제거.\n• fetchCharacterData: 서버명(시엘 등)을 NC API에 그대로 보내던 버그 수정 → 항상 found.serverId(숫자) 사용.' },
+  { version:'1.5.133', title:'멤버 갱신 전체/개별 실패 버그 수정',
+    content:'• fetchCharacterData: 숫자형 serverId(구버전 2001)는 all로 자동 처리.\n• 특정 서버 검색 결과 없으면 전체 검색으로 fallback.\n• syncAllMembers/syncMember: server_name 우선 사용.' },
 ];
 
 // 시맨틱 버전 비교 (날짜형 구버전 호환)
@@ -3587,13 +3589,22 @@ function renderAll() {
 // ─── NC 공홈 API 호출 ──────────────────
 async function fetchCharacterData(nickname, serverId) {
   // 1단계: 닉네임으로 characterId 검색
-  const searchRes = await fetch(`/api/search?keyword=${encodeURIComponent(nickname)}&serverId=${serverId}`);
+  // 숫자만인 serverId(구버전 '2001' 등)는 서버명 필터 불가 → all로 처리
+  const sv = (!serverId || /^\d+$/.test(serverId)) ? 'all' : serverId;
+  const searchRes = await fetch(`/api/search?keyword=${encodeURIComponent(nickname)}&serverId=${sv}`);
   const searchData = await searchRes.json();
-  const found = (searchData.list||[]).find(c => c.name === nickname);
+  let found = (searchData.list||[]).find(c => c.name === nickname);
+
+  // 특정 서버로 검색했는데 못 찾으면 전체 검색으로 재시도
+  if (!found && sv !== 'all') {
+    const retryRes = await fetch(`/api/search?keyword=${encodeURIComponent(nickname)}&serverId=all`);
+    const retryData = await retryRes.json();
+    found = (retryData.list||[]).find(c => c.name === nickname);
+  }
+
   if (!found) throw new Error(`"${nickname}" 캐릭터를 찾을 수 없어요`);
 
   // NC character API는 숫자 serverId 필요 → 항상 검색 결과의 serverId(숫자) 사용
-  // 서버명('시엘' 등)을 그대로 넘기면 NC API 오류 발생
   const actualServerId = found.serverId || found.serverCode || '';
 
   // 2단계: characterId로 상세 정보 조회
@@ -3601,7 +3612,6 @@ async function fetchCharacterData(nickname, serverId) {
   const charData = await charRes.json();
   if (charData.error) throw new Error(charData.error);
 
-  // characterId를 clean하게 반환 (URL 인코딩 제거)
   const cleanCharId = found.characterId ? decodeURIComponent(String(found.characterId)) : '';
   return { ...charData, characterId: cleanCharId };
 }
@@ -3793,7 +3803,7 @@ async function syncAllMembers() {
   for (const m of members) {
     status.textContent = `갱신 중... ${done+fail+1}/${total} (${m.nickname})`;
     try {
-      const data = await fetchCharacterData(m.nickname, m.server||'2001');
+      const data = await fetchCharacterData(m.nickname, m.server_name||m.server||'all');
       const cls = CLASS_MAP[data.class] || data.class || '';
       await db.from('members').update({
         class: cls, level: data.level||0,
@@ -4642,7 +4652,7 @@ function renderMembers() {
     const isSyncing = syncingIds.has(m.id);
     const syncBtn = isSyncing
       ? `<button class="btn btn-sm" disabled><span class="spinner"></span>갱신 중</button>`
-      : `<button class="btn btn-sm" onclick="syncMember('${m.id}','${m.nickname}','${m.server||'2001'}')">갱신</button>`;
+      : `<button class="btn btn-sm" onclick="syncMember('${m.id}','${m.nickname}','${m.server_name||m.server||'all'}')">갱신</button>`;
     const lastSync = m.last_synced ? `<span style="font-size:10px;color:var(--muted);margin-left:6px;white-space:nowrap;">${fmtTime(m.last_synced)}</span>` : '';
     const subMark = isSub ? `<span style="font-size:10px;color:var(--muted);margin-left:4px;border:1px solid var(--border);border-radius:3px;padding:1px 4px;">부캐</span>` : '';
     const prefix = isSub ? '└ ' : '';
