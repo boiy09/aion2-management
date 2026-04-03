@@ -3235,9 +3235,13 @@ function refreshHeaderUser() {
     var m2 = members.find(function(x){ return x.id===currentUser.id; })
            || members.find(function(x){ return x.nickname===currentUser.nickname; });
     if(rk) rk.textContent = (m2&&m2.rank) || currentUser.rank || '군단병';
-    av.innerHTML = (m2&&m2.profile_img)
-      ? '<img src="'+m2.profile_img+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">'
-      : '<span style="font-size:16px;">👤</span>';
+    var cls = CLASS_MAP[(m2||currentUser).class] || (m2||currentUser).class || '';
+    var rawImg = (m2&&m2.profile_img) || '';
+    if(rawImg && !rawImg.startsWith('http')) rawImg = 'https://aion2.plaync.com' + rawImg;
+    var proxiedImg = rawImg && rawImg.indexOf('aion2.plaync.com') !== -1 ? '/api/img?url='+encodeURIComponent(rawImg) : rawImg;
+    av.innerHTML = proxiedImg
+      ? '<img src="'+proxiedImg+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.style.display=\'none\'">'
+      : (CLS_ICON[cls]||'<span style="font-size:16px;">👤</span>');
   }
 }
 
