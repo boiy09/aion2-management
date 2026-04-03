@@ -981,7 +981,6 @@
           <div class="form-group" style="flex:1;">
             <label class="form-label">서버</label>
             <select class="form-select" id="reg-server">
-              <option value="all">전체</option>
               <optgroup label="⚔ 천족">
                 <option value="시엘">시엘</option>
                 <option value="아리엘">아리엘</option>
@@ -1480,7 +1479,7 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '1.5.131';
+const BUILD_VERSION = '1.5.132';
 const BUILD_PATCHNOTE = {
   title: '최근조회 카드 상세 버튼 + CP/IL 표시 개선',
   content: '• 최근조회 카드에 상세 버튼 추가.\n• CP/IL 미보완 항목(구버전 저장 데이터)에 ··· 플레이스홀더 표시.\n• 즐겨찾기·최근조회 name 특수문자 이스케이프 버그 수정.'
@@ -1590,6 +1589,8 @@ const _PATCH_HISTORY = [
     content:'• 전투력/직업 미로드 시 ··· → pulse 애니메이션 바 표시 (즐겨찾기/최근조회 포함).\n• _csLoadStats 배치 순차 → 전체 Promise.all 병렬 처리, 결과 표시 속도 개선.' },
   { version:'1.5.131', title:'멤버 등록 서버 선택 추가 + 찾을 수 없음 버그 수정',
     content:'• reg-server 하드코딩(2001) → 서버 선택 드롭다운 (천족/마족 개별 서버 + 전체).\n• 전체 선택 시 검색 결과의 실제 serverId로 character API 호출 → 찾을 수 없음 버그 수정.\n• DB 저장 시 실제 server_name 사용.' },
+  { version:'1.5.132', title:'멤버 등록 조회 실패 버그 수정',
+    content:'• 서버 드롭다운 전체 옵션 제거.\n• fetchCharacterData: 서버명(시엘 등)을 NC API에 그대로 보내던 버그 수정 → 항상 found.serverId(숫자) 사용.' },
 ];
 
 // 시맨틱 버전 비교 (날짜형 구버전 호환)
@@ -3591,10 +3592,9 @@ async function fetchCharacterData(nickname, serverId) {
   const found = (searchData.list||[]).find(c => c.name === nickname);
   if (!found) throw new Error(`"${nickname}" 캐릭터를 찾을 수 없어요`);
 
-  // 'all' 선택 시 검색 결과의 실제 serverId 사용 (NC API에 'all' 그대로 보내면 오류)
-  const actualServerId = (serverId === 'all' || serverId === 'elyos' || serverId === 'asmo')
-    ? (found.serverId || found.serverCode || serverId)
-    : serverId;
+  // NC character API는 숫자 serverId 필요 → 항상 검색 결과의 serverId(숫자) 사용
+  // 서버명('시엘' 등)을 그대로 넘기면 NC API 오류 발생
+  const actualServerId = found.serverId || found.serverCode || '';
 
   // 2단계: characterId로 상세 정보 조회
   const charRes = await fetch(`/api/character?characterId=${encodeURIComponent(found.characterId)}&serverId=${actualServerId}`);
@@ -3633,10 +3633,8 @@ async function fetchAndRegister() {
       toast('본캐 닉네임을 입력해주세요'); btn.disabled=false; btn.textContent='닉네임으로 스펙 불러와서 등록'; return;
     }
     const finalRank = isMain ? rank : '';
-    // 'all' 선택 시 검색된 실제 서버명 사용
-    const actualServer = (serverId === 'all' || serverId === 'elyos' || serverId === 'asmo')
-      ? (data.server_name || serverId)
-      : serverId;
+    // 선택 서버명과 API 결과의 실제 서버명 중 우선순위: 실제 서버명
+    const actualServer = data.server_name || serverId;
     await db.from('members').upsert({
       id: nickname+'_'+actualServer,
       nickname, server: actualServer, rank: finalRank, intro,
