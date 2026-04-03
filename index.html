@@ -967,8 +967,8 @@
     <div style="max-width:560px;">
       <div class="section-title">멤버 등록</div>
       <div class="card" style="padding:24px;">
-        <div class="form-row">
-          <div class="form-group">
+        <div class="form-row" style="align-items:flex-end;">
+          <div class="form-group" style="flex:2;">
             <label class="form-label">닉네임 *</label>
             <div style="position:relative;">
               <input class="form-input" id="reg-name" placeholder="인게임 닉네임" autocomplete="off"
@@ -978,7 +978,58 @@
             </div>
             <div id="reg-name-card" style="display:none;margin-top:6px;"></div>
           </div>
-  <input type="hidden" id="reg-server" value="2001">
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">서버</label>
+            <select class="form-select" id="reg-server">
+              <option value="all">전체</option>
+              <optgroup label="⚔ 천족">
+                <option value="시엘">시엘</option>
+                <option value="아리엘">아리엘</option>
+                <option value="네자칸">네자칸</option>
+                <option value="바이젤">바이젤</option>
+                <option value="유스티엘">유스티엘</option>
+                <option value="나니아">나니아</option>
+                <option value="카이시넬">카이시넬</option>
+                <option value="프레기온">프레기온</option>
+                <option value="타하바타">타하바타</option>
+                <option value="히타니에">히타니에</option>
+                <option value="카사카">카사카</option>
+                <option value="페르노스">페르노스</option>
+                <option value="메스람타에다">메스람타에다</option>
+                <option value="다미누">다미누</option>
+                <option value="루터스">루터스</option>
+                <option value="코치룽">코치룽</option>
+                <option value="챈가룽">챈가룽</option>
+                <option value="티아마트">티아마트</option>
+                <option value="바카르마">바카르마</option>
+                <option value="이슈타르">이슈타르</option>
+                <option value="포에타">포에타</option>
+              </optgroup>
+              <optgroup label="🔥 마족">
+                <option value="이스라펠">이스라펠</option>
+                <option value="지켈">지켈</option>
+                <option value="아스펠">아스펠</option>
+                <option value="트리니엘">트리니엘</option>
+                <option value="마르쿠탄">마르쿠탄</option>
+                <option value="루미엘">루미엘</option>
+                <option value="네몬">네몬</option>
+                <option value="브리트라">브리트라</option>
+                <option value="무닌">무닌</option>
+                <option value="크로메데">크로메데</option>
+                <option value="루드라">루드라</option>
+                <option value="하달">하달</option>
+                <option value="젠카카">젠카카</option>
+                <option value="에레슈키갈">에레슈키갈</option>
+                <option value="바바룽">바바룽</option>
+                <option value="파프니르">파프니르</option>
+                <option value="인드나흐">인드나흐</option>
+                <option value="오다르">오다르</option>
+                <option value="콰이링">콰이링</option>
+                <option value="울고른">울고른</option>
+                <option value="이스할겐">이스할겐</option>
+              </optgroup>
+            </select>
+          </div>
         </div>
         <div class="form-row">
           <div class="form-group" id="rank-group">
@@ -1429,7 +1480,7 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '1.5.130';
+const BUILD_VERSION = '1.5.131';
 const BUILD_PATCHNOTE = {
   title: '최근조회 카드 상세 버튼 + CP/IL 표시 개선',
   content: '• 최근조회 카드에 상세 버튼 추가.\n• CP/IL 미보완 항목(구버전 저장 데이터)에 ··· 플레이스홀더 표시.\n• 즐겨찾기·최근조회 name 특수문자 이스케이프 버그 수정.'
@@ -1537,6 +1588,8 @@ const _PATCH_HISTORY = [
     content:'• 카드 즉시 렌더 (아바타/닉네임/서버) → 직업·전투력·IL은 3개씩 배치로 백그라운드 업데이트.\n• 5초 타임아웃 적용, 실패 시 — 표시.\n• 스피너 제거, placeholder(···) 방식으로 변경.' },
   { version:'1.5.130', title:'카드 로딩 pulse 애니메이션 + 전체 병렬 스탯 로드',
     content:'• 전투력/직업 미로드 시 ··· → pulse 애니메이션 바 표시 (즐겨찾기/최근조회 포함).\n• _csLoadStats 배치 순차 → 전체 Promise.all 병렬 처리, 결과 표시 속도 개선.' },
+  { version:'1.5.131', title:'멤버 등록 서버 선택 추가 + 찾을 수 없음 버그 수정',
+    content:'• reg-server 하드코딩(2001) → 서버 선택 드롭다운 (천족/마족 개별 서버 + 전체).\n• 전체 선택 시 검색 결과의 실제 serverId로 character API 호출 → 찾을 수 없음 버그 수정.\n• DB 저장 시 실제 server_name 사용.' },
 ];
 
 // 시맨틱 버전 비교 (날짜형 구버전 호환)
@@ -3538,8 +3591,13 @@ async function fetchCharacterData(nickname, serverId) {
   const found = (searchData.list||[]).find(c => c.name === nickname);
   if (!found) throw new Error(`"${nickname}" 캐릭터를 찾을 수 없어요`);
 
+  // 'all' 선택 시 검색 결과의 실제 serverId 사용 (NC API에 'all' 그대로 보내면 오류)
+  const actualServerId = (serverId === 'all' || serverId === 'elyos' || serverId === 'asmo')
+    ? (found.serverId || found.serverCode || serverId)
+    : serverId;
+
   // 2단계: characterId로 상세 정보 조회
-  const charRes = await fetch(`/api/character?characterId=${encodeURIComponent(found.characterId)}&serverId=${serverId}`);
+  const charRes = await fetch(`/api/character?characterId=${encodeURIComponent(found.characterId)}&serverId=${actualServerId}`);
   const charData = await charRes.json();
   if (charData.error) throw new Error(charData.error);
 
@@ -3575,9 +3633,13 @@ async function fetchAndRegister() {
       toast('본캐 닉네임을 입력해주세요'); btn.disabled=false; btn.textContent='닉네임으로 스펙 불러와서 등록'; return;
     }
     const finalRank = isMain ? rank : '';
+    // 'all' 선택 시 검색된 실제 서버명 사용
+    const actualServer = (serverId === 'all' || serverId === 'elyos' || serverId === 'asmo')
+      ? (data.server_name || serverId)
+      : serverId;
     await db.from('members').upsert({
-      id: nickname+'_'+serverId,
-      nickname, server: serverId, rank: finalRank, intro,
+      id: nickname+'_'+actualServer,
+      nickname, server: actualServer, rank: finalRank, intro,
       is_main: isMain, player_id: playerId,
       class:        cls,
       level:        data.level        || 0,
