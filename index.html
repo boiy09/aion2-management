@@ -1479,7 +1479,7 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '1.5.133';
+const BUILD_VERSION = '1.5.134';
 const BUILD_PATCHNOTE = {
   title: '최근조회 카드 상세 버튼 + CP/IL 표시 개선',
   content: '• 최근조회 카드에 상세 버튼 추가.\n• CP/IL 미보완 항목(구버전 저장 데이터)에 ··· 플레이스홀더 표시.\n• 즐겨찾기·최근조회 name 특수문자 이스케이프 버그 수정.'
@@ -1593,6 +1593,8 @@ const _PATCH_HISTORY = [
     content:'• 서버 드롭다운 전체 옵션 제거.\n• fetchCharacterData: 서버명(시엘 등)을 NC API에 그대로 보내던 버그 수정 → 항상 found.serverId(숫자) 사용.' },
   { version:'1.5.133', title:'멤버 갱신 전체/개별 실패 버그 수정',
     content:'• fetchCharacterData: 숫자형 serverId(구버전 2001)는 all로 자동 처리.\n• 특정 서버 검색 결과 없으면 전체 검색으로 fallback.\n• syncAllMembers/syncMember: server_name 우선 사용.' },
+  { version:'1.5.134', title:'내정보 아바타 이미지 프록시 누락 수정',
+    content:'• refreshHeaderUser에서 /api/img 프록시 미적용으로 NC 이미지 차단 → 빈 원형만 표시되던 버그 수정.\n• applyLogin과 동일하게 URL 정규화 + 프록시 적용.' },
 ];
 
 // 시맨틱 버전 비교 (날짜형 구버전 호환)
