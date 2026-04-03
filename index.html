@@ -617,7 +617,10 @@
     <div class="modal" style="max-width:580px;max-height:85vh;overflow-y:auto;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
         <div class="modal-title" style="margin:0;">👤 내 정보</div>
-        <button class="btn btn-sm" onclick="closeModal('modal-myprofile')">닫기</button>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-sm" style="color:var(--red);border-color:var(--red);" onclick="closeModal('modal-myprofile');logoutUser()">로그아웃</button>
+          <button class="btn btn-sm" onclick="closeModal('modal-myprofile')">닫기</button>
+        </div>
       </div>
       <div id="myprofile-body"></div>
     </div>
@@ -1479,7 +1482,7 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '1.5.134';
+const BUILD_VERSION = '1.5.135';
 const BUILD_PATCHNOTE = {
   title: '최근조회 카드 상세 버튼 + CP/IL 표시 개선',
   content: '• 최근조회 카드에 상세 버튼 추가.\n• CP/IL 미보완 항목(구버전 저장 데이터)에 ··· 플레이스홀더 표시.\n• 즐겨찾기·최근조회 name 특수문자 이스케이프 버그 수정.'
@@ -1595,6 +1598,8 @@ const _PATCH_HISTORY = [
     content:'• fetchCharacterData: 숫자형 serverId(구버전 2001)는 all로 자동 처리.\n• 특정 서버 검색 결과 없으면 전체 검색으로 fallback.\n• syncAllMembers/syncMember: server_name 우선 사용.' },
   { version:'1.5.134', title:'내정보 아바타 이미지 프록시 누락 수정',
     content:'• refreshHeaderUser에서 /api/img 프록시 미적용으로 NC 이미지 차단 → 빈 원형만 표시되던 버그 수정.\n• applyLogin과 동일하게 URL 정규화 + 프록시 적용.' },
+  { version:'1.5.135', title:'탈퇴 감지 카드 상세 버튼 + 내정보 모달 로그아웃 버튼 추가',
+    content:'• 탈퇴 멤버 감지 목록 카드에 상세 버튼 추가 (character_id 있는 경우).\n• 내정보 모달 우상단에 로그아웃 버튼 추가 (헤더 로그아웃 버튼 안 보이는 경우 대비).' },
 ];
 
 // 시맨틱 버전 비교 (날짜형 구버전 호환)
@@ -3700,7 +3705,7 @@ function scanLeaveMembers() {
   if(!targets.length) { toast('등록된 멤버가 없어요'); return; }
 
   _scanLeftList = targets.filter(m => (m.guild_name || '').trim() !== '도태')
-    .map(m => ({ id: m.id, nickname: m.nickname, currentGuild: (m.guild_name || '').trim() || '레기온 없음' }));
+    .map(m => ({ id: m.id, nickname: m.nickname, currentGuild: (m.guild_name || '').trim() || '레기온 없음', charId: m.character_id || '', serverId: m.server || '' }));
 
   if(!_scanLeftList.length) {
     resultEl.innerHTML = '<div style="color:#6acd8a;padding:8px 0;">탈퇴 멤버 없음 — 전원 도태 소속입니다.</div>';
@@ -3714,6 +3719,7 @@ function scanLeaveMembers() {
       <div id="scan-row-${i}" style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);">
         <span style="flex:1;font-size:13px;">${m.nickname}</span>
         <span style="font-size:11px;color:var(--muted);">레기온: <b style="color:var(--red);">${m.currentGuild}</b></span>
+        ${m.charId ? `<button class="btn btn-sm" style="background:var(--gold-d);border:none;color:#fff;" onclick="csShowDetail('${m.charId}','${m.serverId}','${m.nickname.replace(/'/g,"\\'")}')" >상세</button>` : ''}
         <button class="btn btn-sm" style="border-color:var(--red);color:var(--red);" onclick="removeScanMember(${i})">제거</button>
       </div>`).join('')}
     <div style="margin-top:10px;">
