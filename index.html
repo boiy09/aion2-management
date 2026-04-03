@@ -4615,6 +4615,8 @@ function renderRecentRecruit() {
 }
 
 function renderMembers() {
+  const ls = document.getElementById('leave-scan-section');
+  if (ls) ls.style.display = isAdmin() ? '' : 'none';
   const search = (document.getElementById('member-search')||{value:''}).value.toLowerCase();
   const filtered = sortMembers(members.filter(m =>
     (mFilter==='all'||(CLASS_MAP[m.class]||m.class)===mFilter) &&
