@@ -1482,10 +1482,10 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '1.5.138';
+const BUILD_VERSION = '1.5.139';
 const BUILD_PATCHNOTE = {
-  title: '장비 툴팁 오류 수정 + 등급 뱃지 제거',
-  content: '• 장비 클릭 시 아이템 정보를 표시하지 못하는 오류 수정.\n• 장비 목록 등급 뱃지 제거.\n• 아르카나 툴팁에 서브 스킬 표시 추가.'
+  title: '아르카나 툴팁 서브 스킬 + 세트 효과 표시',
+  content: '• 아르카나 툴팁에 서브 스킬(스킬명 +레벨) 표시.\n• 아르카나 툴팁에 세트 효과(단계별 효과) 표시.\n• 아르카나 툴팁에 세트 아이템 목록 표시.'
 };
 
 // 전체 패치 내역 (버전별 정확한 설명)
@@ -3997,8 +3997,10 @@ function openDetail(m) {
     const raceName  = (raw && raw.raceName)     || '';
     const clsName   = (raw && Array.isArray(raw.classNames) ? raw.classNames.join(', ') : '') || '';
     const reqLevel  = (raw && raw.equipLevel)   || 0;
-    const setName   = (raw && (raw.setItemName || raw.setName)) || e.setName || '';
-    const setFx     = (raw && (raw.setEffect?.effectList || raw.setEffectList)) || [];
+    const setData   = (raw && raw.set) || null;
+    const setName   = (setData && setData.name) || (raw && (raw.setItemName || raw.setName)) || e.setName || '';
+    const setFx     = (setData && setData.bonuses) || [];
+    const setItems  = (setData && setData.items) || [];
     const acqSources= (raw && raw.sources)      || [];  // 획득처 ["제작"] 형태
 
     // 아이템 정보 행
@@ -4046,18 +4048,29 @@ function openDetail(m) {
     const ncRow = (lbl, val) =>
       `<tr><td style="width:110px;padding:6px 20px;font-size:12px;color:#666;white-space:nowrap;vertical-align:top;">${lbl}</td><td style="padding:6px 20px 6px 0;font-size:12px;color:#d8d8d8;">${val}</td></tr>`;
 
-    // 세트 효과
-    const setFxHTML = setFx.length
-      ? setFx.map(se=>`<div style="font-size:12px;color:#c8c8c8;padding:2px 0;">${se.name||se.desc||se.effectName||''}</div>`).join('')
+    // 세트 효과: raw.set.bonuses = [{ degree, descriptions[] }], raw.set.items = [{ name, grade, equipped }]
+    const setFxRows = setFx.map(b => {
+      const desc = (b.descriptions || []).join(' / ');
+      return ncRow(`${b.degree} 세트 효과`, `<span style="color:#c8c8c8;">${desc}</span>`);
+    }).join('');
+    const setItemsRow = setItems.length
+      ? ncRow('세트 아이템', setItems.map(it => {
+          const ic = GC[it.grade] || '#888';
+          const eq = it.equipped ? `font-weight:700;` : `opacity:.55;`;
+          return `<span style="color:${ic};${eq}">${it.name}</span>`;
+        }).join('<span style="color:#444;margin:0 4px;">/</span>'))
+      : '';
+    const setFxHTML = (setFxRows || setItemsRow)
+      ? `<table style="width:100%;border-collapse:collapse;">${setFxRows}${setItemsRow}</table>`
       : `<span style="font-size:12px;color:#444;">없음</span>`;
 
-    // 서브 스킬 (아르카나 전용)
-    const subSkillList = (raw && (raw.subSkillList || raw.subSkill)) || [];
+    // 서브 스킬 (아르카나 전용): raw.subSkills = [{ id, level, icon, name }]
+    const subSkillList = (raw && raw.subSkills) || [];
     const subSkillsHTML = subSkillList.map(s => {
-      const name = s.name || s.skillName || '';
-      const desc = s.description || s.desc || s.value || '';
-      if(!name && !desc) return '';
-      return `<div style="font-size:12px;color:#c8b4ff;padding:2px 0;">${name}${desc ? ' ' + desc : ''}</div>`;
+      const name = s.name || '';
+      const level = s.level || 0;
+      if(!name) return '';
+      return `<div style="display:flex;align-items:center;gap:5px;font-size:12px;color:#c8b4ff;padding:2px 0;">${s.icon ? `<img src="${s.icon}" style="width:16px;height:16px;border-radius:2px;flex-shrink:0;" onerror="this.style.display='none'">` : ''}<span>${name}${level ? ` +${level}` : ''}</span></div>`;
     }).join('');
 
     // 획득처 (acqSources는 문자열 배열 ["제작"] 형태)
@@ -4122,22 +4135,31 @@ function openDetail(m) {
             ${godStones.map(s=>{const rawDesc=s.description||s.desc||'';const desc=rawDesc.replace(/<[^>]*>/g,'');const _GSC={'Common':'#aaaaaa','일반':'#aaaaaa','Rare':'#55cc44','희귀':'#55cc44','Unique':'#ffaa00','유일':'#ffaa00','Legend':'#4a90e8','Legendary':'#4a90e8','전승':'#4a90e8','전설':'#4a90e8'};const sc=_GSC[s.grade]||_GSC[s.gradeName]||'#e0c97a';const effects=(s.skillEffectList||s.effectList||[]).map(ef=>`<div style="font-size:11px;color:#aaa;line-height:1.6;">${ef.description||ef.desc||ef.name||ef}</div>`).join('');return`<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;">${s.icon?`<img src="${s.icon}" style="width:22px;height:22px;border-radius:3px;flex-shrink:0;background:var(--surface);animation:imgPulse 1.5s ease infinite;" onload="_imgLoad(this)" onerror="_imgErr(this)">`:`<div style="width:22px;height:22px;border-radius:3px;background:${sc}22;flex-shrink:0;"></div>`}<div><div style="font-size:12px;color:${sc};font-weight:600;">${s.name||''}</div>${desc?`<div style="font-size:11px;color:#aaa;line-height:1.6;margin-top:2px;">${desc}</div>`:''}${effects}</div></div>`;}).join('')}
           </div>` : ''}
 
-        <!-- 세트 효과 + 획득처 -->
+        <!-- 세트 효과 -->
+        ${(setFx.length || setItems.length) ? `
+          <div style="border-top:1px solid rgba(255,255,255,.07);">
+            ${ncSec('세트 효과')}
+            <div style="padding:8px 0;">${setFxHTML}</div>
+          </div>` : `
         <div style="display:flex;gap:0;border-top:1px solid rgba(255,255,255,.07);">
           <div style="flex:1;">
             ${ncSec('세트 효과')}
             <div style="padding:8px 20px;">${setFxHTML}</div>
+          </div>`}
+        <!-- 획득처 -->
+        ${(setFx.length || setItems.length) ? `
+          <div style="border-top:1px solid rgba(255,255,255,.07);">
+            ${ncSec('획득처')}
+            <div style="padding:8px 20px;">${acqHTML}</div>
           </div>
+        ` : `
           <div style="flex:1;border-left:1px solid rgba(255,255,255,.07);">
             ${ncSec('획득처')}
             <div style="padding:8px 20px;">${acqHTML}</div>
           </div>
-        </div>
+        `}
 
       </div>
-
-      <!-- [DEBUG] raw API keys 임시 표시 -->
-      ${raw ? `<div style="padding:8px 20px;font-size:10px;color:#555;word-break:break-all;border-top:1px solid rgba(255,255,255,.04);">🔍 raw keys: ${Object.keys(raw).join(', ')}</div>` : ''}
     `;
     } catch(renderErr) {
       console.error('[item-tooltip] render error:', renderErr);
