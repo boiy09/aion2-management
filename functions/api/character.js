@@ -67,6 +67,7 @@ export async function onRequest(context) {
 
     const infoData  = await infoRes.json();
     const equip   = (!lite && equipData.equipment && equipData.equipment.equipmentList) ? equipData.equipment.equipmentList : [];
+    const skins   = (!lite && equipData.equipment && equipData.equipment.skinList) ? equipData.equipment.skinList : [];
     const petwing = (!lite && equipData.petwing) ? equipData.petwing : {};
     const skillData = (!lite && equipData.skill) ? equipData.skill : null;
 
@@ -79,7 +80,12 @@ export async function onRequest(context) {
       'Cleric':'치유성','Chanter':'호법성',
     };
 
+    // slotPos 기준으로 skin 매핑
+    const skinBySlot = {};
+    skins.forEach(function(s) { skinBySlot[s.slotPos] = s; });
+
     const mapEquip = function(e) {
+      const sk = skinBySlot[e.slotPos] || null;
       return {
         name:        e.name || '',
         slot:        e.slotPosName || e.slot || '',
@@ -95,6 +101,7 @@ export async function onRequest(context) {
         itemOptions: e.subStats  || e.randomStats || (e.itemOption && (e.itemOption.optionList || e.itemOption.list || [])) || [],
         itemSouls:   (e.soulCrystal && (e.soulCrystal.crystalList || e.soulCrystal.list || [])) || [],
         potential:   e.potential || null,
+        skin:        sk ? { name: sk.name || '', icon: sk.icon || '', grade: sk.grade || '' } : null,
       };
     };
 

@@ -1482,7 +1482,7 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '1.5.135';
+const BUILD_VERSION = '1.5.136';
 const BUILD_PATCHNOTE = {
   title: '최근조회 카드 상세 버튼 + CP/IL 표시 개선',
   content: '• 최근조회 카드에 상세 버튼 추가.\n• CP/IL 미보완 항목(구버전 저장 데이터)에 ··· 플레이스홀더 표시.\n• 즐겨찾기·최근조회 name 특수문자 이스케이프 버그 수정.'
@@ -1600,6 +1600,8 @@ const _PATCH_HISTORY = [
     content:'• refreshHeaderUser에서 /api/img 프록시 미적용으로 NC 이미지 차단 → 빈 원형만 표시되던 버그 수정.\n• applyLogin과 동일하게 URL 정규화 + 프록시 적용.' },
   { version:'1.5.135', title:'탈퇴 감지 카드 상세 버튼 + 내정보 모달 로그아웃 버튼 추가',
     content:'• 탈퇴 멤버 감지 목록 카드에 상세 버튼 추가 (character_id 있는 경우).\n• 내정보 모달 우상단에 로그아웃 버튼 추가 (헤더 로그아웃 버튼 안 보이는 경우 대비).' },
+  { version:'1.5.136', title:'장비 외형(스킨) 아이콘 표시',
+    content:'• 장비 상세 목록 우측에 외형 장착 아이템 아이콘 표시 (공홈 스타일).\n• character.js: equipment API의 skinList를 slotPos 기준으로 각 장비에 매핑.' },
 ];
 
 // 시맨틱 버전 비교 (날짜형 구버전 호환)
@@ -4153,6 +4155,7 @@ function openDetail(m) {
         <div style="font-size:10px;color:var(--muted);">${SN[slot]||slot}</div>
       </div>
       <span style="font-size:10px;padding:1px 5px;border-radius:3px;background:${gc}22;color:${gc};border:1px solid ${gc}44;flex-shrink:0;">${GN[e.grade]||e.grade}</span>
+      ${e.skin ? `<img src="${e.skin.icon}" style="width:32px;height:32px;border-radius:4px;border:2px solid ${GC[e.skin.grade]||'#888'};flex-shrink:0;background:var(--surface);" title="외형: ${e.skin.name}" onerror="this.style.display='none'">` : '<div style="width:32px;flex-shrink:0;"></div>'}
     </div>`;
   };
 
