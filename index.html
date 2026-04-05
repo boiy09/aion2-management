@@ -1482,10 +1482,10 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '1.5.137';
+const BUILD_VERSION = '1.5.138';
 const BUILD_PATCHNOTE = {
-  title: '아르카나 툴팁 개선',
-  content: '• 장비 목록 등급 뱃지 제거.\n• 아르카나 툴팁에 서브 스킬 표시 추가.\n• 아르카나 툴팁에 세트 효과(단계별 효과 + 세트 아이템 목록) 표시 추가.'
+  title: '장비 툴팁 오류 수정 + 등급 뱃지 제거',
+  content: '• 장비 클릭 시 아이템 정보를 표시하지 못하는 오류 수정.\n• 장비 목록 등급 뱃지 제거.\n• 아르카나 툴팁에 서브 스킬 표시 추가.'
 };
 
 // 전체 패치 내역 (버전별 정확한 설명)
@@ -4051,6 +4051,15 @@ function openDetail(m) {
       ? setFx.map(se=>`<div style="font-size:12px;color:#c8c8c8;padding:2px 0;">${se.name||se.desc||se.effectName||''}</div>`).join('')
       : `<span style="font-size:12px;color:#444;">없음</span>`;
 
+    // 서브 스킬 (아르카나 전용)
+    const subSkillList = (raw && (raw.subSkillList || raw.subSkill)) || [];
+    const subSkillsHTML = subSkillList.map(s => {
+      const name = s.name || s.skillName || '';
+      const desc = s.description || s.desc || s.value || '';
+      if(!name && !desc) return '';
+      return `<div style="font-size:12px;color:#c8b4ff;padding:2px 0;">${name}${desc ? ' ' + desc : ''}</div>`;
+    }).join('');
+
     // 획득처 (acqSources는 문자열 배열 ["제작"] 형태)
     const acqHTML = acqSources.length
       ? acqSources.map(a=>`<div style="font-size:12px;color:#c8c8c8;padding:2px 0;">${typeof a === 'string' ? a : (a.name||a.zoneName||a.infoName||a.type||'')}</div>`).join('')
@@ -4154,7 +4163,6 @@ function openDetail(m) {
         <div style="font-size:12px;font-weight:600;color:${gc};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.name}</div>
         <div style="font-size:10px;color:var(--muted);">${SN[slot]||slot}</div>
       </div>
-      <span style="font-size:10px;padding:1px 5px;border-radius:3px;background:${gc}22;color:${gc};border:1px solid ${gc}44;flex-shrink:0;">${GN[e.grade]||e.grade}</span>
       ${e.skin ? `<img src="${e.skin.icon}" style="width:32px;height:32px;border-radius:4px;border:2px solid ${GC[e.skin.grade]||'#888'};flex-shrink:0;background:var(--surface);" title="외형: ${e.skin.name}" onerror="this.style.display='none'">` : '<div style="width:32px;flex-shrink:0;"></div>'}
     </div>`;
   };
