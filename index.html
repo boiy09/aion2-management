@@ -1482,10 +1482,10 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '1.5.136';
+const BUILD_VERSION = '1.5.137';
 const BUILD_PATCHNOTE = {
-  title: '최근조회 카드 상세 버튼 + CP/IL 표시 개선',
-  content: '• 최근조회 카드에 상세 버튼 추가.\n• CP/IL 미보완 항목(구버전 저장 데이터)에 ··· 플레이스홀더 표시.\n• 즐겨찾기·최근조회 name 특수문자 이스케이프 버그 수정.'
+  title: '아르카나 툴팁 개선',
+  content: '• 장비 목록 등급 뱃지 제거.\n• 아르카나 툴팁에 서브 스킬 표시 추가.\n• 아르카나 툴팁에 세트 효과(단계별 효과 + 세트 아이템 목록) 표시 추가.'
 };
 
 // 전체 패치 내역 (버전별 정확한 설명)
@@ -4088,9 +4088,9 @@ function openDetail(m) {
           ${ncSec('아이템 정보')}
           <table style="width:100%;border-collapse:collapse;">
             ${infoRows.map(([lbl,val])=>ncRow(lbl,val)).join('')}
-            ${(statsHTML||exceedHTML) ? `<tr>
+            ${(statsHTML||exceedHTML||subSkillsHTML) ? `<tr>
               <td style="width:110px;padding:8px 20px;font-size:12px;color:#666;vertical-align:top;white-space:nowrap;">옵션</td>
-              <td style="padding:8px 20px 8px 0;">${statsHTML}${exceedHTML?`<div style="margin-top:3px;">${exceedHTML}</div>`:''}</td>
+              <td style="padding:8px 20px 8px 0;">${statsHTML}${exceedHTML?`<div style="margin-top:3px;">${exceedHTML}</div>`:''}${subSkillsHTML?`<div style="margin-top:3px;">${subSkillsHTML}</div>`:''}</td>
             </tr>` : ''}
             ${soulsHTML ? `<tr>
               <td style="padding:8px 20px;font-size:12px;color:#666;vertical-align:top;white-space:nowrap;">영혼 각인${soulBindRate?`<br><span style="color:#7ab8d8;font-size:11px;">${soulBindRate}%</span>`:''}</td>
