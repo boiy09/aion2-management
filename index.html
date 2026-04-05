@@ -4135,6 +4135,9 @@ function openDetail(m) {
         </div>
 
       </div>
+
+      <!-- [DEBUG] raw API keys 임시 표시 -->
+      ${raw ? `<div style="padding:8px 20px;font-size:10px;color:#555;word-break:break-all;border-top:1px solid rgba(255,255,255,.04);">🔍 raw keys: ${Object.keys(raw).join(', ')}</div>` : ''}
     `;
     } catch(renderErr) {
       console.error('[item-tooltip] render error:', renderErr);
