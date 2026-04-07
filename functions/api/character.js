@@ -5,6 +5,7 @@ export async function onRequest(context) {
   const nickname = url.searchParams.get('nickname') || '';
   const serverId = url.searchParams.get('serverId') || '2001';
   const lite = url.searchParams.get('lite') === '1'; // 카드 미리보기용: info만 조회, equipment 제외
+  const boardId = url.searchParams.get('boardId') || '';
 
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -26,6 +27,51 @@ export async function onRequest(context) {
     'Accept-Language': 'ko-KR,ko;q=0.9',
     'Origin': 'https://aion2.plaync.com',
   };
+
+  // boardId 모드: 데바니온 노드 데이터만 조회
+  if (boardId) {
+    try {
+      let rawId = characterId ? decodeURIComponent(characterId) : null;
+      if (!rawId && nickname) {
+        const nick = decodeURIComponent(nickname);
+        const sr = await fetch(
+          `https://aion2.plaync.com/ko-kr/api/search/aion2/search/v2/character?keyword=${encodeURIComponent(nick)}&serverId=${serverId}`,
+          { headers }
+        );
+        const sd = await sr.json();
+        const list = sd?.result?.character?.list || sd?.list || [];
+        const found = list.find(c => c.characterName === nick || c.name === nick) || list[0];
+        if (found) rawId = String(found.characterId || found.id || '');
+      }
+      if (!rawId) {
+        return new Response(JSON.stringify({ error: '캐릭터를 찾을 수 없어요', boardId }), { status: 400, headers: corsHeaders });
+      }
+      const internalId = parseInt(boardId) - 20;
+      const tried = [];
+      for (const bid of [internalId, parseInt(boardId)]) {
+        const apiUrl = `https://aion2.plaync.com/api/character/daevanion/detail?lang=ko&characterId=${encodeURIComponent(rawId)}&serverId=${serverId}&boardId=${bid}`;
+        try {
+          const r = await fetch(apiUrl, { headers });
+          const text = await r.text();
+          const d = JSON.parse(text);
+          const nl = d.nodeList || [];
+          if (nl.length > 0 || d.openStatEffectList) {
+            return new Response(JSON.stringify({
+              nodeList: nl,
+              openStatEffectList: d.openStatEffectList || [],
+              openSkillEffectList: d.openSkillEffectList || [],
+            }), { headers: corsHeaders });
+          }
+          tried.push(`boardId=${bid} → keys:${Object.keys(d).join(',')}`);
+        } catch(e) {
+          tried.push(`boardId=${bid} → ${e.message}`);
+        }
+      }
+      return new Response(JSON.stringify({ error: '노드 데이터 없음', tried }), { headers: corsHeaders });
+    } catch(err) {
+      return new Response(JSON.stringify({ error: '노드 조회 실패', detail: err.message }), { status: 500, headers: corsHeaders });
+    }
+  }
 
   try {
     let rawId = characterId ? decodeURIComponent(characterId) : null;
