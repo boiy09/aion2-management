@@ -52,10 +52,12 @@ export async function onRequest(context) {
       if (!rawId) {
         return new Response(JSON.stringify({ error: '캐릭터를 찾을 수 없어요', boardId }), { status: 400, headers: corsHeaders });
       }
-      const internalId = parseInt(boardId) - 20;
+      // characterId: 검색 API가 %3D 형태로 반환하므로 먼저 decode 후 encode (이중인코딩 방지)
+      const cleanId = (() => { try { return decodeURIComponent(rawId); } catch(e) { return rawId; } })();
       const tried = [];
-      for (const bid of [internalId, parseInt(boardId)]) {
-        const apiUrl = `https://aion2.plaync.com/api/character/daevanion/detail?lang=ko&characterId=${encodeURIComponent(rawId)}&serverId=${serverId}&boardId=${bid}`;
+      // boardId: boardList의 id가 이미 11,12,13... 형태이므로 그대로 사용
+      for (const bid of [parseInt(boardId)]) {
+        const apiUrl = `https://aion2.plaync.com/api/character/daevanion/detail?lang=ko&characterId=${encodeURIComponent(cleanId)}&serverId=${serverId}&boardId=${bid}`;
         try {
           const r = await fetch(apiUrl, { headers });
           const text = await r.text();
