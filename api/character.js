@@ -19,9 +19,8 @@ module.exports = async function handler(req, res) {
     if (!rawIdForBoard) return res.status(400).json({ error: 'boardId 모드엔 characterId 필요' });
     const internalId = parseInt(boardId) - 20;
     const urls = [
-      `https://aion2.plaync.com/api/character/daevanion?lang=ko&characterId=${encodeURIComponent(rawIdForBoard)}&serverId=${serverId}&boardId=${internalId}`,
-      `https://aion2.plaync.com/api/character/daevanion?lang=ko&characterId=${encodeURIComponent(rawIdForBoard)}&serverId=${serverId}&boardId=${boardId}`,
-      `https://aion2.plaync.com/api/character/daevanion?lang=ko&characterId=${encodeURIComponent(rawIdForBoard)}&serverId=${serverId}`,
+      `https://aion2.plaync.com/api/character/daevanion/detail?lang=ko&characterId=${encodeURIComponent(rawIdForBoard)}&serverId=${serverId}&boardId=${internalId}`,
+      `https://aion2.plaync.com/api/character/daevanion/detail?lang=ko&characterId=${encodeURIComponent(rawIdForBoard)}&serverId=${serverId}&boardId=${boardId}`,
     ];
     const errors = [];
     for (const url of urls) {
