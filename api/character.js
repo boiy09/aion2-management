@@ -22,8 +22,19 @@ module.exports = async function handler(req, res) {
 
   // boardId 모드: 데바니온 노드 데이터만 조회 (try 바깥에서 먼저 체크)
   if (_boardId) {
-    const rawIdForBoard = characterId ? decodeURIComponent(characterId) : null;
-    if (!rawIdForBoard) return res.status(400).json({ error: 'boardId 모드엔 characterId 필요' });
+    // characterId 또는 nickname으로 rawId 획득
+    let rawIdForBoard = characterId ? decodeURIComponent(characterId) : null;
+    if (!rawIdForBoard && nickname) {
+      try {
+        const nick = decodeURIComponent(nickname);
+        const sr = await fetch(`https://aion2.plaync.com/ko-kr/api/search/aion2/search/v2/character?keyword=${encodeURIComponent(nick)}&serverId=${serverId}`, { headers });
+        const sd = await sr.json();
+        const list = sd?.result?.character?.list || sd?.list || [];
+        const found = list.find(c => c.characterName === nick || c.name === nick) || list[0];
+        if (found) rawIdForBoard = String(found.characterId || found.id || '');
+      } catch(e) {}
+    }
+    if (!rawIdForBoard) return res.status(400).json({ error: 'characterId/nickname으로 조회 실패' });
     const internalId = parseInt(_boardId) - 20;
     const urls = [
       `https://aion2.plaync.com/api/character/daevanion/detail?lang=ko&characterId=${encodeURIComponent(rawIdForBoard)}&serverId=${serverId}&boardId=${internalId}`,
