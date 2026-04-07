@@ -2,7 +2,7 @@ module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const { characterId, nickname, serverId = '2001' } = req.query;
+  const { characterId, nickname, serverId = '2001', boardId } = req.query;
   if (!characterId && !nickname) return res.status(400).json({ error: 'characterId 또는 nickname이 필요해요' });
 
   const headers = {
@@ -15,6 +15,33 @@ module.exports = async function handler(req, res) {
 
   try {
     let rawId = characterId ? decodeURIComponent(characterId) : null;
+
+    // boardId 모드: 데바니온 노드 데이터만 조회
+    if (boardId && rawId) {
+      const internalId = parseInt(boardId) - 20;
+      const urls = [
+        `https://aion2.plaync.com/api/character/daevanion?lang=ko&characterId=${encodeURIComponent(rawId)}&serverId=${serverId}&boardId=${boardId}`,
+        `https://aion2.plaync.com/api/character/daevanion?lang=ko&characterId=${encodeURIComponent(rawId)}&serverId=${serverId}&boardId=${internalId}`,
+        `https://aion2.plaync.com/api/character/daevanion?lang=ko&characterId=${encodeURIComponent(rawId)}&serverId=${serverId}`,
+      ];
+      for (const url of urls) {
+        try {
+          const r = await fetch(url, { headers });
+          if (!r.ok) continue;
+          const d = await r.json();
+          const nl = d.nodeList || (d.daevanion && d.daevanion.nodeList) || [];
+          if (nl.length > 0 || d.boardList || d.openStatEffectList) {
+            return res.status(200).json({
+              nodeList: nl,
+              openStatEffectList: d.openStatEffectList || (d.daevanion && d.daevanion.openStatEffectList) || [],
+              openSkillEffectList: d.openSkillEffectList || (d.daevanion && d.daevanion.openSkillEffectList) || [],
+              _usedUrl: url, _rawKeys: Object.keys(d),
+            });
+          }
+        } catch(e) { /* 다음 시도 */ }
+      }
+      return res.status(404).json({ error: '노드 데이터 없음', tried: urls });
+    }
 
     // characterId 없으면 닉네임으로 검색
     if (!rawId) {
