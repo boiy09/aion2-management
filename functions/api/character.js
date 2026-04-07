@@ -28,39 +28,29 @@ export async function onRequest(context) {
     'Origin': 'https://aion2.plaync.com',
   };
 
-  // characterId를 raw JSON 텍스트에서 문자열로 추출 (JS 숫자 정밀도 손실 방지)
+  // 닉네임으로 characterId(base64 문자열) 검색
   async function searchCharacterId(nick) {
     const res = await fetch(
       `https://aion2.plaync.com/ko-kr/api/search/aion2/search/v2/character?keyword=${encodeURIComponent(nick)}&serverId=${serverId}`,
       { headers }
     );
-    const text = await res.text();
-    // 10자리 이상의 숫자 ID를 raw 텍스트에서 추출 (characterId, userId, id 모두 포함)
-    const allIds = [...text.matchAll(/"(?:characterId|userId|id)"\s*:\s*(\d{10,})/g)].map(m => m[1]);
-    // 이름 매칭을 위해 JSON 파싱 (인덱스 매칭용)
-    let idx = 0;
-    try {
-      const sd = JSON.parse(text);
-      const list = sd?.result?.character?.list || sd?.list || [];
-      const fi = list.findIndex(c => c.characterName === nick || c.name === nick);
-      if (fi >= 0) idx = fi;
-    } catch(e) {}
-    return { id: allIds[idx] || allIds[0] || null, _rawHead: text.slice(0, 200) };
+    const sd = await res.json();
+    const list = sd?.list || sd?.result?.character?.list || [];
+    const found = list.find(c => (c.name || c.characterName) === nick) || list[0];
+    return { id: found ? (found.characterId || found.id || null) : null };
   }
 
   // boardId 모드: 데바니온 노드 데이터만 조회
   if (boardId) {
     try {
       let rawId = characterId ? decodeURIComponent(characterId) : null;
-      let _dbg = '';
       if (!rawId && nickname) {
         const nick = decodeURIComponent(nickname);
         const sr = await searchCharacterId(nick);
         rawId = sr.id;
-        _dbg = sr._rawHead;
       }
       if (!rawId) {
-        return new Response(JSON.stringify({ error: '캐릭터를 찾을 수 없어요', boardId, _dbg }), { status: 400, headers: corsHeaders });
+        return new Response(JSON.stringify({ error: '캐릭터를 찾을 수 없어요', boardId }), { status: 400, headers: corsHeaders });
       }
       const internalId = parseInt(boardId) - 20;
       const tried = [];
