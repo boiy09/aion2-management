@@ -1482,7 +1482,7 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '1.5.163';
+const BUILD_VERSION = '1.5.164';
 const BUILD_PATCHNOTE = {
   title: '데바니온 노드판 보기 (완전 수정 2)',
   content: '• 데바니온 노드판 클릭 시 노드 그리드가 표시돼요.\n• 캐릭터ID 정밀도 손실로 NC API 서버에러가 나던 문제를 수정했어요.'
@@ -4212,9 +4212,9 @@ function openDetail(m) {
         } else {
           const gc = _daevColor(n);
           const opened = n.open === 1;
-          const inner = `<div style="width:${SZ-8}px;height:${SZ-8}px;border-radius:2px;background:${opened?gc+'cc':'#333'};opacity:${opened?0.9:0.5};"></div>`;
+          const inner = `<div style="width:${SZ-8}px;height:${SZ-8}px;border-radius:2px;background:${opened?gc+'cc':gc+'44'};"></div>`;
           const glow = opened ? `box-shadow:0 0 6px ${gc}77;` : '';
-          gridHTML += `<div onmouseenter="window._daevTipShow(event,${n.nodeId})" onmouseleave="window._daevTipHide()" style="width:${SZ}px;height:${SZ}px;border-radius:4px;background:${opened?gc+'18':'#1c1e22'};border:${opened?`1.5px solid ${gc}`:'1px solid #2e3035'};display:flex;align-items:center;justify-content:center;box-sizing:border-box;${glow}opacity:${opened?1:0.45};cursor:help;">${inner}</div>`;
+          gridHTML += `<div onmouseenter="window._daevTipShow(event,${n.nodeId})" onmouseleave="window._daevTipHide()" style="width:${SZ}px;height:${SZ}px;border-radius:4px;background:${opened?gc+'18':gc+'0e'};border:${opened?`1.5px solid ${gc}`:`1px solid ${gc}55`};display:flex;align-items:center;justify-content:center;box-sizing:border-box;${glow}cursor:help;">${inner}</div>`;
         }
       }
     }
