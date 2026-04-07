@@ -28,20 +28,33 @@ export async function onRequest(context) {
     'Origin': 'https://aion2.plaync.com',
   };
 
+  // characterId를 raw JSON 텍스트에서 문자열로 추출 (JS 숫자 정밀도 손실 방지)
+  async function searchCharacterId(nick) {
+    const res = await fetch(
+      `https://aion2.plaync.com/ko-kr/api/search/aion2/search/v2/character?keyword=${encodeURIComponent(nick)}&serverId=${serverId}`,
+      { headers }
+    );
+    const text = await res.text();
+    // 모든 characterId를 raw 텍스트에서 문자열로 추출 (정밀도 보존)
+    const allIds = [...text.matchAll(/"characterId"\s*:\s*(\d+)/g)].map(m => m[1]);
+    // 이름 매칭을 위해 JSON 파싱 (characterId는 이미 정밀도 손실이지만 인덱스 매칭용으로만 사용)
+    let idx = 0;
+    try {
+      const sd = JSON.parse(text);
+      const list = sd?.result?.character?.list || sd?.list || [];
+      const fi = list.findIndex(c => c.characterName === nick || c.name === nick);
+      if (fi >= 0) idx = fi;
+    } catch(e) {}
+    return allIds[idx] || allIds[0] || null;
+  }
+
   // boardId 모드: 데바니온 노드 데이터만 조회
   if (boardId) {
     try {
       let rawId = characterId ? decodeURIComponent(characterId) : null;
       if (!rawId && nickname) {
         const nick = decodeURIComponent(nickname);
-        const sr = await fetch(
-          `https://aion2.plaync.com/ko-kr/api/search/aion2/search/v2/character?keyword=${encodeURIComponent(nick)}&serverId=${serverId}`,
-          { headers }
-        );
-        const sd = await sr.json();
-        const list = sd?.result?.character?.list || sd?.list || [];
-        const found = list.find(c => c.characterName === nick || c.name === nick) || list[0];
-        if (found) rawId = String(found.characterId || found.id || '');
+        rawId = await searchCharacterId(nick);
       }
       if (!rawId) {
         return new Response(JSON.stringify({ error: '캐릭터를 찾을 수 없어요', boardId }), { status: 400, headers: corsHeaders });
@@ -78,15 +91,8 @@ export async function onRequest(context) {
 
     if (!rawId) {
       const nick = decodeURIComponent(nickname);
-      const searchRes = await fetch(
-        `https://aion2.plaync.com/ko-kr/api/search/aion2/search/v2/character?keyword=${encodeURIComponent(nick)}&serverId=${serverId}`,
-        { headers }
-      );
-      const searchData = await searchRes.json();
-      const list = searchData?.result?.character?.list || searchData?.list || [];
-      const found = list.find(c => c.characterName === nick || c.name === nick) || list[0];
-      if (!found) throw new Error(`'${nick}' 캐릭터를 찾을 수 없어요`);
-      rawId = String(found.characterId || found.id || '');
+      rawId = await searchCharacterId(nick);
+      if (!rawId) throw new Error(`'${nick}' 캐릭터를 찾을 수 없어요`);
     }
 
     // lite 모드: info만 조회 (카드 미리보기용 — 직업/전투력/아이템레벨)
