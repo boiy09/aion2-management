@@ -41,9 +41,16 @@ module.exports = async function handler(req, res) {
     const equipData = await equipRes.json();
 
     const profile = (infoData && infoData.profile) ? infoData.profile : {};
-    const equip   = (equipData && equipData.equipment && equipData.equipment.equipmentList) ? equipData.equipment.equipmentList : [];
-    const petwing = (equipData && equipData.petwing) ? equipData.petwing : {};
+    const equip    = (equipData && equipData.equipment && equipData.equipment.equipmentList) ? equipData.equipment.equipmentList : [];
+    const skinList = (equipData && equipData.equipment && equipData.equipment.skinList) ? equipData.equipment.skinList : [];
+    const petwing  = (equipData && equipData.petwing) ? equipData.petwing : {};
     const skillData = (equipData && equipData.skill) ? equipData.skill : null;
+
+    // skinList를 slotPos 기준으로 맵핑
+    const skinBySlot = {};
+    skinList.forEach(function(s) {
+      if (s.slotPos !== undefined && s.slotPos !== null) skinBySlot[s.slotPos] = s;
+    });
 
     const classMap = {
       'Gladiator':'검성','Templar':'수호성',
@@ -53,6 +60,7 @@ module.exports = async function handler(req, res) {
     };
 
     const mapEquip = function(e) {
+      const skinItem = skinBySlot[e.slotPos] || e.skinItem || null;
       return {
         name:        e.name || '',
         slot:        e.slotPosName || e.slot || '',
@@ -68,6 +76,7 @@ module.exports = async function handler(req, res) {
         itemOptions: e.subStats  || e.randomStats || (e.itemOption && (e.itemOption.optionList || e.itemOption.list || [])) || [],
         itemSouls:   (e.soulCrystal && (e.soulCrystal.crystalList || e.soulCrystal.list || [])) || [],
         potential:   e.potential || null,
+        skin:        skinItem ? { name: skinItem.name || '', icon: skinItem.icon || '', grade: skinItem.grade || '' } : null,
       };
     };
 
