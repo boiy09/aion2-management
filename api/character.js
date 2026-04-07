@@ -158,7 +158,6 @@ module.exports = async function handler(req, res) {
       equipment:    equip.map(mapEquip),
       stats:        statList,
       daevanion:    daevList,
-      _daevRawKeys: Object.keys(daevRaw),
       ranking:      rankList,
       titles:       titleGroupList.length ? titleGroupList : titleList,
       stigma:       skillList,

@@ -1482,7 +1482,7 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '1.5.146';
+const BUILD_VERSION = '1.5.147';
 const BUILD_PATCHNOTE = {
   title: '데바니온 노드판 보기 (수정)',
   content: '• 데바니온 노드판 그리드가 실제로 표시되도록 수정했어요.\n• 보드별 노드 데이터를 올바르게 불러오도록 API 처리 방식을 개선했어요.'
@@ -4169,17 +4169,9 @@ function openDetail(m) {
 
   // 데바니온 노드판 뷰어
   const _DAEV_GC = { Common:'#888888', Rare:'#4a90e8', Unique:'#e8c030', Legend:'#ff8c30' };
-  window._showDaevBoard = function(boardId) {
-    const board = (m.daevanion||[]).find(d => (d.boardId||d.id) === boardId);
-    if(!board) return;
-    const startNode = (board.nodeList||[]).find(n => n.type === 'Start');
-    const boardName = startNode ? startNode.name.replace(/\s*-\s*시작$/, '') : (board.name || '데바니온');
-    document.getElementById('daev-board-title').textContent = boardName + ' 노드판';
-    document.getElementById('daev-board-modal').style.display = 'flex';
-
+  function _renderDaevGrid(nodeList, statEffects, skillEffects) {
     const nodeMap = {};
-    (board.nodeList||[]).forEach(n => { nodeMap[`${n.row},${n.col}`] = n; });
-
+    (nodeList||[]).forEach(n => { nodeMap[`${n.row},${n.col}`] = n; });
     let gridHTML = '<div style="display:grid;grid-template-columns:repeat(15,18px);gap:2px;margin-bottom:14px;">';
     for(let r = 1; r <= 15; r++) {
       for(let c = 1; c <= 15; c++) {
@@ -4198,7 +4190,6 @@ function openDetail(m) {
       }
     }
     gridHTML += '</div>';
-
     const legend = `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;font-size:10px;color:#555;">
       <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#888;vertical-align:middle;margin-right:3px;"></span>일반</span>
       <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#4a90e8;vertical-align:middle;margin-right:3px;"></span>레어</span>
@@ -4206,20 +4197,33 @@ function openDetail(m) {
       <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ff8c30;vertical-align:middle;margin-right:3px;"></span>전설</span>
       <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#888;vertical-align:middle;margin-right:3px;"></span>스킬(원형)</span>
     </div>`;
-
-    const statItems = (board.openStatEffectList||[]).map(s=>`<div style="font-size:11px;color:#c8c8c8;padding:1px 0;">${s.desc}</div>`).join('');
-    const skillItems = (board.openSkillEffectList||[]).map(s=>`<div style="font-size:11px;color:#c8b4ff;padding:1px 0;">${s.desc}</div>`).join('');
+    const statItems = (statEffects||[]).map(s=>`<div style="font-size:11px;color:#c8c8c8;padding:1px 0;">${s.desc}</div>`).join('');
+    const skillItems = (skillEffects||[]).map(s=>`<div style="font-size:11px;color:#c8b4ff;padding:1px 0;">${s.desc}</div>`).join('');
     const effectsHTML = (statItems||skillItems) ? `
       <div style="display:grid;grid-template-columns:${statItems&&skillItems?'1fr 1fr':'1fr'};gap:12px;border-top:1px solid rgba(255,255,255,.07);padding-top:12px;">
         ${statItems?`<div><div style="font-size:10px;font-weight:600;color:#666;letter-spacing:.05em;margin-bottom:6px;">스탯 효과</div>${statItems}</div>`:''}
         ${skillItems?`<div><div style="font-size:10px;font-weight:600;color:#666;letter-spacing:.05em;margin-bottom:6px;">스킬 효과</div>${skillItems}</div>`:''}
       </div>` : '';
-
-    const debugInfo = `<div style="font-size:10px;color:#ff6b6b;background:rgba(255,100,100,.08);border:1px solid rgba(255,100,100,.2);border-radius:4px;padding:6px 8px;margin-bottom:8px;word-break:break-all;">
-      🔍 board.id: ${boardId} | infoData.daevanion 키: ${JSON.stringify(m._daevRawKeys||[])}<br>
-      board 필드: ${Object.keys(board).join(', ')}
-    </div>`;
-    document.getElementById('daev-board-scroll').innerHTML = debugInfo + legend + gridHTML + effectsHTML;
+    return legend + gridHTML + effectsHTML;
+  }
+  window._showDaevBoard = function(boardId) {
+    const board = (m.daevanion||[]).find(d => (d.boardId||d.id) === boardId);
+    if(!board) return;
+    const boardName = board.name || '데바니온';
+    document.getElementById('daev-board-title').textContent = boardName + ' 노드판';
+    const scrollEl = document.getElementById('daev-board-scroll');
+    scrollEl.innerHTML = '<div style="padding:40px;text-align:center;color:#555;font-size:12px;">노드 데이터 불러오는 중...</div>';
+    document.getElementById('daev-board-modal').style.display = 'flex';
+    fetch(`/api/daevboard?characterId=${encodeURIComponent(m.characterId)}&serverId=${m.serverId||'2001'}&boardId=${boardId}`)
+      .then(r => r.json())
+      .then(data => {
+        if(data.error) {
+          scrollEl.innerHTML = `<div style="padding:20px;color:#ff6b6b;font-size:11px;">⚠ ${data.error}<br><span style="color:#555;font-size:10px;">_rawKeys: ${JSON.stringify(data._rawKeys||[])}<br>tried: ${(data.tried||[]).join('<br>')}</span></div>`;
+          return;
+        }
+        scrollEl.innerHTML = _renderDaevGrid(data.nodeList, data.openStatEffectList, data.openSkillEffectList);
+      })
+      .catch(e => { scrollEl.innerHTML = `<div style="padding:20px;color:#ff6b6b;font-size:11px;">⚠ 불러오기 실패: ${e.message}</div>`; });
   };
 
   // 장비 아이템 HTML
