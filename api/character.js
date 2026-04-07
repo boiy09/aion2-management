@@ -137,14 +137,7 @@ module.exports = async function handler(req, res) {
     var arcanaList = equip.filter(function(e) { return (e.slotPosName||'').indexOf('Arcana') !== -1; }).map(mapEquip);
     var daevRaw    = (infoData && infoData.daevanion) ? infoData.daevanion : {};
     var daevBoards = daevRaw.boardList || [];
-    var daevNodes  = daevRaw.nodeList  || [];
-    // boardId별로 nodeList를 그룹핑해서 각 보드에 붙여줌
-    var daevNodeMap = {};
-    daevNodes.forEach(function(n) { var bid = n.boardId; if(!daevNodeMap[bid]) daevNodeMap[bid] = []; daevNodeMap[bid].push(n); });
-    var daevList = daevBoards.map(function(b) {
-      var bid = b.boardId || b.id;
-      return Object.assign({}, b, { nodeList: daevNodeMap[bid] || [] });
-    });
+    var daevList   = daevBoards; // boardList 그대로 전달 (nodeList는 별도 필드 확인 필요)
     var rankList   = (infoData && infoData.ranking   && infoData.ranking.rankingList)   ? infoData.ranking.rankingList   : [];
     var titleRaw       = (infoData && infoData.title) ? infoData.title : {};
     var titleList      = titleRaw.titleList      || [];
@@ -165,6 +158,7 @@ module.exports = async function handler(req, res) {
       equipment:    equip.map(mapEquip),
       stats:        statList,
       daevanion:    daevList,
+      _daevRawKeys: Object.keys(daevRaw),
       ranking:      rankList,
       titles:       titleGroupList.length ? titleGroupList : titleList,
       stigma:       skillList,

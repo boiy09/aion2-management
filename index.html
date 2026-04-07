@@ -1482,7 +1482,7 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '1.5.145';
+const BUILD_VERSION = '1.5.146';
 const BUILD_PATCHNOTE = {
   title: '데바니온 노드판 보기 (수정)',
   content: '• 데바니온 노드판 그리드가 실제로 표시되도록 수정했어요.\n• 보드별 노드 데이터를 올바르게 불러오도록 API 처리 방식을 개선했어요.'
@@ -4215,11 +4215,9 @@ function openDetail(m) {
         ${skillItems?`<div><div style="font-size:10px;font-weight:600;color:#666;letter-spacing:.05em;margin-bottom:6px;">스킬 효과</div>${skillItems}</div>`:''}
       </div>` : '';
 
-    const _bCopy = Object.assign({}, board); delete _bCopy.nodeList; delete _bCopy.openStatEffectList; delete _bCopy.openSkillEffectList;
     const debugInfo = `<div style="font-size:10px;color:#ff6b6b;background:rgba(255,100,100,.08);border:1px solid rgba(255,100,100,.2);border-radius:4px;padding:6px 8px;margin-bottom:8px;word-break:break-all;">
-      🔍 boardId(클릭값): ${boardId} | nodeList: ${(board.nodeList||[]).length}개<br>
-      board 필드: ${Object.keys(board).join(', ')}<br>
-      board 값(nodeList제외): ${JSON.stringify(_bCopy).slice(0,300)}
+      🔍 board.id: ${boardId} | infoData.daevanion 키: ${JSON.stringify(m._daevRawKeys||[])}<br>
+      board 필드: ${Object.keys(board).join(', ')}
     </div>`;
     document.getElementById('daev-board-scroll').innerHTML = debugInfo + legend + gridHTML + effectsHTML;
   };
