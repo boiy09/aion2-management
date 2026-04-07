@@ -1482,10 +1482,10 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '1.5.141';
+const BUILD_VERSION = '1.5.142';
 const BUILD_PATCHNOTE = {
-  title: '외형 아이콘 색상 통일',
-  content: '• 장비 목록 외형 아이콘 테두리 색상을 외형 날개와 동일한 보라색으로 통일.'
+  title: '데바니온 노드판 보기',
+  content: '• 캐릭터 상세 스펙 > 데바니온 항목 클릭 시 15×15 노드판을 볼 수 있어요.\n• 열린 노드는 등급 색상(일반/희귀/영웅/전설)으로 표시되고, 닫힌 노드는 어둡게 표시돼요.\n• 스탯 효과와 스킬 레벨 효과도 함께 확인할 수 있어요.'
 };
 
 // 전체 패치 내역 (버전별 정확한 설명)
@@ -4167,6 +4167,57 @@ function openDetail(m) {
     }
   }
 
+  // 데바니온 노드판 뷰어
+  const _DAEV_GC = { Common:'#888888', Rare:'#4a90e8', Unique:'#e8c030', Legend:'#ff8c30' };
+  window._showDaevBoard = function(boardId) {
+    const board = (m.daevanion||[]).find(d => (d.boardId||d.id) === boardId);
+    if(!board) return;
+    const startNode = (board.nodeList||[]).find(n => n.type === 'Start');
+    const boardName = startNode ? startNode.name.replace(/\s*-\s*시작$/, '') : (board.name || '데바니온');
+    document.getElementById('daev-board-title').textContent = boardName + ' 노드판';
+    document.getElementById('daev-board-modal').style.display = 'flex';
+
+    const nodeMap = {};
+    (board.nodeList||[]).forEach(n => { nodeMap[`${n.row},${n.col}`] = n; });
+
+    let gridHTML = '<div style="display:grid;grid-template-columns:repeat(15,18px);gap:2px;margin-bottom:14px;">';
+    for(let r = 1; r <= 15; r++) {
+      for(let c = 1; c <= 15; c++) {
+        const n = nodeMap[`${r},${c}`];
+        if(!n || n.type === 'None') {
+          gridHTML += '<div style="width:18px;height:18px;"></div>';
+        } else if(n.type === 'Start') {
+          gridHTML += `<div title="${n.name}" style="width:18px;height:18px;display:flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 14 14"><polygon points="7,1 13,7 7,13 1,7" fill="rgba(255,204,0,.3)" stroke="#ffcc00" stroke-width="1.5"/></svg></div>`;
+        } else {
+          const gc = _DAEV_GC[n.grade] || '#555';
+          const opened = n.open === 1;
+          const tooltip = n.name + (n.effectList||[]).filter(e=>e.desc).map(e => ': ' + e.desc).join('');
+          const shape = n.type === 'SkillLevel' ? '50%' : '3px';
+          gridHTML += `<div title="${tooltip}" style="width:18px;height:18px;border-radius:${shape};background:${opened ? gc : '#1e2025'};border:1px solid ${opened ? gc+'99' : '#2a2b30'};opacity:${opened ? 1 : 0.35};box-sizing:border-box;cursor:${n.name?'help':'default'};"></div>`;
+        }
+      }
+    }
+    gridHTML += '</div>';
+
+    const legend = `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;font-size:10px;color:#555;">
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#888;vertical-align:middle;margin-right:3px;"></span>일반</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#4a90e8;vertical-align:middle;margin-right:3px;"></span>레어</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#e8c030;vertical-align:middle;margin-right:3px;"></span>유일</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ff8c30;vertical-align:middle;margin-right:3px;"></span>전설</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#888;vertical-align:middle;margin-right:3px;"></span>스킬(원형)</span>
+    </div>`;
+
+    const statItems = (board.openStatEffectList||[]).map(s=>`<div style="font-size:11px;color:#c8c8c8;padding:1px 0;">${s.desc}</div>`).join('');
+    const skillItems = (board.openSkillEffectList||[]).map(s=>`<div style="font-size:11px;color:#c8b4ff;padding:1px 0;">${s.desc}</div>`).join('');
+    const effectsHTML = (statItems||skillItems) ? `
+      <div style="display:grid;grid-template-columns:${statItems&&skillItems?'1fr 1fr':'1fr'};gap:12px;border-top:1px solid rgba(255,255,255,.07);padding-top:12px;">
+        ${statItems?`<div><div style="font-size:10px;font-weight:600;color:#666;letter-spacing:.05em;margin-bottom:6px;">스탯 효과</div>${statItems}</div>`:''}
+        ${skillItems?`<div><div style="font-size:10px;font-weight:600;color:#666;letter-spacing:.05em;margin-bottom:6px;">스킬 효과</div>${skillItems}</div>`:''}
+      </div>` : '';
+
+    document.getElementById('daev-board-scroll').innerHTML = legend + gridHTML + effectsHTML;
+  };
+
   // 장비 아이템 HTML
   const equipHTML = (slot, isLast = false) => {
     const e = equipMap[slot];
@@ -4205,16 +4256,21 @@ function openDetail(m) {
   const extraStatHTML = extraStats.map(statCard).join('');
 
   // 데바니온 스탯 바
-  const daevStatHTML = (m.daevanion||[]).map(d => `
-    <div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid var(--border);">
+  const daevStatHTML = (m.daevanion||[]).map(d => {
+    const startNode = (d.nodeList||[]).find(n => n.type === 'Start');
+    const bName = startNode ? startNode.name.replace(/\s*-\s*시작$/, '') : (d.name||'');
+    const bid = d.boardId || d.id || 0;
+    return `<div onclick="_showDaevBoard(${bid})" style="display:flex;align-items:center;gap:10px;padding:6px 4px;border-bottom:1px solid var(--border);cursor:pointer;border-radius:4px;transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,.04)'" onmouseout="this.style.background=''">
       <img src="${d.icon||''}" style="width:24px;height:24px;border-radius:4px;flex-shrink:0;" onerror="this.style.display='none'">
-      <span style="font-size:12px;color:var(--muted);min-width:80px;">${d.name||''}</span>
+      <span style="font-size:12px;color:var(--fg);min-width:80px;font-weight:500;">${bName}</span>
       <div style="flex:1;background:var(--border);border-radius:3px;height:4px;overflow:hidden;">
         <div style="height:100%;width:${d.openPercent||0}%;background:linear-gradient(90deg,var(--gold-d),var(--gold-l));border-radius:3px;"></div>
       </div>
       <span style="font-size:12px;font-weight:700;color:var(--gold-l);min-width:36px;text-align:right;">${d.openPercent||0}%</span>
       <span style="font-size:10px;color:var(--muted);min-width:60px;">${d.openNodeCount||0}/${d.totalNodeCount||0} 노드</span>
-    </div>`).join('');
+      <span style="font-size:10px;color:#555;">▶</span>
+    </div>`;
+  }).join('');
 
   // 랭킹
   const rankHTML = (m.ranking||[]).map(r => `
@@ -4354,6 +4410,15 @@ function openDetail(m) {
   : '<div style="color:var(--muted);font-size:12px;padding:12px;text-align:center;">장착된 타이틀 없음 (갱신 필요)</div>';
 
   el.querySelector('.modal-detail-content').innerHTML = `
+    <!-- 데바니온 노드판 모달 -->
+    <div id="daev-board-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1b1f;border:1px solid rgba(255,255,255,.1);border-radius:8px;z-index:300;max-width:560px;width:95%;box-shadow:0 16px 56px rgba(0,0,0,.85);max-height:88vh;overflow:hidden;flex-direction:column;">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 16px;background:#222328;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0;">
+        <span id="daev-board-title" style="font-size:12px;font-weight:600;color:#888;letter-spacing:.05em;">노드 보기</span>
+        <button onclick="document.getElementById('daev-board-modal').style.display='none'" style="background:none;border:none;color:#666;font-size:18px;cursor:pointer;line-height:1;padding:0 2px;">✕</button>
+      </div>
+      <div id="daev-board-scroll" style="overflow-y:auto;flex:1;background:#1a1b1f;padding:16px;"></div>
+    </div>
+
     <!-- 아이템 툴팁 -->
     <div id="item-tooltip" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1b1f;border:1px solid rgba(255,255,255,.1);border-radius:8px;z-index:300;max-width:640px;width:95%;box-shadow:0 16px 56px rgba(0,0,0,.85);max-height:88vh;overflow:hidden;flex-direction:column;">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 16px;background:#222328;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0;">
