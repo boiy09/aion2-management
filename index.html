@@ -1482,7 +1482,7 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '1.5.151';
+const BUILD_VERSION = '1.5.152';
 const BUILD_PATCHNOTE = {
   title: '데바니온 노드판 보기 (수정)',
   content: '• 데바니온 노드판 그리드가 실제로 표시되도록 수정했어요.\n• 보드별 노드 데이터를 올바르게 불러오도록 API 처리 방식을 개선했어요.'
@@ -4214,11 +4214,11 @@ function openDetail(m) {
     const scrollEl = document.getElementById('daev-board-scroll');
     scrollEl.innerHTML = '<div style="padding:40px;text-align:center;color:#555;font-size:12px;">노드 데이터 불러오는 중...</div>';
     document.getElementById('daev-board-modal').style.display = 'flex';
-    fetch(`/api/character?characterId=${encodeURIComponent(m.characterId)}&serverId=${m.serverId||'2001'}&boardId=${boardId}`)
+    fetch(`/api/character?characterId=${encodeURIComponent(m.characterId)}&serverId=${m.serverId||'2001'}&boardId=${boardId}&bid=${boardId}`)
       .then(r => r.json())
       .then(data => {
         if(data.error) {
-          scrollEl.innerHTML = `<div style="padding:20px;color:#ff6b6b;font-size:11px;word-break:break-all;">⚠ ${data.error}<br><span style="color:#555;font-size:10px;">detail: ${data.detail||''}<br>_rawKeys: ${JSON.stringify(data._rawKeys||[])}<br>tried: ${(data.tried||[]).join('<br>')}</span></div>`;
+          scrollEl.innerHTML = `<div style="padding:20px;color:#ff6b6b;font-size:11px;word-break:break-all;">⚠ ${data.error}<br><span style="color:#555;font-size:10px;">detail: ${data.detail||''}<br>_query: ${data._query||''}<br>_boardId: ${data._boardId||''}<br>tried: ${(data.tried||[]).join('<br>')}</span></div>`;
           return;
         }
         scrollEl.innerHTML = _renderDaevGrid(data.nodeList, data.openStatEffectList, data.openSkillEffectList);

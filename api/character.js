@@ -2,8 +2,9 @@ module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const { characterId, nickname, serverId = '2001', boardId } = req.query;
-  if (!characterId && !nickname) return res.status(400).json({ error: 'characterId 또는 nickname이 필요해요' });
+  const { characterId, nickname, serverId = '2001', boardId, bid } = req.query;
+  const _boardId = boardId || bid;  // 파라미터 이름 fallback
+  if (!characterId && !nickname) return res.status(400).json({ error: 'characterId 또는 nickname이 필요해요', _query: JSON.stringify(req.query) });
 
   const headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36',
@@ -14,13 +15,13 @@ module.exports = async function handler(req, res) {
   };
 
   // boardId 모드: 데바니온 노드 데이터만 조회 (try 바깥에서 먼저 체크)
-  if (boardId) {
+  if (_boardId) {
     const rawIdForBoard = characterId ? decodeURIComponent(characterId) : null;
     if (!rawIdForBoard) return res.status(400).json({ error: 'boardId 모드엔 characterId 필요' });
-    const internalId = parseInt(boardId) - 20;
+    const internalId = parseInt(_boardId) - 20;
     const urls = [
       `https://aion2.plaync.com/api/character/daevanion/detail?lang=ko&characterId=${encodeURIComponent(rawIdForBoard)}&serverId=${serverId}&boardId=${internalId}`,
-      `https://aion2.plaync.com/api/character/daevanion/detail?lang=ko&characterId=${encodeURIComponent(rawIdForBoard)}&serverId=${serverId}&boardId=${boardId}`,
+      `https://aion2.plaync.com/api/character/daevanion/detail?lang=ko&characterId=${encodeURIComponent(rawIdForBoard)}&serverId=${serverId}&boardId=${_boardId}`,
     ];
     const errors = [];
     for (const url of urls) {
@@ -193,7 +194,7 @@ module.exports = async function handler(req, res) {
       wing:         wingData,
     });
   } catch (err) {
-    res.status(500).json({ error: '조회 실패', detail: err.message });
+    res.status(500).json({ error: '조회 실패', detail: err.message, _query: JSON.stringify(req.query), _boardId: _boardId });
   }
 }
 
