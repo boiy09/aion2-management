@@ -1482,7 +1482,7 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '1.5.161';
+const BUILD_VERSION = '1.5.162';
 const BUILD_PATCHNOTE = {
   title: '데바니온 노드판 보기 (완전 수정 2)',
   content: '• 데바니온 노드판 클릭 시 노드 그리드가 표시돼요.\n• 캐릭터ID 정밀도 손실로 NC API 서버에러가 나던 문제를 수정했어요.'
@@ -4168,17 +4168,11 @@ function openDetail(m) {
   }
 
   // 데바니온 노드판 뷰어
-  const _DAEV_GC = { Common:'#888888', Rare:'#4a90e8', Unique:'#c77dff', Legend:'#ff8c30' };
-  const _DAEV_CDN = 'https://assets.playnccdn.com';
-  function _daevIcon(raw, sz, extraStyle) {
-    if(!raw) return '';
-    const src = raw.startsWith('http') ? raw : _DAEV_CDN + raw;
-    return `<img src="${src}" style="width:${sz}px;height:${sz}px;object-fit:contain;${extraStyle||''}" crossorigin="anonymous" onerror="this.replaceWith(document.createTextNode(''))">`;
-  }
+  const _DAEV_GC = { Common:'#9e9e9e', Rare:'#4a90e8', Unique:'#c77dff', Legend:'#ff8c30' };
   function _renderDaevGrid(nodeList, statEffects, skillEffects) {
     const nodeMap = {};
     (nodeList||[]).forEach(n => { nodeMap[`${n.row},${n.col}`] = n; });
-    const SZ = 30;
+    const SZ = 28;
     let gridHTML = `<div style="display:grid;grid-template-columns:repeat(15,${SZ}px);gap:2px;flex-shrink:0;">`;
     for(let r = 1; r <= 15; r++) {
       for(let c = 1; c <= 15; c++) {
@@ -4186,25 +4180,29 @@ function openDetail(m) {
         if(!n || n.type === 'None') {
           gridHTML += `<div style="width:${SZ}px;height:${SZ}px;"></div>`;
         } else if(n.type === 'Start') {
-          gridHTML += `<div title="${n.name}" style="width:${SZ}px;height:${SZ}px;display:flex;align-items:center;justify-content:center;background:rgba(255,204,0,.15);border:2px solid #ffcc00;border-radius:5px;box-sizing:border-box;">${_daevIcon(n.icon,20,'')}</div>`;
+          gridHTML += `<div title="${n.name}" style="width:${SZ}px;height:${SZ}px;display:flex;align-items:center;justify-content:center;background:rgba(255,204,0,.18);border:2px solid #ffcc00;border-radius:4px;box-sizing:border-box;box-shadow:0 0 8px #ffcc0066;"><span style="font-size:13px;">★</span></div>`;
         } else {
           const gc = _DAEV_GC[n.grade] || '#555';
           const opened = n.open === 1;
           const tooltip = n.name + (n.effectList||[]).filter(e=>e.desc).map(e=>'\n'+e.desc).join('');
-          const radius = n.type === 'SkillLevel' ? '50%' : '4px';
-          const iconStyle = opened ? '' : 'filter:grayscale(1) brightness(0.35);';
-          const glow = opened ? `box-shadow:0 0 5px ${gc}66;` : '';
-          gridHTML += `<div title="${tooltip}" style="width:${SZ}px;height:${SZ}px;border-radius:${radius};background:rgba(0,0,0,.45);border:${opened?`2px solid ${gc}`:'1px solid #2e3035'};display:flex;align-items:center;justify-content:center;box-sizing:border-box;${glow}opacity:${opened?1:0.45};cursor:help;">${_daevIcon(n.icon,20,iconStyle)}</div>`;
+          const isSkill = n.type === 'SkillLevel';
+          const radius = isSkill ? '50%' : '4px';
+          const inner = isSkill
+            ? `<div style="width:${SZ-10}px;height:${SZ-10}px;border-radius:50%;background:${opened?gc:'#333'};opacity:${opened?0.9:0.5};"></div>`
+            : `<div style="width:${SZ-8}px;height:${SZ-8}px;border-radius:2px;background:${opened?gc+'cc':'#333'};opacity:${opened?0.9:0.5};"></div>`;
+          const glow = opened ? `box-shadow:0 0 6px ${gc}77;` : '';
+          gridHTML += `<div title="${tooltip}" style="width:${SZ}px;height:${SZ}px;border-radius:${radius};background:${opened?gc+'18':'#1c1e22'};border:${opened?`1.5px solid ${gc}`:'1px solid #2e3035'};display:flex;align-items:center;justify-content:center;box-sizing:border-box;${glow}cursor:help;">${inner}</div>`;
         }
       }
     }
     gridHTML += '</div>';
-    const statItems = (statEffects||[]).map(s=>`<div style="font-size:11px;color:#c8c8c8;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04);">${s.desc}</div>`).join('');
-    const skillItems = (skillEffects||[]).map(s=>`<div style="font-size:11px;color:#c8b4ff;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04);">${s.desc}</div>`).join('');
-    const effectsHTML = `<div style="width:160px;flex-shrink:0;margin-left:12px;overflow-y:auto;max-height:${SZ*15+14*2}px;">
+    const statItems = (statEffects||[]).map(s=>`<div style="font-size:11px;color:#c8c8c8;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.05);">${s.desc}</div>`).join('');
+    const skillItems = (skillEffects||[]).map(s=>`<div style="font-size:11px;color:#c8b4ff;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.05);">${s.desc}</div>`).join('');
+    const effectsHTML = `<div style="width:155px;flex-shrink:0;margin-left:14px;overflow-y:auto;max-height:${SZ*15+14*2}px;">
       ${statItems?`<div style="font-size:10px;font-weight:600;color:#666;letter-spacing:.05em;margin-bottom:5px;">스탯 효과</div>${statItems}`:''}
-      ${statItems&&skillItems?'<div style="height:10px;"></div>':''}
-      ${skillItems?`<div style="font-size:10px;font-weight:600;color:#666;letter-spacing:.05em;margin-bottom:5px;margin-top:${statItems?'4px':'0'};">스킬 효과</div>${skillItems}`:''}
+      ${statItems&&skillItems?'<div style="height:12px;"></div>':''}
+      ${skillItems?`<div style="font-size:10px;font-weight:600;color:#666;letter-spacing:.05em;margin-bottom:5px;">스킬 효과</div>${skillItems}`:''}
+      ${!statItems&&!skillItems?`<div style="font-size:11px;color:#444;">효과 없음</div>`:''}
     </div>`;
     return `<div style="display:flex;align-items:flex-start;">${gridHTML}${effectsHTML}</div>`;
   }
