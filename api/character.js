@@ -2,9 +2,15 @@ module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const { characterId, nickname, serverId = '2001', boardId, bid } = req.query;
-  const _boardId = boardId || bid;  // 파라미터 이름 fallback
-  if (!characterId && !nickname) return res.status(400).json({ error: 'characterId 또는 nickname이 필요해요', _query: JSON.stringify(req.query) });
+  // req.query가 Cloudflare에서 누락되는 경우를 대비해 URL에서 직접 파싱
+  const _qs = req.query || {};
+  const _url = req.url || '';
+  const _sp = _url.includes('?') ? new URLSearchParams(_url.split('?')[1]) : new URLSearchParams();
+  const characterId = _qs.characterId || _sp.get('characterId') || '';
+  const nickname    = _qs.nickname    || _sp.get('nickname')    || '';
+  const serverId    = _qs.serverId    || _sp.get('serverId')    || '2001';
+  const _boardId    = _qs.boardId     || _qs.bid || _sp.get('boardId') || _sp.get('bid') || '';
+  if (!characterId && !nickname) return res.status(400).json({ error: 'characterId 또는 nickname이 필요해요', _url, _sp: _sp.toString() });
 
   const headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36',
@@ -194,7 +200,7 @@ module.exports = async function handler(req, res) {
       wing:         wingData,
     });
   } catch (err) {
-    res.status(500).json({ error: '조회 실패', detail: err.message, _query: JSON.stringify(req.query), _boardId: _boardId });
+    res.status(500).json({ error: '조회 실패', detail: err.message, _url: req.url||'', _boardId: _boardId||'none' });
   }
 }
 
