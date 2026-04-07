@@ -1482,7 +1482,7 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '1.5.162';
+const BUILD_VERSION = '1.5.163';
 const BUILD_PATCHNOTE = {
   title: '데바니온 노드판 보기 (완전 수정 2)',
   content: '• 데바니온 노드판 클릭 시 노드 그리드가 표시돼요.\n• 캐릭터ID 정밀도 손실로 NC API 서버에러가 나던 문제를 수정했어요.'
@@ -4168,8 +4168,36 @@ function openDetail(m) {
   }
 
   // 데바니온 노드판 뷰어
-  const _DAEV_GC = { Common:'#9e9e9e', Rare:'#4a90e8', Unique:'#c77dff', Legend:'#ff8c30' };
+  // 노드 색상: grade+type 조합으로 결정
+  function _daevColor(n) {
+    if (n.type === 'SkillLevel') {
+      if (n.grade === 'Legend') return '#4a90e8'; // 파란 네모
+      if (n.grade === 'Rare')   return '#4caf50'; // 초록 네모
+      return '#9e9e9e';
+    }
+    if (n.grade === 'Unique' || n.grade === 'Legend') return '#ff8c30'; // 주황 네모
+    if (n.grade === 'Rare')   return '#4a90e8'; // 파란 네모
+    return '#9e9e9e'; // 회색 네모
+  }
+  // 커스텀 툴팁
+  window._daevTipShow = function(e, nid) {
+    const n = window._daevNM && window._daevNM[nid];
+    if (!n || !n.name) return;
+    const tip = document.getElementById('daev-tip');
+    if (!tip) return;
+    const effects = (n.effectList||[]).filter(x=>x.desc).map(x=>`<div style="color:#aaa;margin-top:2px;">${x.desc}</div>`).join('');
+    tip.innerHTML = `<div style="font-weight:600;color:#e8e8e8;margin-bottom:2px;">${n.name}</div>${effects}`;
+    tip.style.display = 'block';
+    tip.style.left = (e.clientX+14)+'px';
+    tip.style.top  = (e.clientY+14)+'px';
+  };
+  window._daevTipHide = function() {
+    const tip = document.getElementById('daev-tip');
+    if (tip) tip.style.display = 'none';
+  };
   function _renderDaevGrid(nodeList, statEffects, skillEffects) {
+    window._daevNM = {};
+    (nodeList||[]).forEach(n => { window._daevNM[n.nodeId] = n; });
     const nodeMap = {};
     (nodeList||[]).forEach(n => { nodeMap[`${n.row},${n.col}`] = n; });
     const SZ = 28;
@@ -4180,18 +4208,13 @@ function openDetail(m) {
         if(!n || n.type === 'None') {
           gridHTML += `<div style="width:${SZ}px;height:${SZ}px;"></div>`;
         } else if(n.type === 'Start') {
-          gridHTML += `<div title="${n.name}" style="width:${SZ}px;height:${SZ}px;display:flex;align-items:center;justify-content:center;background:rgba(255,204,0,.18);border:2px solid #ffcc00;border-radius:4px;box-sizing:border-box;box-shadow:0 0 8px #ffcc0066;"><span style="font-size:13px;">★</span></div>`;
+          gridHTML += `<div onmouseenter="window._daevTipShow(event,${n.nodeId})" onmouseleave="window._daevTipHide()" style="width:${SZ}px;height:${SZ}px;display:flex;align-items:center;justify-content:center;background:rgba(255,204,0,.18);border:2px solid #ffcc00;border-radius:4px;box-sizing:border-box;box-shadow:0 0 8px #ffcc0066;cursor:help;"><span style="font-size:13px;">★</span></div>`;
         } else {
-          const gc = _DAEV_GC[n.grade] || '#555';
+          const gc = _daevColor(n);
           const opened = n.open === 1;
-          const tooltip = n.name + (n.effectList||[]).filter(e=>e.desc).map(e=>'\n'+e.desc).join('');
-          const isSkill = n.type === 'SkillLevel';
-          const radius = isSkill ? '50%' : '4px';
-          const inner = isSkill
-            ? `<div style="width:${SZ-10}px;height:${SZ-10}px;border-radius:50%;background:${opened?gc:'#333'};opacity:${opened?0.9:0.5};"></div>`
-            : `<div style="width:${SZ-8}px;height:${SZ-8}px;border-radius:2px;background:${opened?gc+'cc':'#333'};opacity:${opened?0.9:0.5};"></div>`;
+          const inner = `<div style="width:${SZ-8}px;height:${SZ-8}px;border-radius:2px;background:${opened?gc+'cc':'#333'};opacity:${opened?0.9:0.5};"></div>`;
           const glow = opened ? `box-shadow:0 0 6px ${gc}77;` : '';
-          gridHTML += `<div title="${tooltip}" style="width:${SZ}px;height:${SZ}px;border-radius:${radius};background:${opened?gc+'18':'#1c1e22'};border:${opened?`1.5px solid ${gc}`:'1px solid #2e3035'};display:flex;align-items:center;justify-content:center;box-sizing:border-box;${glow}cursor:help;">${inner}</div>`;
+          gridHTML += `<div onmouseenter="window._daevTipShow(event,${n.nodeId})" onmouseleave="window._daevTipHide()" style="width:${SZ}px;height:${SZ}px;border-radius:4px;background:${opened?gc+'18':'#1c1e22'};border:${opened?`1.5px solid ${gc}`:'1px solid #2e3035'};display:flex;align-items:center;justify-content:center;box-sizing:border-box;${glow}opacity:${opened?1:0.45};cursor:help;">${inner}</div>`;
         }
       }
     }
@@ -4426,6 +4449,7 @@ function openDetail(m) {
       </div>
       <div id="daev-board-scroll" style="overflow-y:auto;flex:1;background:#1a1b1f;padding:16px;"></div>
     </div>
+    <div id="daev-tip" style="display:none;position:fixed;z-index:500;background:#23252b;border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:7px 10px;font-size:11px;pointer-events:none;max-width:180px;line-height:1.5;box-shadow:0 4px 16px rgba(0,0,0,.6);"></div>
 
     <!-- 아이템 툴팁 -->
     <div id="item-tooltip" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1b1f;border:1px solid rgba(255,255,255,.1);border-radius:8px;z-index:300;max-width:640px;width:95%;box-shadow:0 16px 56px rgba(0,0,0,.85);max-height:88vh;overflow:hidden;flex-direction:column;">
