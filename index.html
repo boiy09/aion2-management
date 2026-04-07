@@ -1482,7 +1482,7 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '1.5.160';
+const BUILD_VERSION = '1.5.161';
 const BUILD_PATCHNOTE = {
   title: '데바니온 노드판 보기 (완전 수정 2)',
   content: '• 데바니온 노드판 클릭 시 노드 그리드가 표시돼요.\n• 캐릭터ID 정밀도 손실로 NC API 서버에러가 나던 문제를 수정했어요.'
@@ -4169,43 +4169,44 @@ function openDetail(m) {
 
   // 데바니온 노드판 뷰어
   const _DAEV_GC = { Common:'#888888', Rare:'#4a90e8', Unique:'#c77dff', Legend:'#ff8c30' };
+  const _DAEV_CDN = 'https://assets.playnccdn.com';
+  function _daevIcon(raw, sz, extraStyle) {
+    if(!raw) return '';
+    const src = raw.startsWith('http') ? raw : _DAEV_CDN + raw;
+    return `<img src="${src}" style="width:${sz}px;height:${sz}px;object-fit:contain;${extraStyle||''}" crossorigin="anonymous" onerror="this.replaceWith(document.createTextNode(''))">`;
+  }
   function _renderDaevGrid(nodeList, statEffects, skillEffects) {
     const nodeMap = {};
     (nodeList||[]).forEach(n => { nodeMap[`${n.row},${n.col}`] = n; });
-    const SZ = 32; // 노드 셀 크기
-    let gridHTML = `<div style="display:grid;grid-template-columns:repeat(15,${SZ}px);gap:3px;margin-bottom:16px;">`;
+    const SZ = 30;
+    let gridHTML = `<div style="display:grid;grid-template-columns:repeat(15,${SZ}px);gap:2px;flex-shrink:0;">`;
     for(let r = 1; r <= 15; r++) {
       for(let c = 1; c <= 15; c++) {
         const n = nodeMap[`${r},${c}`];
         if(!n || n.type === 'None') {
           gridHTML += `<div style="width:${SZ}px;height:${SZ}px;"></div>`;
         } else if(n.type === 'Start') {
-          const ic = n.icon ? `<img src="${n.icon}" style="width:22px;height:22px;object-fit:contain;" onerror="this.style.display='none'">` : '★';
-          gridHTML += `<div title="${n.name}" style="width:${SZ}px;height:${SZ}px;display:flex;align-items:center;justify-content:center;background:rgba(255,204,0,.12);border:2px solid #ffcc00;border-radius:6px;box-sizing:border-box;">${ic}</div>`;
+          gridHTML += `<div title="${n.name}" style="width:${SZ}px;height:${SZ}px;display:flex;align-items:center;justify-content:center;background:rgba(255,204,0,.15);border:2px solid #ffcc00;border-radius:5px;box-sizing:border-box;">${_daevIcon(n.icon,20,'')}</div>`;
         } else {
           const gc = _DAEV_GC[n.grade] || '#555';
           const opened = n.open === 1;
           const tooltip = n.name + (n.effectList||[]).filter(e=>e.desc).map(e=>'\n'+e.desc).join('');
-          const isSkill = n.type === 'SkillLevel';
-          const radius = isSkill ? '50%' : '5px';
-          const bg = opened ? 'rgba(0,0,0,.5)' : 'rgba(0,0,0,.3)';
-          const border = opened ? `2px solid ${gc}` : `1px solid #333`;
-          const filter = opened ? '' : 'filter:grayscale(1) brightness(0.4);';
-          const ic = n.icon ? `<img src="${n.icon}" style="width:22px;height:22px;object-fit:contain;${filter}" onerror="this.style.display='none'">` : '';
-          const glow = opened ? `box-shadow:0 0 6px ${gc}55;` : '';
-          gridHTML += `<div title="${tooltip}" style="width:${SZ}px;height:${SZ}px;border-radius:${radius};background:${bg};border:${border};display:flex;align-items:center;justify-content:center;box-sizing:border-box;${glow}opacity:${opened?1:0.5};cursor:help;">${ic}</div>`;
+          const radius = n.type === 'SkillLevel' ? '50%' : '4px';
+          const iconStyle = opened ? '' : 'filter:grayscale(1) brightness(0.35);';
+          const glow = opened ? `box-shadow:0 0 5px ${gc}66;` : '';
+          gridHTML += `<div title="${tooltip}" style="width:${SZ}px;height:${SZ}px;border-radius:${radius};background:rgba(0,0,0,.45);border:${opened?`2px solid ${gc}`:'1px solid #2e3035'};display:flex;align-items:center;justify-content:center;box-sizing:border-box;${glow}opacity:${opened?1:0.45};cursor:help;">${_daevIcon(n.icon,20,iconStyle)}</div>`;
         }
       }
     }
     gridHTML += '</div>';
-    const statItems = (statEffects||[]).map(s=>`<div style="font-size:11px;color:#c8c8c8;padding:2px 0;">${s.desc}</div>`).join('');
-    const skillItems = (skillEffects||[]).map(s=>`<div style="font-size:11px;color:#c8b4ff;padding:2px 0;">${s.desc}</div>`).join('');
-    const effectsHTML = (statItems||skillItems) ? `
-      <div style="display:grid;grid-template-columns:${statItems&&skillItems?'1fr 1fr':'1fr'};gap:12px;border-top:1px solid rgba(255,255,255,.07);padding-top:12px;">
-        ${statItems?`<div><div style="font-size:10px;font-weight:600;color:#888;letter-spacing:.05em;margin-bottom:6px;">스탯 효과</div>${statItems}</div>`:''}
-        ${skillItems?`<div><div style="font-size:10px;font-weight:600;color:#888;letter-spacing:.05em;margin-bottom:6px;">스킬 효과</div>${skillItems}</div>`:''}
-      </div>` : '';
-    return gridHTML + effectsHTML;
+    const statItems = (statEffects||[]).map(s=>`<div style="font-size:11px;color:#c8c8c8;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04);">${s.desc}</div>`).join('');
+    const skillItems = (skillEffects||[]).map(s=>`<div style="font-size:11px;color:#c8b4ff;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04);">${s.desc}</div>`).join('');
+    const effectsHTML = `<div style="width:160px;flex-shrink:0;margin-left:12px;overflow-y:auto;max-height:${SZ*15+14*2}px;">
+      ${statItems?`<div style="font-size:10px;font-weight:600;color:#666;letter-spacing:.05em;margin-bottom:5px;">스탯 효과</div>${statItems}`:''}
+      ${statItems&&skillItems?'<div style="height:10px;"></div>':''}
+      ${skillItems?`<div style="font-size:10px;font-weight:600;color:#666;letter-spacing:.05em;margin-bottom:5px;margin-top:${statItems?'4px':'0'};">스킬 효과</div>${skillItems}`:''}
+    </div>`;
+    return `<div style="display:flex;align-items:flex-start;">${gridHTML}${effectsHTML}</div>`;
   }
   window._showDaevBoard = function(boardId) {
     const board = (m.daevanion||[]).find(d => (d.boardId||d.id) === boardId);
@@ -4420,7 +4421,7 @@ function openDetail(m) {
 
   el.querySelector('.modal-detail-content').innerHTML = `
     <!-- 데바니온 노드판 모달 -->
-    <div id="daev-board-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1b1f;border:1px solid rgba(255,255,255,.1);border-radius:8px;z-index:300;max-width:600px;width:95%;box-shadow:0 16px 56px rgba(0,0,0,.85);max-height:88vh;overflow:hidden;flex-direction:column;">
+    <div id="daev-board-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1b1f;border:1px solid rgba(255,255,255,.1);border-radius:8px;z-index:300;max-width:760px;width:96%;box-shadow:0 16px 56px rgba(0,0,0,.85);max-height:88vh;overflow:hidden;flex-direction:column;">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 16px;background:#222328;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0;">
         <span id="daev-board-title" style="font-size:12px;font-weight:600;color:#888;letter-spacing:.05em;">노드 보기</span>
         <button onclick="document.getElementById('daev-board-modal').style.display='none'" style="background:none;border:none;color:#666;font-size:18px;cursor:pointer;line-height:1;padding:0 2px;">✕</button>
