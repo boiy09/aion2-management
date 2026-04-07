@@ -135,7 +135,16 @@ module.exports = async function handler(req, res) {
     var itemLevelStat = statList.find(function(s) { return s.type === 'ItemLevel'; });
     var itemLevel = itemLevelStat ? (itemLevelStat.value || 0) : 0;
     var arcanaList = equip.filter(function(e) { return (e.slotPosName||'').indexOf('Arcana') !== -1; }).map(mapEquip);
-    var daevList   = (infoData && infoData.daevanion && infoData.daevanion.boardList) ? infoData.daevanion.boardList : [];
+    var daevRaw    = (infoData && infoData.daevanion) ? infoData.daevanion : {};
+    var daevBoards = daevRaw.boardList || [];
+    var daevNodes  = daevRaw.nodeList  || [];
+    // boardId별로 nodeList를 그룹핑해서 각 보드에 붙여줌
+    var daevNodeMap = {};
+    daevNodes.forEach(function(n) { var bid = n.boardId; if(!daevNodeMap[bid]) daevNodeMap[bid] = []; daevNodeMap[bid].push(n); });
+    var daevList = daevBoards.map(function(b) {
+      var bid = b.boardId || b.id;
+      return Object.assign({}, b, { nodeList: daevNodeMap[bid] || [] });
+    });
     var rankList   = (infoData && infoData.ranking   && infoData.ranking.rankingList)   ? infoData.ranking.rankingList   : [];
     var titleRaw       = (infoData && infoData.title) ? infoData.title : {};
     var titleList      = titleRaw.titleList      || [];
