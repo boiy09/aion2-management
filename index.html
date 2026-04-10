@@ -1482,7 +1482,7 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '2.0.5';
+const BUILD_VERSION = '2.0.6';
 const BUILD_PATCHNOTE = {
   title: '아이온2 관리 도구 v2.0',
   content: '• 데바니온 노드판 보기 기능 추가 (보드 클릭 → 노드 그리드, 호버 툴팁)\n• 캐릭터 상세 정보 전반 개선'
@@ -2903,6 +2903,8 @@ function initDb() {
       renderAll();
       renderNotices(freshNotices);
       _fetchAndMergeEquipment(true, freshNotices);
+      // 닉네임 변경 여부 백그라운드 확인 (세션당 1회)
+      setTimeout(_autoSyncNicknames, 5000);
     }).catch(function(){ _bgRefreshRunning = false; });
   }
 
@@ -3501,7 +3503,18 @@ function renderAll() {
 }
 
 // ─── NC 공홈 API 호출 ──────────────────
-async function fetchCharacterData(nickname, serverId) {
+// characterId(옵션): 전달 시 닉네임 검색 단계를 건너뛰고 직접 조회
+async function fetchCharacterData(nickname, serverId, characterId) {
+  if (characterId) {
+    // characterId로 직접 조회 (닉네임 검색 불필요)
+    const cleanId = (() => { try { return decodeURIComponent(String(characterId)); } catch(e) { return String(characterId); } })();
+    const charRes = await fetch(`/api/character?characterId=${encodeURIComponent(cleanId)}&serverId=${encodeURIComponent(serverId||'')}`);
+    if (!charRes.ok) throw new Error(`캐릭터 API 오류: HTTP ${charRes.status}`);
+    const charData = await charRes.json();
+    if (charData.error) throw new Error(charData.error);
+    return { ...charData, characterId: cleanId };
+  }
+
   // 1단계: 닉네임으로 characterId 검색
   // 숫자만인 serverId(구버전 '2001' 등)는 서버명 필터 불가 → all로 처리
   const sv = (!serverId || /^\d+$/.test(serverId)) ? 'all' : serverId;
@@ -3676,9 +3689,15 @@ async function syncMember(id, nickname, serverId) {
   renderMembers();
 
   try {
-    const data = await fetchCharacterData(nickname, serverId);
+    // character_id가 저장돼 있으면 닉네임 검색 단계 건너뜀
+    const storedMember = members.find(m => m.id === id);
+    const storedCharId = storedMember && storedMember.character_id ? storedMember.character_id : null;
+    const data = await fetchCharacterData(nickname, serverId, storedCharId);
     const cls  = CLASS_MAP[data.class] || data.class || '';
-    await db.from('members').update({
+
+    // 닉네임 변경 감지: NC에서 반환한 이름이 DB의 이름과 다르면 조용히 반영
+    const freshNickname = data.nickname || nickname;
+    const updatePayload = {
       class:        cls,
       level:        data.level        || 0,
       combat_power: data.combat_power || 0,
@@ -3698,8 +3717,11 @@ async function syncMember(id, nickname, serverId) {
       profile_img:  data.profile_img  || '',
       character_id: data.characterId  || '',
       last_synced:  new Date().toISOString(),
-    }).eq('id', id);
-    toast(`${nickname} 갱신 완료! ✓`);
+    };
+    if (freshNickname !== nickname) updatePayload.nickname = freshNickname;
+
+    await db.from('members').update(updatePayload).eq('id', id);
+    toast(`${freshNickname} 갱신 완료! ✓`);
     try { localStorage.removeItem(_CACHE_KEY); } catch(e) {} // 갱신 후 캐시 무효화
   } catch(err) {
     toast('갱신 실패: ' + err.message);
@@ -3722,9 +3744,14 @@ async function syncAllMembers() {
   for (const m of members) {
     status.textContent = `갱신 중... ${done+fail+1}/${total} (${m.nickname})`;
     try {
-      const data = await fetchCharacterData(m.nickname, m.server_name||m.server||'all');
+      // character_id가 있으면 검색 단계 건너뜀
+      const storedCharId = m.character_id || null;
+      const data = await fetchCharacterData(m.nickname, m.server_name||m.server||'all', storedCharId);
       const cls = CLASS_MAP[data.class] || data.class || '';
-      await db.from('members').update({
+
+      // 닉네임 변경 감지
+      const freshNickname = data.nickname || m.nickname;
+      const updatePayload = {
         class: cls, level: data.level||0,
         combat_power: data.combat_power||0,
         item_level:   data.item_level||0,
@@ -3741,7 +3768,10 @@ async function syncAllMembers() {
         profile_img:  data.profile_img||'',
         character_id: data.characterId||'',
         last_synced:  new Date().toISOString(),
-      }).eq('id', m.id);
+      };
+      if (freshNickname !== m.nickname) updatePayload.nickname = freshNickname;
+
+      await db.from('members').update(updatePayload).eq('id', m.id);
       done++;
     } catch(e) {
       fail++;
@@ -3754,6 +3784,41 @@ async function syncAllMembers() {
   status.textContent = `완료: ${done}명 성공 ${fail>0?'/ '+fail+'명 실패':''}`;
   toast(`전체 갱신 완료! ${done}명 성공${fail>0?' / '+fail+'명 실패':''}`);
   try { localStorage.removeItem(_CACHE_KEY); } catch(e) {} // 갱신 후 캐시 무효화
+}
+
+// ─── 닉네임 자동 동기화 (백그라운드) ────────
+// 페이지 로드 후 1회 실행: character_id가 있는 멤버의 현재 닉네임을 NC에서 조회해
+// DB와 다르면 조용히 반영 (토스트/알림 없음)
+var _nickSyncDone = false;
+async function _autoSyncNicknames() {
+  if (_nickSyncDone) return;
+  _nickSyncDone = true;
+
+  var targets = members.filter(function(m) { return m.character_id && _isMain(m); });
+  if (!targets.length) return;
+
+  var changed = false;
+  for (var i = 0; i < targets.length; i++) {
+    var m = targets[i];
+    try {
+      var cleanId = (function(cid){ try { return decodeURIComponent(String(cid)); } catch(e){ return String(cid); } })(m.character_id);
+      var res = await fetch('/api/character?characterId=' + encodeURIComponent(cleanId) + '&serverId=' + encodeURIComponent(m.server||'') + '&lite=1');
+      if (!res.ok) continue;
+      var data = await res.json();
+      if (!data || data.error || !data.nickname) continue;
+      if (data.nickname !== m.nickname) {
+        await db.from('members').update({ nickname: data.nickname }).eq('id', m.id);
+        m.nickname = data.nickname; // 로컬 반영
+        changed = true;
+      }
+    } catch(e) { /* 네트워크 오류 등 조용히 무시 */ }
+    if (i < targets.length - 1) await new Promise(function(r){ setTimeout(r, 400); });
+  }
+
+  if (changed) {
+    try { localStorage.removeItem(_CACHE_KEY); } catch(e) {}
+    renderMembers();
+  }
 }
 
 // ─── 상세 보기 ────────────────────────────
