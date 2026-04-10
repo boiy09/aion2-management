@@ -1,7 +1,6 @@
 export async function onRequest(context) {
   const { request } = context;
   const url = new URL(request.url);
-  const debug = url.searchParams.get('debug') === '1';
   const prevId = url.searchParams.get('prevId') || '0';
 
   const corsHeaders = {
@@ -25,31 +24,6 @@ export async function onRequest(context) {
   };
 
   const moreEndpoint = `https://api-community.plaync.com/aion2/board/notice_ko/article/search/moreArticle?isVote=true&moreSize=15&moreDirection=BEFORE&previousArticleId=${prevId}`;
-
-  if (debug) {
-    try {
-      const r = await fetch(moreEndpoint, { headers });
-      const data = await r.json();
-      const rawList = data?.contentList || [];
-      const firstItem = rawList[0] || null;
-      return new Response(JSON.stringify({
-        notices: [],
-        debug: {
-          url: moreEndpoint,
-          status: r.status,
-          keys: Object.keys(data || {}),
-          hasMore: data?.hasMore,
-          count: rawList.length,
-          firstItemKeys: firstItem ? Object.keys(firstItem) : null,
-          firstItemArticleMetaKeys: firstItem?.articleMeta ? Object.keys(firstItem.articleMeta) : null,
-          firstItemSnow: firstItem?.articleMeta?.snow || firstItem?.snow || null,
-          firstItemPreview: JSON.stringify(firstItem).slice(0, 800),
-        }
-      }), { status: 200, headers: corsHeaders });
-    } catch(e) {
-      return new Response(JSON.stringify({ notices: [], debug: { error: e.message } }), { status: 200, headers: corsHeaders });
-    }
-  }
 
   try {
     const r = await fetch(moreEndpoint, { headers });
@@ -77,8 +51,9 @@ export async function onRequest(context) {
     const hasMore = data?.hasMore ?? false;
     const lastSnowId = notices.length > 0 ? (notices[notices.length - 1].id || 0) : 0;
 
-    return new Response(JSON.stringify({ notices, hasMore, lastSnowId, _src: moreEndpoint }), { status: 200, headers: corsHeaders });
+    return new Response(JSON.stringify({ notices, hasMore, lastSnowId }), { status: 200, headers: corsHeaders });
   } catch(e) {
     return new Response(JSON.stringify({ notices: [], _err: e.message }), { status: 200, headers: corsHeaders });
   }
 }
+

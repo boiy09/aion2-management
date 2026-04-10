@@ -590,20 +590,20 @@
         </div>
         <div class="form-group" id="nw-version-group" style="display:none;">
           <label class="form-label">버전</label>
-          <input id="nw-version" class="form-input" placeholder="예: v1.5.26">
+          <input id="nw-version" class="form-input" placeholder="예: v1.5.26" maxlength="20">
         </div>
       </div>
       <div class="form-group">
         <label class="form-label">제목 *</label>
-        <input id="nw-title" class="form-input" placeholder="공지 제목을 입력하세요">
+        <input id="nw-title" class="form-input" placeholder="공지 제목을 입력하세요" maxlength="100">
       </div>
       <div class="form-group">
         <label class="form-label">작성자 *</label>
-        <input id="nw-author" class="form-input" placeholder="작성자 이름">
+        <input id="nw-author" class="form-input" placeholder="작성자 이름" maxlength="30">
       </div>
       <div class="form-group">
         <label class="form-label">내용 *</label>
-        <textarea id="nw-content" class="form-input" rows="8" placeholder="공지 내용을 입력하세요" style="resize:vertical;font-family:inherit;line-height:1.7;"></textarea>
+        <textarea id="nw-content" class="form-input" rows="8" placeholder="공지 내용을 입력하세요" style="resize:vertical;font-family:inherit;line-height:1.7;" maxlength="2000"></textarea>
       </div>
       <div class="modal-foot" style="margin-top:8px;">
         <button class="btn" onclick="closeModal('modal-notice-write')">취소</button>
@@ -1482,7 +1482,7 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '1.5.136';
+const BUILD_VERSION = '2.0.1';
 const BUILD_PATCHNOTE = {
   title: '최근조회 카드 상세 버튼 + CP/IL 표시 개선',
   content: '• 최근조회 카드에 상세 버튼 추가.\n• CP/IL 미보완 항목(구버전 저장 데이터)에 ··· 플레이스홀더 표시.\n• 즐겨찾기·최근조회 name 특수문자 이스케이프 버그 수정.'
@@ -1647,7 +1647,6 @@ async function migrateRanks() {
       count++;
     }
   }
-  if(count > 0) console.log(`계급 마이그레이션 완료: ${count}명`);
 }
 
 
@@ -2722,6 +2721,7 @@ async function doCharSearch() {
   el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px;"><span class="spinner"></span> 검색 중...</div>';
   try {
     var res  = await fetch('/api/search?keyword='+encodeURIComponent(val)+'&serverId='+encodeURIComponent(sv));
+    if(!res.ok) throw new Error('HTTP ' + res.status);
     var data = await res.json();
     if(data.error) throw new Error(data.error);
     var list = data.list || [];
@@ -2785,6 +2785,7 @@ async function doLoginCharSearch() {
   el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;"><span class="spinner"></span> 검색 중...</div>';
   try {
     var res  = await fetch('/api/search?keyword='+encodeURIComponent(val)+'&serverId='+encodeURIComponent(sv));
+    if(!res.ok) throw new Error('HTTP ' + res.status);
     var data = await res.json();
     if(data.error) throw new Error(data.error);
     var list = data.list || [];
@@ -3458,7 +3459,6 @@ async function loadNcNotices(force) {
     _ncNoticeLastIds = newIds;
     _ncLastSnowId = data.lastSnowId || 0;
     _ncInitialSnowId = _ncLastSnowId;
-    console.log('[NC공지] lastSnowId=', _ncLastSnowId, 'hasMore=', data.hasMore, 'count=', list.length);
     _ncNoticeLoaded = true;
     hideActionLoading();
     if(btn) { btn.disabled = false; btn.style.opacity = ''; btn.textContent = '↺'; }
@@ -3478,10 +3478,8 @@ async function loadMoreNcNotices() {
   const btnArea = document.getElementById('nc-notice-btn-area');
   if(btnArea) btnArea.innerHTML = '<button disabled style="width:100%;padding:8px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:12px;cursor:pointer;">불러오는 중...</button>';
   try {
-    console.log('[NC공지 더보기] prevId=', _ncLastSnowId);
     const r = await fetch('/api/ncnotice?prevId=' + _ncLastSnowId);
     const data = await r.json();
-    console.log('[NC공지 더보기] 응답:', data.notices?.length, '개, hasMore=', data.hasMore, 'lastSnowId=', data.lastSnowId, '_err=', data._err);
     const list = data.notices || [];
     if(!list.length) { if(btnArea) btnArea.innerHTML = '<button onclick="collapseNcNotices()" style="width:100%;padding:8px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:12px;cursor:pointer;">▲ 접기</button>'; return; }
     _ncLastSnowId = data.lastSnowId || _ncLastSnowId;
@@ -3541,7 +3539,6 @@ async function loadNcUpdates(force) {
     _ncUpdateLastIds = newIds;
     _ncUpdateLastSnowId = data.lastSnowId || 0;
     _ncUpdateInitialSnowId = _ncUpdateLastSnowId;
-    console.log('[NC업데이트] lastSnowId=', _ncUpdateLastSnowId, 'hasMore=', data.hasMore, 'count=', list.length);
     _ncUpdateLoaded = true;
     hideActionLoading();
     if(btn) { btn.disabled = false; btn.style.opacity = ''; btn.textContent = '↺'; }
@@ -3561,10 +3558,8 @@ async function loadMoreNcUpdates() {
   const btnArea = document.getElementById('nc-update-btn-area');
   if(btnArea) btnArea.innerHTML = '<button disabled style="width:100%;padding:8px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:12px;cursor:pointer;">불러오는 중...</button>';
   try {
-    console.log('[NC업데이트 더보기] prevId=', _ncUpdateLastSnowId);
     const r = await fetch('/api/ncupdate?prevId=' + _ncUpdateLastSnowId);
     const data = await r.json();
-    console.log('[NC업데이트 더보기] 응답:', data.notices?.length, '개, hasMore=', data.hasMore, 'lastSnowId=', data.lastSnowId, '_err=', data._err);
     const list = data.notices || [];
     if(!list.length) { if(btnArea) btnArea.innerHTML = '<button onclick="collapseNcUpdates()" style="width:100%;padding:8px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:12px;cursor:pointer;">▲ 접기</button>'; return; }
     _ncUpdateLastSnowId = data.lastSnowId || _ncUpdateLastSnowId;
@@ -3605,14 +3600,17 @@ async function fetchCharacterData(nickname, serverId) {
   // 숫자만인 serverId(구버전 '2001' 등)는 서버명 필터 불가 → all로 처리
   const sv = (!serverId || /^\d+$/.test(serverId)) ? 'all' : serverId;
   const searchRes = await fetch(`/api/search?keyword=${encodeURIComponent(nickname)}&serverId=${sv}`);
+  if (!searchRes.ok) throw new Error(`검색 API 오류: HTTP ${searchRes.status}`);
   const searchData = await searchRes.json();
   let found = (searchData.list||[]).find(c => c.name === nickname);
 
   // 특정 서버로 검색했는데 못 찾으면 전체 검색으로 재시도
   if (!found && sv !== 'all') {
     const retryRes = await fetch(`/api/search?keyword=${encodeURIComponent(nickname)}&serverId=all`);
-    const retryData = await retryRes.json();
-    found = (retryData.list||[]).find(c => c.name === nickname);
+    if (retryRes.ok) {
+      const retryData = await retryRes.json();
+      found = (retryData.list||[]).find(c => c.name === nickname);
+    }
   }
 
   if (!found) throw new Error(`"${nickname}" 캐릭터를 찾을 수 없어요`);
@@ -3622,6 +3620,7 @@ async function fetchCharacterData(nickname, serverId) {
 
   // 2단계: characterId로 상세 정보 조회
   const charRes = await fetch(`/api/character?characterId=${encodeURIComponent(found.characterId)}&serverId=${actualServerId}`);
+  if (!charRes.ok) throw new Error(`캐릭터 API 오류: HTTP ${charRes.status}`);
   const charData = await charRes.json();
   if (charData.error) throw new Error(charData.error);
 
@@ -3935,7 +3934,6 @@ function openDetail(m) {
     let raw = null;
     try {
       const cid = m.character_id || m.characterId || '';
-      console.log('[item-tooltip] cid:', cid, '/ itemId:', e.itemId, '/ slotPos:', e.slotPos);
       const params = new URLSearchParams({ lang: 'ko' });
       if(cid) {
         params.append('characterId', cid);
@@ -3978,8 +3976,6 @@ function openDetail(m) {
       }
     } catch(err) { console.error('[item-tooltip] 오류:', err); }
 
-    console.log('[item-tooltip] raw keys:', raw ? Object.keys(raw).join(', ') : 'null');
-    console.log('[item-tooltip] raw full:', raw ? JSON.stringify(raw).substring(0, 1000) : 'null');
 
     // ── NC API 실제 필드 파싱 (네트워크 탭 확인 완료) ──
     const allMainStats  = (raw && raw.mainStats) || e.itemStats || [];
