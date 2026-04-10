@@ -1308,7 +1308,7 @@ function loginNicknameInput(val) {
   preview.innerHTML = matches.slice(0,5).map(function(m){
     var cls = CLASS_MAP[m.class]||m.class||'';
     var clsIcon = CLS_ICON[cls]||'';
-    return '<div style="display:flex;align-items:center;gap:8px;padding:6px;cursor:pointer;border-radius:6px;" onclick="selectLoginNick(\'' + m.nickname + '\')">'
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px;cursor:pointer;border-radius:6px;" onclick="selectLoginNick(\''+_escSQ(m.nickname)+'\')">'
       +clsIcon
       +'<span style="font-weight:600;">' + m.nickname + '</span>'
       +'<span style="font-size:11px;color:var(--muted);">' + cls + '</span>'
@@ -1482,13 +1482,11 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '2.0.1';
+const BUILD_VERSION = '2.0.2';
 const BUILD_PATCHNOTE = {
   title: '아이온2 관리 도구 v2.0',
   content: '• 데바니온 노드판 보기 기능 추가 (보드 클릭 → 노드 그리드, 호버 툴팁)\n• 캐릭터 상세 정보 전반 개선'
 };
-
-const _PATCH_HISTORY = [];
 
 // 시맨틱 버전 비교 (날짜형 구버전 호환)
 function _semverGte(a, b) {
@@ -1503,6 +1501,10 @@ function _semverGte(a, b) {
   }
   return true;
 }
+// onclick 속성 내 단따옴표 이스케이프 (XSS 방지)
+function _escSQ(s) { return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+// innerHTML 삽입용 HTML 이스케이프
+function _escHtml(s) { return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 let members  = [];
 let recruits = [];
@@ -2237,49 +2239,58 @@ function fmtTime(val) {
       +String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
   } catch(e) { return '—'; }
 }
+var _nickDebounceTimerC, _nickDebounceTimer;
 function nickPreviewCompact(inputEl, previewId, cardId) {
-  var val = (inputEl.value||'').trim();
+  clearTimeout(_nickDebounceTimerC);
+  var iid = inputEl.id, val = (inputEl.value||'').trim();
   var preview = document.getElementById(previewId);
   if(!preview) return;
   if(!val) { preview.style.display='none'; return; }
-  var matches = members.filter(function(m){ return m.nickname.toLowerCase().indexOf(val.toLowerCase())===0; });
-  if(!matches.length) { preview.style.display='none'; return; }
-  preview.style.display='block';
-  preview.innerHTML = matches.slice(0,6).map(function(m){
-    var cls = CLASS_MAP[m.class]||m.class||'';
-    return '<div style="display:flex;align-items:center;gap:6px;padding:5px 10px;cursor:pointer;border-bottom:1px solid var(--border);white-space:nowrap;" '
-      +'onmousedown="event.preventDefault();nickSelect(this,\''+inputEl.id+'\',\''+previewId+'\',\''+(cardId||'')+'\',\''+m.id+'\');">'
-      +(CLS_ICON[cls]||'<span>👤</span>')
-      +'<span style="font-size:13px;font-weight:600;">'+m.nickname+'</span>'
-      +(cls?'<span style="font-size:11px;color:var(--muted);">'+cls+'</span>':'')
-      +'</div>';
-  }).join('');
+  _nickDebounceTimerC = setTimeout(function() {
+    var lv = val.toLowerCase();
+    var matches = members.filter(function(m){ return m.nickname.toLowerCase().indexOf(lv)===0; });
+    if(!matches.length) { preview.style.display='none'; return; }
+    preview.style.display='block';
+    preview.innerHTML = matches.slice(0,6).map(function(m){
+      var cls = CLASS_MAP[m.class]||m.class||'';
+      return '<div style="display:flex;align-items:center;gap:6px;padding:5px 10px;cursor:pointer;border-bottom:1px solid var(--border);white-space:nowrap;" '
+        +'onmousedown="event.preventDefault();nickSelect(this,\''+_escSQ(iid)+'\',\''+_escSQ(previewId)+'\',\''+(cardId?_escSQ(cardId):'')+'\',\''+_escSQ(m.id)+'\');">'
+        +(CLS_ICON[cls]||'<span>👤</span>')
+        +'<span style="font-size:13px;font-weight:600;">'+m.nickname+'</span>'
+        +(cls?'<span style="font-size:11px;color:var(--muted);">'+cls+'</span>':'')
+        +'</div>';
+    }).join('');
+  }, 120);
 }
 
 function nickPreview(inputEl, previewId, cardId) {
-  var val = (inputEl.value||'').trim();
+  clearTimeout(_nickDebounceTimer);
+  var iid = inputEl.id, val = (inputEl.value||'').trim();
   var preview = document.getElementById(previewId);
   if(!preview) return;
   if(!val) { preview.style.display='none'; return; }
-  var matches = members.filter(function(m){ return m.nickname.toLowerCase().indexOf(val.toLowerCase())===0; });
-  if(!matches.length) { preview.style.display='none'; return; }
-  preview.style.display='block';
-  preview.innerHTML = matches.slice(0,8).map(function(m){
-    var cls = CLASS_MAP[m.class]||m.class||'';
-    var abyss = (m.ranking||[]).find(function(r){ return r.rankingContentsName&&r.rankingContentsName.includes('어비스'); });
-    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;cursor:pointer;border-bottom:1px solid var(--border);" '
-      +'onmousedown="event.preventDefault();nickSelect(this,\''+inputEl.id+'\',\''+previewId+'\',\''+( cardId||'')+'\',\''+m.id+'\');">'
-      +'<div style="flex:1;display:flex;align-items:center;gap:6px;">'
-      +(CLS_ICON[cls]||'<span>👤</span>')
-      +'<div><div style="font-size:13px;font-weight:600;">'+m.nickname+'</div>'
-      +'<div style="font-size:11px;color:var(--muted);">'+cls+(abyss&&abyss.gradeName?' · '+abyss.gradeName:'')+'</div></div></div>'
-      +'<div style="text-align:right;font-size:11px;color:var(--muted);margin-right:6px;">'
-      +'<div>'+(m.combat_power?(+m.combat_power).toLocaleString():'—')+'</div>'
-      +'<div>아이템레벨 '+(m.item_level?(+m.item_level).toLocaleString():'—')+'</div></div>'
-      +'<button onmousedown="event.preventDefault();event.stopPropagation();openDetailById(\''+m.id+'\');" '
-      +'style="font-size:11px;padding:4px 10px;background:var(--gold-d);border:none;border-radius:4px;cursor:pointer;color:#fff;font-weight:600;white-space:nowrap;">상세</button>'
-      +'</div>';
-  }).join('');
+  _nickDebounceTimer = setTimeout(function() {
+    var lv = val.toLowerCase();
+    var matches = members.filter(function(m){ return m.nickname.toLowerCase().indexOf(lv)===0; });
+    if(!matches.length) { preview.style.display='none'; return; }
+    preview.style.display='block';
+    preview.innerHTML = matches.slice(0,8).map(function(m){
+      var cls = CLASS_MAP[m.class]||m.class||'';
+      var abyss = (m.ranking||[]).find(function(r){ return r.rankingContentsName&&r.rankingContentsName.includes('어비스'); });
+      return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;cursor:pointer;border-bottom:1px solid var(--border);" '
+        +'onmousedown="event.preventDefault();nickSelect(this,\''+_escSQ(iid)+'\',\''+_escSQ(previewId)+'\',\''+(cardId?_escSQ(cardId):'')+'\',\''+_escSQ(m.id)+'\');">'
+        +'<div style="flex:1;display:flex;align-items:center;gap:6px;">'
+        +(CLS_ICON[cls]||'<span>👤</span>')
+        +'<div><div style="font-size:13px;font-weight:600;">'+m.nickname+'</div>'
+        +'<div style="font-size:11px;color:var(--muted);">'+cls+(abyss&&abyss.gradeName?' · '+abyss.gradeName:'')+'</div></div></div>'
+        +'<div style="text-align:right;font-size:11px;color:var(--muted);margin-right:6px;">'
+        +'<div>'+(m.combat_power?(+m.combat_power).toLocaleString():'—')+'</div>'
+        +'<div>아이템레벨 '+(m.item_level?(+m.item_level).toLocaleString():'—')+'</div></div>'
+        +'<button onmousedown="event.preventDefault();event.stopPropagation();openDetailById(\''+_escSQ(m.id)+'\');" '
+        +'style="font-size:11px;padding:4px 10px;background:var(--gold-d);border:none;border-radius:4px;cursor:pointer;color:#fff;font-weight:600;white-space:nowrap;">상세</button>'
+        +'</div>';
+    }).join('');
+  }, 120);
 }
 
 function nickSelect(el, inputId, previewId, cardId, memberId) {
@@ -2306,7 +2317,7 @@ function nickSelect(el, inputId, previewId, cardId, memberId) {
     +'<div style="font-weight:700;color:var(--gold-l);">'+(m.combat_power?(+m.combat_power).toLocaleString():'—')+'</div>'
     +'<div style="color:var(--muted);">아이템레벨 '+(m.item_level?(+m.item_level).toLocaleString():'—')+'</div>'
     +'</div>'
-    +'<button onclick="openDetailById(\''+m.id+'\')" style="margin-left:8px;font-size:11px;padding:4px 10px;background:var(--gold-d);border:none;border-radius:4px;cursor:pointer;color:#fff;font-weight:600;flex-shrink:0;">상세</button>'
+    +'<button onclick="openDetailById(\''+_escSQ(m.id)+'\')" style="margin-left:8px;font-size:11px;padding:4px 10px;background:var(--gold-d);border:none;border-radius:4px;cursor:pointer;color:#fff;font-weight:600;flex-shrink:0;">상세</button>'
     +'</div>';
 }
 
@@ -2513,7 +2524,7 @@ function _csResultCard(c) {
 // 전체 병렬 백그라운드 스탯 로드 (6초 타임아웃)
 async function _csLoadStats(list) {
   var items = list.filter(function(c){ return c.characterId; });
-  await Promise.all(items.map(function(c) {
+  await Promise.allSettled(items.map(function(c) {
       var cid     = String(c.characterId);
       var cidSafe = cid.replace(/[^a-zA-Z0-9]/g, '_');
       var sid     = String(c.serverId||'');
@@ -3008,7 +3019,7 @@ function initDb() {
             if(!res.error && res.data) { warSurveys = res.data; renderWarSurveys(); }
           });
       }, 30000);
-      // 공지/패치노트 5초 폴링
+      // 공지/패치노트 30초 폴링
       window._noticePollTimer = setInterval(function() {
         if(document.hidden) return;
         db.from('notices').select('*').order('created_at', { ascending: false })
@@ -3024,7 +3035,7 @@ function initDb() {
             }
             renderNotices(data);
           });
-      }, 5000);
+      }, 30000);
     }
     function _stopPolling() {
       if(window._pollTimer){ clearInterval(window._pollTimer); window._pollTimer=null; }
@@ -3306,10 +3317,10 @@ let _ncLastSnowId = 0;
 let _ncInitialSnowId = 0;
 
 function _renderNcItem(n) {
-  const dateStr = (n.date||'').slice(0,10);
-  const cat = n.category ? '<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(100,160,255,.1);color:#6ab0ff;border:1px solid #1a3060;margin-right:6px;">'+n.category+'</span>' : '';
-  return '<a href="'+n.url+'" target="_blank" rel="noopener" style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-radius:7px;background:var(--card);border:1px solid var(--border);text-decoration:none;transition:border-color .15s;margin-bottom:6px;" onmouseover="this.style.borderColor=\'var(--gold-d)\'" onmouseout="this.style.borderColor=\'var(--border)\'">'
-    +'<span style="font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">'+cat+n.title+'</span>'
+  const dateStr = _escHtml((n.date||'').slice(0,10));
+  const cat = n.category ? '<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(100,160,255,.1);color:#6ab0ff;border:1px solid #1a3060;margin-right:6px;">'+_escHtml(n.category)+'</span>' : '';
+  return '<a href="'+_escHtml(n.url)+'" target="_blank" rel="noopener" style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-radius:7px;background:var(--card);border:1px solid var(--border);text-decoration:none;transition:border-color .15s;margin-bottom:6px;" onmouseover="this.style.borderColor=\'var(--gold-d)\'" onmouseout="this.style.borderColor=\'var(--border)\'">'
+    +'<span style="font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">'+cat+_escHtml(n.title)+'</span>'
     +'<span style="font-size:11px;color:var(--muted);flex-shrink:0;margin-left:12px;">'+dateStr+'</span>'
     +'</a>';
 }
