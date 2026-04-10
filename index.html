@@ -179,6 +179,15 @@
   .hw-check { width:18px; height:18px; border-radius:4px; border:2px solid var(--border); cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-right:10px; transition:all .15s; }
   .hw-check.checked { background:var(--gold); border-color:var(--gold); }
   .hw-reset-info { font-size:11px; color:var(--muted); text-align:right; margin-bottom:6px; }
+  .hw-countdown-bar { display:flex; gap:8px; flex-wrap:wrap; }
+  .hw-countdown-item { display:flex; align-items:center; gap:6px; padding:4px 10px; background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:6px; font-size:12px; color:var(--muted); }
+  .hw-countdown-val { font-family:monospace; font-weight:700; color:var(--gold-l); font-size:13px; }
+  .hw-shugo-toggle { display:flex; align-items:center; gap:6px; padding:5px 12px; background:var(--surface); border:1px solid var(--border); border-radius:6px; cursor:pointer; transition:all .15s; white-space:nowrap; font-size:12px; }
+  .hw-shugo-toggle.active { background:rgba(234,179,8,.1); border-color:var(--gold-d); color:var(--gold-l); }
+  .hw-quick-actions { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
+  .hw-qa-btn { padding:6px 14px; border-radius:6px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:12px; cursor:pointer; transition:all .15s; }
+  .hw-qa-btn:hover { border-color:var(--gold-d); color:var(--gold-l); }
+  .hw-kina-input { width:100%; box-sizing:border-box; border:1px solid var(--border); background:var(--surface); color:var(--text); border-radius:6px; padding:6px 10px; font-size:13px; outline:none; }
   /* 뷰 토글 */
   .view-toggle { display:flex; gap:3px; background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:3px; }
   .vt { background:none; border:none; color:var(--muted); padding:4px 10px; border-radius:4px; font-size:12px; cursor:pointer; transition:all .15s; }
@@ -950,13 +959,32 @@
 
   <!-- 숙제 도우미 -->
   <div id="tab-homework" class="tab-content">
-    <div class="section-title">📋 숙제 도우미(개발중)</div>
+    <div class="section-title">📋 숙제 도우미</div>
     <div style="max-width:600px;">
 
       <!-- 리셋 안내 -->
-      <div style="display:flex;gap:8px;margin-bottom:16px;font-size:12px;flex-wrap:wrap;">
+      <div style="display:flex;gap:8px;margin-bottom:10px;font-size:12px;flex-wrap:wrap;">
         <span style="padding:4px 10px;background:rgba(0,200,138,.1);border:1px solid rgba(0,200,138,.3);color:#00c88a;border-radius:6px;">🌙 일일: 오전 5시 리셋</span>
         <span style="padding:4px 10px;background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.3);color:var(--gold-l);border-radius:6px;">📅 주간: 매주 수요일 오전 5시 리셋</span>
+      </div>
+
+      <!-- 카운트다운 + 슈고 멤버십 -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+        <div class="hw-countdown-bar">
+          <div class="hw-countdown-item">🌙 일일 <span class="hw-countdown-val" id="hw-cd-daily">--:--:--</span></div>
+          <div class="hw-countdown-item">📅 주간 <span class="hw-countdown-val" id="hw-cd-weekly">---</span></div>
+        </div>
+        <div id="hw-shugo-toggle" class="hw-shugo-toggle" onclick="hwToggleShugo()" title="슈고 멤버십 토글">
+          <span style="font-size:15px;">🎩</span>
+          <span id="hw-shugo-label">슈고 없음</span>
+        </div>
+      </div>
+
+      <!-- 빠른 버튼 -->
+      <div class="hw-quick-actions">
+        <button class="hw-qa-btn" onclick="hwQuickDoneDaily()">✅ 일일 전체 완료</button>
+        <button class="hw-qa-btn" onclick="hwQuickDoneWeekly()">✅ 주간 전체 완료</button>
+        <button class="hw-qa-btn" onclick="hwQuickResetDaily()" style="color:var(--muted);">↩ 일일 초기화</button>
       </div>
 
       <!-- 리모권 -->
@@ -987,6 +1015,30 @@
           <button class="hw-counter-btn" onclick="hwSetOd(-200)" style="padding:4px 10px;font-size:12px;">-200</button>
           <button class="hw-counter-btn" onclick="hwSetOd('full')" style="padding:4px 10px;font-size:12px;color:var(--gold-l);border-color:var(--gold);">FULL</button>
         </div>
+      </div>
+
+      <!-- 키나 일일 한도 -->
+      <div class="card hw-section" style="padding:16px;">
+        <div class="hw-section-title">💰 키나 일일 획득 한도 <span style="font-size:11px;color:var(--muted);font-weight:400;">(일일)</span></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-size:20px;font-weight:700;color:var(--gold-l);" id="hw-kina-val">0</span>
+          <span style="color:var(--muted);font-size:13px;">/ 1,000,000</span>
+          <span class="hw-max-badge" id="hw-kina-badge" style="display:none;">한도</span>
+          <span style="font-size:12px;color:var(--muted);" id="hw-kina-pct">0%</span>
+        </div>
+        <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:12px;">
+          <div style="height:100%;width:0%;background:var(--gold);border-radius:4px;transition:width .3s;" id="hw-kina-bar"></div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+          <button class="hw-counter-btn" onclick="hwAdjustKina(10000)" style="padding:4px 10px;font-size:12px;">+1만</button>
+          <button class="hw-counter-btn" onclick="hwAdjustKina(50000)" style="padding:4px 10px;font-size:12px;">+5만</button>
+          <button class="hw-counter-btn" onclick="hwAdjustKina(100000)" style="padding:4px 10px;font-size:12px;">+10만</button>
+          <button class="hw-counter-btn" onclick="hwAdjustKina(200000)" style="padding:4px 10px;font-size:12px;">+20만</button>
+          <button class="hw-counter-btn" onclick="hwAdjustKina(500000)" style="padding:4px 10px;font-size:12px;">+50만</button>
+          <button class="hw-counter-btn" onclick="hwSetKina(0)" style="padding:4px 10px;font-size:12px;color:var(--muted);">초기화</button>
+        </div>
+        <input class="hw-kina-input" type="number" placeholder="직접 입력 (숫자)" min="0" max="1000000"
+          oninput="hwSetKina(parseInt(this.value)||0)" id="hw-kina-ipt">
       </div>
 
       <!-- 일일 콘텐츠 -->
@@ -1553,7 +1605,7 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '2.1.3';
+const BUILD_VERSION = '2.2.0';
 const BUILD_PATCHNOTE = {
   title: '아이온2 관리 도구 v2.0',
   content: '• 데바니온 노드판 보기 기능 추가 (보드 클릭 → 노드 그리드, 호버 툴팁)\n• 캐릭터 상세 정보 전반 개선'
@@ -6376,8 +6428,21 @@ function _hwRenderAll() {
     const daily = _hwLoad(_hwDailyKey());
     const weekly = _hwLoad(_hwWeeklyKey());
 
+    // 카운트다운 타이머 시작 (1초)
+    if(!window._hwCountdownTimer) {
+      _hwUpdateCountdowns();
+      window._hwCountdownTimer = setInterval(_hwUpdateCountdowns, 1000);
+    }
+
     // 오드 에너지
     _hwRefreshOd(daily['od_energy'] !== undefined ? daily['od_energy'] : HW_OD_MAX);
+
+    // 키나 한도
+    _hwRefreshKina(daily['kina_earned'] || 0);
+
+    // 슈고 멤버십
+    var _hwSettings = _hwLoad('hw_settings') || {};
+    _hwRefreshShugo(!!_hwSettings['shugo_membership']);
 
     // 리모권
     const rimoArea = document.getElementById('hw-rimo-area');
@@ -6546,6 +6611,136 @@ function hwToggleRimo(id) {
     var labelKey = id.slice(5).replace(/_/g, ' ');
     var odAmount = HW_RIMO_OD_EFFECTS[labelKey];
     if(odAmount) hwSetOd(odAmount * (data[id] ? 1 : -1));
+  } catch(e) {}
+}
+
+// ─── 카운트다운 타이머 ────────────────────────────
+function _hwNextDailyMs() {
+  var now = _hwKstNow();
+  var target = new Date(now);
+  target.setHours(5, 0, 0, 0);
+  if(now.getHours() >= 5) target.setDate(target.getDate() + 1);
+  return target - now;
+}
+function _hwNextWeeklyMs() {
+  var now = _hwKstNow();
+  var day = now.getDay();
+  var daysUntilWed = (3 - day + 7) % 7;
+  if(daysUntilWed === 0) {
+    if(now.getHours() >= 5) daysUntilWed = 7;
+  }
+  var target = new Date(now);
+  target.setDate(target.getDate() + daysUntilWed);
+  target.setHours(5, 0, 0, 0);
+  if(target <= now) target.setDate(target.getDate() + 7);
+  return target - now;
+}
+function _hwFmtMs(ms) {
+  if(ms < 0) ms = 0;
+  var s = Math.floor(ms / 1000);
+  var h = Math.floor(s / 3600);
+  var m = Math.floor((s % 3600) / 60);
+  var ss = s % 60;
+  if(h >= 24) {
+    var d = Math.floor(h / 24);
+    return d+'일 '+(h%24)+'시간 '+(m<10?'0':'')+m+'분';
+  }
+  return (h<10?'0':'')+h+':'+(m<10?'0':'')+m+':'+(ss<10?'0':'')+ss;
+}
+function _hwUpdateCountdowns() {
+  var de = document.getElementById('hw-cd-daily');
+  var we = document.getElementById('hw-cd-weekly');
+  if(de) de.textContent = _hwFmtMs(_hwNextDailyMs());
+  if(we) we.textContent = _hwFmtMs(_hwNextWeeklyMs());
+}
+
+// ─── 키나 일일 한도 ────────────────────────────
+const HW_KINA_MAX = 1000000;
+function hwSetKina(val) {
+  try {
+    var data = _hwLoad(_hwDailyKey());
+    data['kina_earned'] = Math.max(0, Math.min(HW_KINA_MAX, parseInt(val)||0));
+    _hwSave(_hwDailyKey(), data);
+    _hwRefreshKina(data['kina_earned']);
+  } catch(e) {}
+}
+function hwAdjustKina(delta) {
+  try {
+    var data = _hwLoad(_hwDailyKey());
+    var cur = data['kina_earned'] || 0;
+    data['kina_earned'] = Math.max(0, Math.min(HW_KINA_MAX, cur + delta));
+    _hwSave(_hwDailyKey(), data);
+    _hwRefreshKina(data['kina_earned']);
+  } catch(e) {}
+}
+function _hwRefreshKina(val) {
+  val = val || 0;
+  var valEl = document.getElementById('hw-kina-val');
+  var bar   = document.getElementById('hw-kina-bar');
+  var pct   = document.getElementById('hw-kina-pct');
+  var badge = document.getElementById('hw-kina-badge');
+  var ipt   = document.getElementById('hw-kina-ipt');
+  if(valEl) valEl.textContent = val.toLocaleString();
+  if(bar)   bar.style.width   = (val / HW_KINA_MAX * 100) + '%';
+  if(pct)   pct.textContent   = Math.floor(val / HW_KINA_MAX * 100) + '%';
+  if(badge) badge.style.display = val >= HW_KINA_MAX ? '' : 'none';
+  if(ipt && document.activeElement !== ipt) ipt.value = val > 0 ? val : '';
+}
+
+// ─── 슈고 멤버십 ────────────────────────────
+function hwToggleShugo() {
+  try {
+    var data = _hwLoad('hw_settings') || {};
+    data['shugo_membership'] = !data['shugo_membership'];
+    _hwSave('hw_settings', data);
+    _hwRefreshShugo(data['shugo_membership']);
+  } catch(e) {}
+}
+function _hwRefreshShugo(active) {
+  var el  = document.getElementById('hw-shugo-toggle');
+  var lbl = document.getElementById('hw-shugo-label');
+  if(el)  el.className  = 'hw-shugo-toggle' + (active ? ' active' : '');
+  if(lbl) lbl.textContent = active ? '슈고 멤버십 ✓' : '슈고 없음';
+}
+
+// ─── 일괄 완료 / 초기화 ────────────────────────────
+function hwQuickDoneDaily() {
+  try {
+    var data = _hwLoad(_hwDailyKey());
+    data['daily_mission']      = 5;
+    data['daily_abyss_supply'] = true;
+    data['od_energy']          = HW_OD_MAX;
+    HW_TICKETS.forEach(function(t) { data[t.id] = t.max; });
+    HW_ABYSS_CORRIDOR.forEach(function(t) { data[t.id] = t.max; });
+    HW_RIMO_LIST.forEach(function(label) {
+      data['rimo_'+label.replace(/\s/g,'_')] = true;
+    });
+    _hwSave(_hwDailyKey(), data);
+    var mid = _hwLoad(_hwMidnightKey());
+    mid['daily_attend'] = true;
+    _hwSave(_hwMidnightKey(), mid);
+    _hwRenderAll();
+    toast('일일 숙제 전체 완료!');
+  } catch(e) {}
+}
+function hwQuickDoneWeekly() {
+  try {
+    var data = _hwLoad(_hwWeeklyKey());
+    HW_WEEKLY_COUNTERS.forEach(function(t) {
+      data[t.id] = t.isCheck ? true : t.max;
+    });
+    _hwSave(_hwWeeklyKey(), data);
+    _hwRenderAll();
+    toast('주간 숙제 전체 완료!');
+  } catch(e) {}
+}
+function hwQuickResetDaily() {
+  if(!confirm('오늘 일일 숙제를 초기화할까요?')) return;
+  try {
+    localStorage.removeItem(_hwDailyKey());
+    localStorage.removeItem(_hwMidnightKey());
+    _hwRenderAll();
+    toast('일일 초기화 완료');
   } catch(e) {}
 }
 
