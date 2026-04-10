@@ -1310,8 +1310,8 @@ function loginNicknameInput(val) {
     var clsIcon = CLS_ICON[cls]||'';
     return '<div style="display:flex;align-items:center;gap:8px;padding:6px;cursor:pointer;border-radius:6px;" onclick="selectLoginNick(\''+_escSQ(m.nickname)+'\')">'
       +clsIcon
-      +'<span style="font-weight:600;">' + m.nickname + '</span>'
-      +'<span style="font-size:11px;color:var(--muted);">' + cls + '</span>'
+      +'<span style="font-weight:600;">' + _escHtml(m.nickname) + '</span>'
+      +'<span style="font-size:11px;color:var(--muted);">' + _escHtml(cls) + '</span>'
       +'</div>';
   }).join('');
 }
@@ -1482,7 +1482,7 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '2.0.2';
+const BUILD_VERSION = '2.0.3';
 const BUILD_PATCHNOTE = {
   title: '아이온2 관리 도구 v2.0',
   content: '• 데바니온 노드판 보기 기능 추가 (보드 클릭 → 노드 그리드, 호버 툴팁)\n• 캐릭터 상세 정보 전반 개선'
@@ -2256,8 +2256,8 @@ function nickPreviewCompact(inputEl, previewId, cardId) {
       return '<div style="display:flex;align-items:center;gap:6px;padding:5px 10px;cursor:pointer;border-bottom:1px solid var(--border);white-space:nowrap;" '
         +'onmousedown="event.preventDefault();nickSelect(this,\''+_escSQ(iid)+'\',\''+_escSQ(previewId)+'\',\''+(cardId?_escSQ(cardId):'')+'\',\''+_escSQ(m.id)+'\');">'
         +(CLS_ICON[cls]||'<span>👤</span>')
-        +'<span style="font-size:13px;font-weight:600;">'+m.nickname+'</span>'
-        +(cls?'<span style="font-size:11px;color:var(--muted);">'+cls+'</span>':'')
+        +'<span style="font-size:13px;font-weight:600;">'+_escHtml(m.nickname)+'</span>'
+        +(cls?'<span style="font-size:11px;color:var(--muted);">'+_escHtml(cls)+'</span>':'')
         +'</div>';
     }).join('');
   }, 120);
@@ -2281,8 +2281,8 @@ function nickPreview(inputEl, previewId, cardId) {
         +'onmousedown="event.preventDefault();nickSelect(this,\''+_escSQ(iid)+'\',\''+_escSQ(previewId)+'\',\''+(cardId?_escSQ(cardId):'')+'\',\''+_escSQ(m.id)+'\');">'
         +'<div style="flex:1;display:flex;align-items:center;gap:6px;">'
         +(CLS_ICON[cls]||'<span>👤</span>')
-        +'<div><div style="font-size:13px;font-weight:600;">'+m.nickname+'</div>'
-        +'<div style="font-size:11px;color:var(--muted);">'+cls+(abyss&&abyss.gradeName?' · '+abyss.gradeName:'')+'</div></div></div>'
+        +'<div><div style="font-size:13px;font-weight:600;">'+_escHtml(m.nickname)+'</div>'
+        +'<div style="font-size:11px;color:var(--muted);">'+_escHtml(cls)+(abyss&&abyss.gradeName?' · '+_escHtml(abyss.gradeName):'')+'</div></div></div>'
         +'<div style="text-align:right;font-size:11px;color:var(--muted);margin-right:6px;">'
         +'<div>'+(m.combat_power?(+m.combat_power).toLocaleString():'—')+'</div>'
         +'<div>아이템레벨 '+(m.item_level?(+m.item_level).toLocaleString():'—')+'</div></div>'
@@ -2627,7 +2627,7 @@ async function doCharSearch() {
     else if(sv === 'asmo') list = list.filter(function(c){ return _CS_ASMO.has(c.serverName||''); });
     _csRenderSplit(list, el, '검색 결과가 없습니다'+(sv!=='all'?' ('+sv+' 서버)':''));
   } catch(e) {
-    el.innerHTML = '<div class="card" style="padding:20px;text-align:center;color:var(--red);font-size:13px;">검색 실패: '+e.message+'</div>';
+    el.innerHTML = '<div class="card" style="padding:20px;text-align:center;color:var(--red);font-size:13px;">검색 실패: '+_escHtml(e.message)+'</div>';
   }
 }
 
@@ -2690,7 +2690,7 @@ async function doLoginCharSearch() {
     else if(sv === 'asmo') list = list.filter(function(c){ return _CS_ASMO.has(c.serverName||''); });
     _csRenderSplit(list, el, '검색 결과가 없습니다'+(sv!=='all'?' ('+sv+' 서버)':''));
   } catch(e) {
-    el.innerHTML = '<div style="padding:12px;text-align:center;color:var(--red);font-size:13px;">검색 실패: '+e.message+'</div>';
+    el.innerHTML = '<div style="padding:12px;text-align:center;color:var(--red);font-size:13px;">검색 실패: '+_escHtml(e.message)+'</div>';
   }
 }
 
@@ -3300,7 +3300,7 @@ function showNoticeAlert(n) {
   const wrap = document.createElement('div');
   wrap.style.cssText = 'position:fixed;bottom:80px;right:20px;z-index:9999;background:var(--surface);border:1px solid var(--gold-d);border-radius:12px;padding:14px 18px;max-width:320px;box-shadow:0 4px 24px rgba(0,0,0,.5);animation:fadeIn .3s;';
   wrap.innerHTML = '<div style="font-size:11px;color:var(--gold-l);font-weight:700;margin-bottom:6px;">'+typeLabel+'</div>'
-    +'<div style="font-size:13px;font-weight:600;margin-bottom:10px;">'+(n.version?'<span style="color:var(--gold-l);font-size:11px;margin-right:4px;">'+n.version+'</span>':'')+n.title+'</div>'
+    +'<div style="font-size:13px;font-weight:600;margin-bottom:10px;">'+(n.version?'<span style="color:var(--gold-l);font-size:11px;margin-right:4px;">'+_escHtml(n.version)+'</span>':'')+_escHtml(n.title)+'</div>'
     +'<div style="display:flex;justify-content:flex-end;gap:8px;">'
     +'<button onclick="this.closest(\'div[style]\').remove()" style="font-size:11px;padding:4px 10px;background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;">닫기</button>'
     +'<button onclick="showTab(\'notice\');this.closest(\'div[style]\').remove()" style="font-size:11px;padding:4px 10px;background:var(--gold-d);border:none;border-radius:6px;color:var(--gold-l);cursor:pointer;font-weight:600;">확인하기</button>'
@@ -3363,11 +3363,11 @@ async function loadNcNotices(force) {
       ? '<div id="nc-notice-btn-area"><button onclick="loadMoreNcNotices()" style="width:100%;padding:8px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:12px;cursor:pointer;">▼ 더보기</button></div>'
       : '';
     el.innerHTML = list.map(_renderNcItem).join('') + '<div id="nc-notice-extra"></div>' + moreBtnHtml;
-    if(!_ncPollTimer) _ncPollTimer = setInterval(function(){ loadNcNotices(false); }, 5 * 60 * 1000);
+    if(!_ncPollTimer) _ncPollTimer = setInterval(function(){ if(!document.hidden) loadNcNotices(false); }, 5 * 60 * 1000);
   } catch(e) {
     hideActionLoading();
     if(btn) { btn.disabled = false; btn.style.opacity = ''; btn.textContent = '↺'; }
-    el.innerHTML = '<div style="color:var(--muted);font-size:13px;">불러오기 실패: '+e.message+'</div>';
+    el.innerHTML = '<div style="color:var(--muted);font-size:13px;">불러오기 실패: '+_escHtml(e.message)+'</div>';
   }
 }
 
@@ -3443,11 +3443,11 @@ async function loadNcUpdates(force) {
       ? '<div id="nc-update-btn-area"><button onclick="loadMoreNcUpdates()" style="width:100%;padding:8px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:12px;cursor:pointer;">▼ 더보기</button></div>'
       : '';
     el.innerHTML = list.map(_renderNcItem).join('') + '<div id="nc-update-extra"></div>' + moreBtnHtml2;
-    if(!_ncUpdatePollTimer) _ncUpdatePollTimer = setInterval(function(){ loadNcUpdates(false); }, 5 * 60 * 1000);
+    if(!_ncUpdatePollTimer) _ncUpdatePollTimer = setInterval(function(){ if(!document.hidden) loadNcUpdates(false); }, 5 * 60 * 1000);
   } catch(e) {
     hideActionLoading();
     if(btn) { btn.disabled = false; btn.style.opacity = ''; btn.textContent = '↺'; }
-    el.innerHTML = '<div style="color:var(--muted);font-size:13px;">불러오기 실패: '+e.message+'</div>';
+    el.innerHTML = '<div style="color:var(--muted);font-size:13px;">불러오기 실패: '+_escHtml(e.message)+'</div>';
   }
 }
 
@@ -3580,10 +3580,10 @@ async function fetchAndRegister() {
       updated_at:   new Date().toISOString(),
     });
 
-    resultEl.innerHTML = `<span style="color:#6acd8a">✓ ${nickname} 등록 완료! 전투력: ${(data.combat_power||0).toLocaleString()}</span>`;
+    resultEl.innerHTML = `<span style="color:#6acd8a">✓ ${_escHtml(nickname)} 등록 완료! 전투력: ${(data.combat_power||0).toLocaleString()}</span>`;
     toast(`${nickname} 등록 완료! ✓`);
   } catch (err) {
-    resultEl.innerHTML = `<span style="color:var(--red)">✗ ${err.message}</span>`;
+    resultEl.innerHTML = `<span style="color:var(--red)">✗ ${_escHtml(err.message)}</span>`;
     toast('불러오기 실패: ' + err.message);
   } finally {
     btn.disabled = false;
@@ -4056,7 +4056,7 @@ function openDetail(m) {
     `;
     } catch(renderErr) {
       console.error('[item-tooltip] render error:', renderErr);
-      scrollEl.innerHTML = `<div style="padding:30px;text-align:center;color:var(--muted);font-size:13px;">⚠ 아이템 정보를 표시하지 못했습니다.<br><span style="font-size:11px;margin-top:6px;display:block;">${e.name||''}</span></div>`;
+      scrollEl.innerHTML = `<div style="padding:30px;text-align:center;color:var(--muted);font-size:13px;">⚠ 아이템 정보를 표시하지 못했습니다.<br><span style="font-size:11px;margin-top:6px;display:block;">${_escHtml(e.name||'')}</span></div>`;
     }
   }
 
@@ -4078,8 +4078,8 @@ function openDetail(m) {
     if (!n || !n.name) return;
     const tip = document.getElementById('daev-tip');
     if (!tip) return;
-    const effects = (n.effectList||[]).filter(x=>x.desc).map(x=>`<div style="color:#aaa;margin-top:2px;">${x.desc}</div>`).join('');
-    tip.innerHTML = `<div style="font-weight:600;color:#e8e8e8;margin-bottom:2px;">${n.name}</div>${effects}`;
+    const effects = (n.effectList||[]).filter(x=>x.desc).map(x=>`<div style="color:#aaa;margin-top:2px;">${_escHtml(x.desc)}</div>`).join('');
+    tip.innerHTML = `<div style="font-weight:600;color:#e8e8e8;margin-bottom:2px;">${_escHtml(n.name)}</div>${effects}`;
     tip.style.display = 'block';
     tip.style.left = (e.clientX+14)+'px';
     tip.style.top  = (e.clientY+14)+'px';
@@ -4139,7 +4139,7 @@ function openDetail(m) {
         }
         scrollEl.innerHTML = _renderDaevGrid(data.nodeList, data.openStatEffectList, data.openSkillEffectList);
       })
-      .catch(e => { scrollEl.innerHTML = `<div style="padding:20px;color:#ff6b6b;font-size:11px;">⚠ 불러오기 실패: ${e.message}</div>`; });
+      .catch(e => { scrollEl.innerHTML = `<div style="padding:20px;color:#ff6b6b;font-size:11px;">⚠ 불러오기 실패: ${_escHtml(e.message)}</div>`; });
   };
 
   // 장비 아이템 HTML
@@ -5384,8 +5384,8 @@ function initBossTimers() {
     });
   }
   loadBossTimers();
-  // 30초마다 갱신 (실시간 대신 폴링)
-  setInterval(loadBossTimers, 30000);
+  // 30초마다 갱신 (탭 숨김 시 일시 정지)
+  var _bossTimer = setInterval(function() { if(!document.hidden) loadBossTimers(); }, 30000);
 
   // 1초마다 카운트다운 업데이트
   setInterval(() => {
@@ -5734,7 +5734,7 @@ function updateShugoFestaDisplay() {
   } catch(e) {}
 }
 
-setInterval(function() { updateRiftDisplay(); updateShugoFestaDisplay(); }, 1000);
+setInterval(function() { if(!document.hidden){ updateRiftDisplay(); updateShugoFestaDisplay(); } }, 1000);
 updateRiftDisplay(); updateShugoFestaDisplay();
 
 // ─── 숙제 도우미 ────────────────────────────
