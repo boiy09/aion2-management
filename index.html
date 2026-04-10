@@ -855,10 +855,10 @@
           <div id="shugo-festa-timer" style="margin-left:auto;font-size:18px;font-weight:700;font-family:monospace;color:var(--gold-l);">--:--</div>
         </div>
         <div id="shugo-festa-badge" style="display:inline-block;font-size:12px;padding:4px 12px;border-radius:20px;background:var(--surface);border:1px solid var(--border);color:var(--muted);margin-bottom:10px;">대기 중</div>
-        <!-- :15 / :45 퀘스트 목록 -->
+        <!-- 짝수 정각 / 홀수 정각 퀘스트 목록 -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
           <div id="shugo-15-box" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;transition:border-color .3s,background .3s;">
-            <div id="shugo-15-label" style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;">매시 15분</div>
+            <div id="shugo-15-label" style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;">짝수 정각 (0, 2, 4...시)</div>
             <div style="display:flex;flex-direction:column;gap:4px;">
               <span class="shugo-quest">오드 방울 수집</span>
               <span class="shugo-quest">슈고 상인 보호</span>
@@ -868,7 +868,7 @@
             </div>
           </div>
           <div id="shugo-45-box" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;transition:border-color .3s,background .3s;">
-            <div id="shugo-45-label" style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;">매시 45분</div>
+            <div id="shugo-45-label" style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;">홀수 정각 (1, 3, 5...시)</div>
             <div style="display:flex;flex-direction:column;gap:4px;">
               <span class="shugo-quest">높이 높이</span>
               <span class="shugo-quest">신비로운 트랙</span>
@@ -1545,7 +1545,7 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '2.0.9';
+const BUILD_VERSION = '2.1.0';
 const BUILD_PATCHNOTE = {
   title: '아이온2 관리 도구 v2.0',
   content: '• 데바니온 노드판 보기 기능 추가 (보드 클릭 → 노드 그리드, 호버 툴팁)\n• 캐릭터 상세 정보 전반 개선'
@@ -5998,27 +5998,21 @@ function updateRiftDisplay() {
 function updateShugoFestaDisplay() {
   try {
     const now = new Date();
-    const m = now.getMinutes(), s = now.getSeconds();
+    const h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
     const totalSec = m * 60 + s;
-    const open15 = totalSec >= 15*60 && totalSec < 15*60 + SHUGO_OPEN_SEC;
-    const open45 = totalSec >= 45*60 && totalSec < 45*60 + SHUGO_OPEN_SEC;
-    const isOpen = open15 || open45;
 
-    let remainMs;
-    if(open15) {
-      remainMs = ((15*60 + SHUGO_OPEN_SEC) - totalSec) * 1000;
-    } else if(open45) {
-      remainMs = ((45*60 + SHUGO_OPEN_SEC) - totalSec) * 1000;
-    } else if(totalSec < 15*60) {
-      remainMs = (15*60 - totalSec) * 1000;
-    } else if(totalSec < 45*60) {
-      remainMs = (45*60 - totalSec) * 1000;
-    } else {
-      remainMs = (60*60 - totalSec + 15*60) * 1000;
-    }
+    // 매 정각 시작, 3분간 입장
+    const isOpen = totalSec < SHUGO_OPEN_SEC;
+    // 짝수 시 = 15분 퀘스트 세트, 홀수 시 = 45분 퀘스트 세트
+    const isEvenHour = h % 2 === 0;
 
-    // 정각 :15, :45 TTS 알림
-    if(s === 0 && (m === 15 || m === 45)) speakShugo();
+    // 남은 시간: 입장 중이면 마감까지, 대기 중이면 다음 정각까지
+    const remainMs = isOpen
+      ? (SHUGO_OPEN_SEC - totalSec) * 1000
+      : (60 * 60 - totalSec) * 1000;
+
+    // 매 정각 TTS 알림
+    if(s === 0 && m === 0) speakShugo();
 
     const timerEl = document.getElementById('shugo-festa-timer');
     if(timerEl) { timerEl.textContent = _fmtMmSs(remainMs); timerEl.style.color = isOpen ? '#00c88a' : 'var(--gold-l)'; }
@@ -6029,30 +6023,35 @@ function updateShugoFestaDisplay() {
         badge.textContent = '✅ 입장 가능';
         badge.style.background = 'rgba(0,200,138,.15)'; badge.style.borderColor = '#00c88a'; badge.style.color = '#00c88a';
       } else {
-        const nextMin = totalSec < 15*60 ? '15' : totalSec < 45*60 ? '45' : '15(다음 시)';
-        badge.textContent = `⏳ 매시 ${nextMin}분`;
+        const nextH = (h + 1) % 24;
+        const nextType = nextH % 2 === 0 ? '짝수' : '홀수';
+        badge.textContent = `⏳ ${String(nextH).padStart(2,'0')}:00 (${nextType} 정각)`;
         badge.style.background = 'var(--surface)'; badge.style.borderColor = 'var(--border)'; badge.style.color = 'var(--muted)';
       }
     }
 
-    // :15 / :45 박스 하이라이트 (active=파랑, next=금색)
+    // 짝수(box15) / 홀수(box45) 박스 하이라이트
+    // active = 현재 열린 세트, next = 다음에 열릴 세트
     const box15 = document.getElementById('shugo-15-box');
     const lbl15 = document.getElementById('shugo-15-label');
     const box45 = document.getElementById('shugo-45-box');
     const lbl45 = document.getElementById('shugo-45-label');
-    const is15Active = m >= 15 && m < 18;
-    const is45Active = m >= 45 && m < 48;
-    const is15Next = m < 15 || m >= 48;
-    const is45Next = m >= 18 && m < 45;
+
+    const isEvenActive = isOpen && isEvenHour;
+    const isOddActive  = isOpen && !isEvenHour;
+    // 다음 이벤트: 현재 시가 짝수면 다음(홀수), 홀수면 다음(짝수)
+    const isEvenNext = !isOpen && !isEvenHour;
+    const isOddNext  = !isOpen && isEvenHour;
+
     if(box15) {
-      box15.style.borderColor = is15Active ? '#38bdf8' : is15Next ? 'var(--gold-d)' : 'var(--border)';
-      box15.style.background = is15Active ? 'rgba(56,189,248,.1)' : 'var(--surface)';
-      if(lbl15) lbl15.style.color = is15Active ? '#38bdf8' : is15Next ? 'var(--gold-l)' : 'var(--text)';
+      box15.style.borderColor = isEvenActive ? '#38bdf8' : isEvenNext ? 'var(--gold-d)' : 'var(--border)';
+      box15.style.background  = isEvenActive ? 'rgba(56,189,248,.1)' : 'var(--surface)';
+      if(lbl15) lbl15.style.color = isEvenActive ? '#38bdf8' : isEvenNext ? 'var(--gold-l)' : 'var(--text)';
     }
     if(box45) {
-      box45.style.borderColor = is45Active ? '#38bdf8' : is45Next ? 'var(--gold-d)' : 'var(--border)';
-      box45.style.background = is45Active ? 'rgba(56,189,248,.1)' : 'var(--surface)';
-      if(lbl45) lbl45.style.color = is45Active ? '#38bdf8' : is45Next ? 'var(--gold-l)' : 'var(--text)';
+      box45.style.borderColor = isOddActive ? '#38bdf8' : isOddNext ? 'var(--gold-d)' : 'var(--border)';
+      box45.style.background  = isOddActive ? 'rgba(56,189,248,.1)' : 'var(--surface)';
+      if(lbl45) lbl45.style.color = isOddActive ? '#38bdf8' : isOddNext ? 'var(--gold-l)' : 'var(--text)';
     }
   } catch(e) {}
 }
