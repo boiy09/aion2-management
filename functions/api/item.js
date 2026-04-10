@@ -14,7 +14,8 @@ export async function onRequest(context) {
 
   const id = sp.get('id') || '';
   const enchantLevel = sp.get('enchantLevel') || '0';
-  const serverId = sp.get('serverId') || '2001';
+  const rawServerId = sp.get('serverId') || '';
+  const serverId = /^\d+$/.test(rawServerId) ? rawServerId : '2001';
   const slotPos = sp.get('slotPos');
   const lang = sp.get('lang') || 'ko';
   const characterId = sp.get('characterId') ? decodeURIComponent(sp.get('characterId')) : null;
