@@ -1545,7 +1545,7 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '2.0.8';
+const BUILD_VERSION = '2.0.9';
 const BUILD_PATCHNOTE = {
   title: '아이온2 관리 도구 v2.0',
   content: '• 데바니온 노드판 보기 기능 추가 (보드 클릭 → 노드 그리드, 호버 툴팁)\n• 캐릭터 상세 정보 전반 개선'
@@ -4503,18 +4503,26 @@ function openDetail(m) {
   }).join('');
 
   // 랭킹
-  const rankHTML = (m.ranking||[]).map(r => `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;">
-      <div style="display:flex;align-items:center;gap:8px;">
-        <img src="${r.gradeIcon||''}" style="width:22px;height:22px;" onerror="this.style.display='none'">
-        <div><div style="font-size:13px;font-weight:600;">${r.rankingContentsName||''}</div>
-        <div style="font-size:11px;color:var(--muted);">${r.gradeName||''}</div></div>
+  const rankHTML = (m.ranking||[]).map(r => {
+    const icon = r.gradeIcon || '';
+    const iconHtml = icon
+      ? `<img src="${icon}" style="width:44px;height:44px;object-fit:contain;flex-shrink:0;" onerror="this.replaceWith(document.createTextNode(''))">`
+      : '';
+    return `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        ${iconHtml}
+        <div>
+          <div style="font-size:13px;font-weight:600;">${r.rankingContentsName||''}</div>
+          <div style="font-size:12px;color:var(--gold-l);font-weight:600;margin-top:2px;">${r.gradeName||''}</div>
+        </div>
       </div>
       <div style="text-align:right;">
-        <div style="font-size:15px;font-weight:700;color:var(--gold-l);">${(r.rank||0).toLocaleString()}위</div>
+        <div style="font-size:16px;font-weight:700;color:var(--gold-l);">${(r.rank||0).toLocaleString()}위</div>
         <div style="font-size:11px;color:var(--muted);">${(r.point||0).toLocaleString()}점</div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   // 스킬 — 타입별 그룹 분리
   const SKILL_TYPE_LABEL = {
@@ -5009,7 +5017,13 @@ function renderMembers() {
       <td style="white-space:nowrap;">${isSub ? '' : `<span class="rank ${rankCls(m.rank||'군단병')}">${rankLabel(m.rank||'군단병')}</span>`}</td>
       <td>${cpBar(m.combat_power)}</td>
       <td style="white-space:nowrap;">${m.item_level?(+m.item_level).toLocaleString():'—'}</td>
-      <td style="white-space:nowrap;">${(()=>{const r=(m.ranking||[]).find(r=>r.rankingContentsName&&r.rankingContentsName.includes('어비스'));return r?(r.gradeIcon?'<img src="'+r.gradeIcon+'" style="width:20px;height:20px;vertical-align:middle;margin-right:2px;">'+(r.gradeName||''):(r.gradeName||'')):'—';})()}</td>
+      <td style="white-space:nowrap;">${(()=>{
+        const r=(m.ranking||[]).find(r=>r.rankingContentsName&&r.rankingContentsName.includes('어비스'));
+        if(!r) return '—';
+        const name = r.gradeName||'';
+        if(!r.gradeIcon) return name||'—';
+        return '<img src="'+r.gradeIcon+'" style="width:22px;height:22px;vertical-align:middle;margin-right:3px;" onerror="this.style.display=\'none\'">'+name;
+      })()}</td>
       <td><div class="equip-list">${equips(m.equipment)}</div></td>
       <td style="white-space:nowrap;vertical-align:middle;">${syncBtn}${lastSync}</td>
       <td style="white-space:nowrap;vertical-align:middle;">

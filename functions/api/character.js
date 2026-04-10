@@ -190,7 +190,14 @@ export async function onRequest(context) {
     var itemLevel = itemLevelStat ? (itemLevelStat.value || 0) : 0;
     var arcanaList = equip.filter(function(e) { return (e.slotPosName||'').indexOf('Arcana') !== -1; }).map(mapEquip);
     var daevList   = (infoData && infoData.daevanion && infoData.daevanion.boardList) ? infoData.daevanion.boardList : [];
-    var rankList   = (infoData && infoData.ranking   && infoData.ranking.rankingList)   ? infoData.ranking.rankingList   : [];
+    var rankRaw    = (infoData && infoData.ranking) ? infoData.ranking : {};
+    var rankList   = rankRaw.rankingList || rankRaw.list || (Array.isArray(rankRaw) ? rankRaw : []);
+    // gradeIcon 상대 경로 → 절대 URL 변환
+    rankList = rankList.map(function(r) {
+      var icon = r.gradeIcon || r.gradeIconUrl || r.rankGradeIcon || r.tierIcon || '';
+      if (icon && !icon.startsWith('http')) icon = 'https://aion2.plaync.com' + icon;
+      return Object.assign({}, r, { gradeIcon: icon });
+    });
     var titleRaw       = (infoData && infoData.title) ? infoData.title : {};
     var titleList      = titleRaw.titleList      || [];
     var titleGroupList = titleRaw.titleGroupList || titleRaw.groupList || [];
