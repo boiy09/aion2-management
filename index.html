@@ -1482,7 +1482,7 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '2.0.4';
+const BUILD_VERSION = '2.0.5';
 const BUILD_PATCHNOTE = {
   title: '아이온2 관리 도구 v2.0',
   content: '• 데바니온 노드판 보기 기능 추가 (보드 클릭 → 노드 그리드, 호버 툴팁)\n• 캐릭터 상세 정보 전반 개선'
@@ -2133,7 +2133,7 @@ function openMyProfile() {
       <div style="flex:1;">
         <div style="font-size:20px;font-weight:700;">${currentUser.nickname}</div>
         <div style="font-size:12px;color:var(--muted);margin-top:3px;">${cls?`${CLS_ICON[cls]||''} ${cls} \u00b7 `:''}${m?.rank || currentUser.rank||'\uacc4\uae09 \uc5c6\uc74c'}</div>
-        ${m?.intro?`<div style="font-size:13px;color:var(--text);margin-top:6px;padding:8px;background:var(--card);border-radius:6px;">${m.intro}</div>`:''}
+        ${m?.intro?`<div style="font-size:13px;color:var(--text);margin-top:6px;padding:8px;background:var(--card);border-radius:6px;">${_escHtml(m.intro)}</div>`:''}
       </div>
       ${m?`<div style="display:flex;gap:10px;flex-shrink:0;">
         <div style="text-align:center;padding:8px 14px;background:var(--card);border:1px solid var(--border);border-radius:8px;">
@@ -2161,8 +2161,8 @@ function openMyProfile() {
       ${myRecruits.length ? myRecruits.map(r=>`
         <div style="padding:12px;background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;cursor:pointer;" onclick="closeModal('modal-myprofile');showTab('recruit');setTimeout(()=>openRecruit('${_escSQ(r.id)}'),300)">
           <div style="display:flex;justify-content:space-between;align-items:center;">
-            <div style="font-size:14px;font-weight:600;">${r.title}</div>
-            <span class="rc-tag tag-${r.type}" style="font-size:11px;">${r.type}</span>
+            <div style="font-size:14px;font-weight:600;">${_escHtml(r.title)}</div>
+            <span class="rc-tag tag-${r.type}" style="font-size:11px;">${_escHtml(r.type)}</span>
           </div>
           <div style="font-size:12px;color:var(--muted);margin-top:4px;">\uc2e0\uccad ${(r.applies||[]).length}\uba85 \u00b7 \ub313\uae00 ${(r.comments||[]).length}\uac1c</div>
         </div>`).join('') : '<div style="color:var(--muted);font-size:13px;padding:16px;text-align:center;">\uc791\uc131\ud55c \ubaa8\uc9d1\uae00\uc774 \uc5c6\uc5b4\uc694</div>'}
@@ -2172,8 +2172,8 @@ function openMyProfile() {
     <div id="my-applies" style="display:none;">
       ${myApplies.length ? myApplies.map(a=>`
         <div style="padding:12px;background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;cursor:pointer;" onclick="closeModal('modal-myprofile');showTab('recruit');setTimeout(()=>openRecruit('${_escSQ(a.recruitId)}'),300)">
-          <div style="font-size:14px;font-weight:600;">${a.recruitTitle}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px;">${a.time||''}</div>
+          <div style="font-size:14px;font-weight:600;">${_escHtml(a.recruitTitle)}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">${_escHtml(a.time||''||'')} </div>
         </div>`).join('') : '<div style="color:var(--muted);font-size:13px;padding:16px;text-align:center;">\uc2e0\uccad\ud55c \ubaa8\uc9d1\uc774 \uc5c6\uc5b4\uc694</div>'}
     </div>
 
@@ -2400,7 +2400,7 @@ function _csMiniCard(item) {
     +'<div style="flex:1;min-width:0;cursor:pointer;" onclick="csShowDetail(\''+_escSQ(item.charId)+'\',\''+_escSQ(item.serverId)+'\',\''+safeName+'\')">'
     +'<div style="display:flex;align-items:center;gap:4px;">'
     +(cls?'<span style="font-size:12px;flex-shrink:0;">'+(CLS_ICON[cls]||'')+'</span>':'')
-    +'<span style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+item.name+'</span>'
+    +'<span style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+_escHtml(item.name)+'</span>'
     +(srvNm?'<span style="font-size:10px;color:'+srvColor+';font-weight:600;flex-shrink:0;">'+srvNm+'</span>':'')
     +(cls?'<span style="font-size:10px;color:'+clsColor+';flex-shrink:0;">'+cls+'</span>':'')
     +'</div>'
@@ -2435,8 +2435,9 @@ function _csEnrichStored(list, storageKey, renderFn) {
         if(!storedImg || storedImg.startsWith('/')) all[idx].profile_img = freshImg;
         try { localStorage.setItem(storageKey, JSON.stringify(all)); } catch(e){}
         renderFn();
-      }).catch(function(e){
-          var cpEl = document.querySelector('.cs-mcp-'+cid.replace(/[^a-zA-Z0-9]/g,'_'));
+      }).catch(function(){
+          var cidSafe = String(item.charId||'').replace(/[^a-zA-Z0-9]/g,'_');
+          var cpEl = document.querySelector('.cs-mcp-'+cidSafe);
           if(cpEl) cpEl.style.display='none';
       });
   });
@@ -3637,7 +3638,7 @@ function scanLeaveMembers() {
 async function removeScanMember(idx) {
   const m = _scanLeftList[idx];
   if(!m) return;
-  if(!confirm(`'${m.nickname}'을(를) 제거하시겠어요?`)) return;
+  if(!confirm('\'' + m.nickname.replace(/'/g,"\\'") + '\'을(를) 제거하시겠어요?')) return;
   showActionLoading(m.nickname + ' 제거 중...');
   const { error } = await db.from('members').delete().eq('id', m.id);
   hideActionLoading();
@@ -4631,7 +4632,7 @@ function renderRecentRecruit() {
   if(!list.length) { el.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:12px">모집 공고가 없어요</div>`; return; }
   el.innerHTML = list.map(r=>`
     <div class="rc">
-      <div class="rc-head"><span class="rc-title">${r.title}</span><span class="rc-tag tag-${r.type}">${r.type}</span></div>
+      <div class="rc-head"><span class="rc-title">${_escHtml(r.title)}</span><span class="rc-tag tag-${r.type}">${_escHtml(r.type)}</span></div>
       <div class="rc-meta">${r.schedule||'일정 미정'} · 최소 ${r.min_cp||'제한 없음'}</div>
       <div class="rc-reqs">${(function(){
         var reqs=r.reqs||[]; if(!reqs.length) return '<span class="req-item">제한 없음</span>';
@@ -4647,11 +4648,11 @@ function renderRecentRecruit() {
       <div style="display:flex;align-items:center;gap:5px;padding:6px 0;border-top:1px solid var(--border);margin-top:6px;flex-wrap:wrap;">${(function(){
         var applies=r.applies||[];
         if(!applies.length) return '<span style="font-size:11px;color:var(--muted);">신청자 없음</span>';
-        var avatars=applies.slice(0,6).map(function(a){var mem=members.find(function(m){return m.nickname===a.nickname;});var cls=mem?(CLASS_MAP[mem.class]||mem.class||''):'';return(mem&&mem.profile_img)?'<img src="'+mem.profile_img+'" title="'+a.nickname+'" style="width:22px;height:22px;border-radius:50%;object-fit:cover;border:1px solid var(--border);">'  :'<span title="'+a.nickname+'" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--surface);border:1px solid var(--border);font-size:10px;">'+(CLS_ICON[cls]||'👤')+'</span>';}).join('');
+        var avatars=applies.slice(0,6).map(function(a){var mem=members.find(function(m){return m.nickname===a.nickname;});var cls=mem?(CLASS_MAP[mem.class]||mem.class||''):'';return(mem&&mem.profile_img)?'<img src="'+mem.profile_img+'" title="'+_escHtml(a.nickname)+'" style="width:22px;height:22px;border-radius:50%;object-fit:cover;border:1px solid var(--border);">'  :'<span title="'+_escHtml(a.nickname)+'" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--surface);border:1px solid var(--border);font-size:10px;">'+(CLS_ICON[cls]||'👤')+'</span>';}).join('');
         return '<span style="font-size:11px;color:var(--muted);">신청 '+applies.length+'명</span>'+avatars+(applies.length>6?'<span style="font-size:11px;color:var(--muted);">+'+(applies.length-6)+'</span>':'');
       })()}</div>
       <div class="rc-foot">
-        <span class="rc-author">by ${r.author}</span>
+        <span class="rc-author">by ${_escHtml(r.author)}</span>
         <div style="display:flex;align-items:center;gap:8px">
           <span class="${r.slots>0?'slots-open':'slots-full'}">${r.slots>0?'모집중 '+r.slots+'자리':'마감'}</span>
           <button class="btn btn-sm" onclick="openRecruit('${_escSQ(r.id)}')">상세보기</button>
@@ -4805,7 +4806,7 @@ function renderRecruit() {
   document.getElementById('recruit-grid').innerHTML = filtered.length
     ? filtered.map(r=>`
         <div class="rc">
-          <div class="rc-head"><span class="rc-title">${r.title}</span><span class="rc-tag tag-${r.type}">${r.type}</span></div>
+          <div class="rc-head"><span class="rc-title">${_escHtml(r.title)}</span><span class="rc-tag tag-${r.type}">${_escHtml(r.type)}</span></div>
           <div class="rc-meta">${r.schedule||'일정 미정'} · 최소 ${r.min_cp||'제한 없음'}</div>
           <div class="rc-reqs">${(function(){
             var reqs = r.reqs||[];
@@ -4841,13 +4842,13 @@ function renderRecruit() {
               var mem = members.find(function(m){ return m.nickname===a.nickname; });
               var cls = mem?(CLASS_MAP[mem.class]||mem.class||''):'';
               return (mem&&mem.profile_img)
-                ? '<img src="'+mem.profile_img+'" title="'+a.nickname+'" style="width:22px;height:22px;border-radius:50%;object-fit:cover;border:1px solid var(--border);">'
-                : '<span title="'+a.nickname+'" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--surface);border:1px solid var(--border);font-size:10px;">'+(CLS_ICON[cls]||'👤')+'</span>';
+                ? '<img src="'+mem.profile_img+'" title="'+_escHtml(a.nickname)+'" style="width:22px;height:22px;border-radius:50%;object-fit:cover;border:1px solid var(--border);">'
+                : '<span title="'+_escHtml(a.nickname)+'" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--surface);border:1px solid var(--border);font-size:10px;">'+(CLS_ICON[cls]||'👤')+'</span>';
             }).join('');
             return '<span style="font-size:11px;color:var(--muted);">신청 '+applies.length+'명</span>'+avatars+(applies.length>6?'<span style="font-size:11px;color:var(--muted);">+'+( applies.length-6)+'</span>':'');
           })()}</div>
           <div class="rc-foot">
-            <span class="rc-author">by ${r.author}</span>
+            <span class="rc-author">by ${_escHtml(r.author)}</span>
             <div style="display:flex;align-items:center;gap:8px">
               <span class="${r.slots>0?'slots-open':'slots-full'}">${r.slots>0?'모집중 '+r.slots+'자리':'마감'}</span>
               <button class="btn btn-sm" onclick="openRecruit('${_escSQ(r.id)}')">상세보기</button>
@@ -5071,7 +5072,7 @@ function renderCommentList(recruitId) {
         <span style="font-size:11px;color:var(--muted);flex-shrink:0;">${c.time||''}</span>
         ${mem?`<button onmousedown="event.preventDefault();" onclick="openDetailById('${_escSQ(mem.id)}')" style="font-size:11px;padding:4px 10px;background:var(--gold-d);border:none;border-radius:4px;cursor:pointer;color:#fff;font-weight:600;flex-shrink:0;">상세</button>`:''}
       </div>
-      <div style="font-size:13px;line-height:1.5;padding-left:36px;">${c.text}</div>
+      <div style="font-size:13px;line-height:1.5;padding-left:36px;">${_escHtml(c.text)}</div>
     </div>`;
   }).join('') || '<div style="font-size:12px;color:var(--muted);">댓글이 없어요</div>';
 }
