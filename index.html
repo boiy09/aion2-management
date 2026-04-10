@@ -772,9 +772,17 @@
         <div id="bulk-preview" style="margin-top:10px;max-height:240px;overflow-y:auto;font-size:12px;"></div>
       </div>
     </div>
-  </div>
 
-  <!-- 파티 모집 -->
+    <!-- 관리자 전용: 중복 멤버 정리 -->
+    <div id="dedup-section" style="display:none;margin-top:12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:0;">
+        <span style="font-size:12px;color:var(--gold);font-weight:600;">중복 멤버 정리 (관리자 전용)</span>
+        <span style="font-size:11px;color:var(--muted);">같은 닉네임으로 중복 등록된 항목을 감지해 정리합니다.</span>
+        <button class="btn btn-sm" style="margin-left:auto;white-space:nowrap;" onclick="scanDuplicates()">감지 시작</button>
+      </div>
+      <div id="dedup-result" style="margin-top:10px;font-size:12px;"></div>
+    </div>
+  </div>
   <div id="tab-recruit" class="tab-content">
     <div class="recruit-filter-top">
       <div class="filter-row" style="margin:0;flex:1;">
@@ -1545,7 +1553,7 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '2.1.1';
+const BUILD_VERSION = '2.1.2';
 const BUILD_PATCHNOTE = {
   title: '아이온2 관리 도구 v2.0',
   content: '• 데바니온 노드판 보기 기능 추가 (보드 클릭 → 노드 그리드, 호버 툴팁)\n• 캐릭터 상세 정보 전반 개선'
@@ -4018,6 +4026,77 @@ async function startBulkRegister() {
   if (res.data) { members = res.data; renderAll(); }
 }
 
+// ─── 중복 멤버 정리 ────────
+async function scanDuplicates() {
+  if (!isAdmin()) { toast('관리자만 사용할 수 있어요'); return; }
+  var resultEl = document.getElementById('dedup-result');
+  resultEl.innerHTML = '<span style="color:var(--muted)">스캔 중...</span>';
+
+  // DB에서 전체 멤버 다시 로드 (최신 상태)
+  var res = await db.from('members').select('id,nickname,server,combat_power,last_synced,is_main,rank').order('nickname');
+  if (res.error) { resultEl.innerHTML = '<span style="color:#f44">로드 실패: ' + _escHtml(res.error.message) + '</span>'; return; }
+  var all = res.data || [];
+
+  // nickname 기준으로 그룹핑
+  var groups = {};
+  all.forEach(function(m) {
+    var key = m.nickname;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(m);
+  });
+
+  var dupGroups = Object.values(groups).filter(function(g) { return g.length > 1; });
+
+  if (!dupGroups.length) {
+    resultEl.innerHTML = '<span style="color:var(--muted)">중복 항목 없음</span>';
+    return;
+  }
+
+  var html = '<div style="margin-bottom:6px;color:var(--gold);font-weight:600;">' + dupGroups.length + '개 닉네임에 중복 항목 발견</div>';
+  dupGroups.forEach(function(group) {
+    var nick = _escHtml(group[0].nickname);
+    html += '<div style="margin-bottom:14px;border:1px solid var(--border);border-radius:6px;padding:10px;">';
+    html += '<div style="font-weight:600;margin-bottom:6px;color:var(--text);">' + nick + ' (' + group.length + '개)</div>';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:11px;">';
+    html += '<tr style="color:var(--muted);border-bottom:1px solid var(--border);"><th style="text-align:left;padding:4px 6px;">서버</th><th style="text-align:left;padding:4px 6px;">등급</th><th style="text-align:right;padding:4px 6px;">전투력</th><th style="text-align:left;padding:4px 6px;">마지막 갱신</th><th style="padding:4px 6px;"></th></tr>';
+    var allIds = group.map(function(m){ return _escSQ(m.id); }).join("','");
+    group.forEach(function(m) {
+      var keepId = _escSQ(m.id);
+      var syncedStr = m.last_synced ? m.last_synced.slice(0,10) : '-';
+      html += '<tr style="border-bottom:1px solid var(--border);">';
+      html += '<td style="padding:4px 6px;">' + _escHtml(m.server||'-') + '</td>';
+      html += '<td style="padding:4px 6px;">' + _escHtml(m.rank||'-') + '</td>';
+      html += '<td style="padding:4px 6px;text-align:right;">' + (m.combat_power||0).toLocaleString() + '</td>';
+      html += '<td style="padding:4px 6px;">' + _escHtml(syncedStr) + '</td>';
+      html += '<td style="padding:4px 6px;"><button class="btn btn-sm" style="font-size:10px;padding:2px 8px;" onclick="keepOnlyMember(\'' + keepId + '\',[\'' + allIds + '\'])">이것만 남기기</button></td>';
+      html += '</tr>';
+    });
+    html += '</table></div>';
+  });
+  resultEl.innerHTML = html;
+}
+
+async function keepOnlyMember(keepId, allIds) {
+  if (!isAdmin()) return;
+  var deleteIds = allIds.filter(function(id){ return id !== keepId; });
+  if (!deleteIds.length) return;
+  var confirmed = confirm('"' + keepId + '"만 남기고 ' + deleteIds.length + '개 항목을 삭제할까요?');
+  if (!confirmed) return;
+
+  for (var i = 0; i < deleteIds.length; i++) {
+    await db.from('members').delete().eq('id', deleteIds[i]);
+  }
+  toast('정리 완료! ' + deleteIds.length + '개 삭제됨');
+
+  // 멤버 배열 갱신
+  try { localStorage.removeItem(_CACHE_KEY); } catch(e) {}
+  var res = await db.from('members').select(_MEMBER_COLS).order('combat_power', { ascending: false });
+  if (res.data) { members = res.data; renderAll(); }
+
+  // 결과 패널 새로고침
+  scanDuplicates();
+}
+
 // ─── 닉네임 자동 동기화 (백그라운드) ────────
 // 페이지 로드 후 1회 실행: character_id가 있는 멤버의 현재 닉네임을 NC에서 조회해
 // DB와 다르면 조용히 반영 (토스트/알림 없음)
@@ -5524,6 +5603,7 @@ function showTab(id) {
   if(id==='members') {
     const ls=document.getElementById('leave-scan-section'); if(ls) ls.style.display=isAdmin()?'':'none';
     const bs=document.getElementById('bulk-register-section'); if(bs) bs.style.display=isAdmin()?'':'none';
+    const ds=document.getElementById('dedup-section'); if(ds) ds.style.display=isAdmin()?'':'none';
   }
   try { localStorage.setItem('activeTab', id); } catch(e) {}
 }
