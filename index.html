@@ -1482,7 +1482,7 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '2.0.3';
+const BUILD_VERSION = '2.0.4';
 const BUILD_PATCHNOTE = {
   title: '아이온2 관리 도구 v2.0',
   content: '• 데바니온 노드판 보기 기능 추가 (보드 클릭 → 노드 그리드, 호버 툴팁)\n• 캐릭터 상세 정보 전반 개선'
@@ -2147,7 +2147,7 @@ function openMyProfile() {
       </div>`:''}
     </div>
 
-    ${m?`<button class="btn btn-primary btn-sm" style="margin-bottom:16px;" onclick="closeModal('modal-myprofile');openDetailById('${m.id}')">\uc0c1\uc138 \uc2a4\ud399 \ubcf4\uae30 \u2192</button>`:''}
+    ${m?`<button class="btn btn-primary btn-sm" style="margin-bottom:16px;" onclick="closeModal('modal-myprofile');openDetailById('${_escSQ(m.id)}')">\uc0c1\uc138 \uc2a4\ud399 \ubcf4\uae30 \u2192</button>`:''}
 
     <!-- \ud0ed -->
     <div style="display:flex;gap:0;margin-bottom:14px;border-bottom:2px solid var(--border);">
@@ -2159,7 +2159,7 @@ function openMyProfile() {
     <!-- \ubaa8\uc9d1\uae00 \ud0ed -->
     <div id="my-recruits">
       ${myRecruits.length ? myRecruits.map(r=>`
-        <div style="padding:12px;background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;cursor:pointer;" onclick="closeModal('modal-myprofile');showTab('recruit');setTimeout(()=>openRecruit('${r.id}'),300)">
+        <div style="padding:12px;background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;cursor:pointer;" onclick="closeModal('modal-myprofile');showTab('recruit');setTimeout(()=>openRecruit('${_escSQ(r.id)}'),300)">
           <div style="display:flex;justify-content:space-between;align-items:center;">
             <div style="font-size:14px;font-weight:600;">${r.title}</div>
             <span class="rc-tag tag-${r.type}" style="font-size:11px;">${r.type}</span>
@@ -2171,7 +2171,7 @@ function openMyProfile() {
     <!-- \uc2e0\uccad \ud0ed -->
     <div id="my-applies" style="display:none;">
       ${myApplies.length ? myApplies.map(a=>`
-        <div style="padding:12px;background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;cursor:pointer;" onclick="closeModal('modal-myprofile');showTab('recruit');setTimeout(()=>openRecruit('${a.recruitId}'),300)">
+        <div style="padding:12px;background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;cursor:pointer;" onclick="closeModal('modal-myprofile');showTab('recruit');setTimeout(()=>openRecruit('${_escSQ(a.recruitId)}'),300)">
           <div style="font-size:14px;font-weight:600;">${a.recruitTitle}</div>
           <div style="font-size:11px;color:var(--muted);margin-top:4px;">${a.time||''}</div>
         </div>`).join('') : '<div style="color:var(--muted);font-size:13px;padding:16px;text-align:center;">\uc2e0\uccad\ud55c \ubaa8\uc9d1\uc774 \uc5c6\uc5b4\uc694</div>'}
@@ -2180,7 +2180,7 @@ function openMyProfile() {
     <!-- \ub313\uae00 \ud0ed -->
     <div id="my-comments" style="display:none;">
       ${myComments.length ? myComments.map(c=>`
-        <div style="padding:12px;background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;cursor:pointer;" onclick="closeModal('modal-myprofile');showTab('recruit');setTimeout(()=>openRecruit('${c.recruitId}'),300)">
+        <div style="padding:12px;background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;cursor:pointer;" onclick="closeModal('modal-myprofile');showTab('recruit');setTimeout(()=>openRecruit('${_escSQ(c.recruitId)}'),300)">
           <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">${c.recruitTitle}</div>
           <div style="font-size:13px;">${c.text}</div>
           <div style="font-size:11px;color:var(--muted);margin-top:4px;">${c.time||''}</div>
@@ -2385,9 +2385,9 @@ function _csMiniCard(item) {
   var il       = +ilRaw || 0;
   var hasCpData = (cpRaw !== undefined && cpRaw !== null);
   var cidSafe  = String(item.charId||'').replace(/[^a-zA-Z0-9]/g, '_');
-  var safeImg  = (item.profile_img||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-  var safeSrv  = srvNm.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-  var safeName = item.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  var safeImg  = _escSQ(item.profile_img||'');
+  var safeSrv  = _escSQ(srvNm);
+  var safeName = _escSQ(item.name);
 
   var cpLine = cp
     ? '<span style="font-size:11px;color:var(--gold-l);font-weight:600;">'+(+cp).toLocaleString()+' 전투력'
@@ -2397,7 +2397,7 @@ function _csMiniCard(item) {
 
   return '<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:4px;">'
     +_csAvatar(item.profile_img, cls, 32)
-    +'<div style="flex:1;min-width:0;cursor:pointer;" onclick="csShowDetail(\''+item.charId+'\',\''+item.serverId+'\',\''+safeName+'\')">'
+    +'<div style="flex:1;min-width:0;cursor:pointer;" onclick="csShowDetail(\''+_escSQ(item.charId)+'\',\''+_escSQ(item.serverId)+'\',\''+safeName+'\')">'
     +'<div style="display:flex;align-items:center;gap:4px;">'
     +(cls?'<span style="font-size:12px;flex-shrink:0;">'+(CLS_ICON[cls]||'')+'</span>':'')
     +'<span style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+item.name+'</span>'
@@ -2406,10 +2406,10 @@ function _csMiniCard(item) {
     +'</div>'
     +(cpLine?'<div style="margin-top:1px;">'+cpLine+'</div>':'')
     +'</div>'
-    +'<button class="cs-star-'+cidSafe+'" onclick="event.stopPropagation();csToggleFav(\''+safeName+'\',\''+item.charId+'\',\''+item.serverId+'\',\''+safeImg+'\',\''+item.cls+'\',\''+safeSrv+'\',\''+cp+'\',\''+il+'\')" style="'+(isFav?'background:rgba(255,180,0,0.18);border:1px solid rgba(255,180,0,0.5);':'background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);')+'border-radius:7px;font-size:14px;cursor:pointer;flex-shrink:0;padding:3px 5px;line-height:1;">'+(isFav?'⭐':'☆')+'</button>'
+    +'<button class="cs-star-'+cidSafe+'" onclick="event.stopPropagation();csToggleFav(\''+safeName+'\',\''+_escSQ(item.charId)+'\',\''+_escSQ(item.serverId)+'\',\''+safeImg+'\',\''+_escSQ(item.cls||'')+'\',\''+safeSrv+'\',\''+cp+'\',\''+il+'\')" style="'+(isFav?'background:rgba(255,180,0,0.18);border:1px solid rgba(255,180,0,0.5);':'background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);')+'border-radius:7px;font-size:14px;cursor:pointer;flex-shrink:0;padding:3px 5px;line-height:1;">'+(isFav?'⭐':'☆')+'</button>'
     +(item._isRecent
-      ? '<button onclick="event.stopPropagation();csShowDetail(\''+item.charId+'\',\''+item.serverId+'\',\''+safeName+'\')" style="font-size:11px;padding:3px 8px;background:var(--gold-d);border:none;border-radius:6px;cursor:pointer;color:#fff;font-weight:600;flex-shrink:0;">상세</button>'
-        +'<button onclick="event.stopPropagation();csRemoveRecent(\''+item.charId+'\')" style="background:rgba(255,80,80,0.12);border:1px solid rgba(255,80,80,0.35);border-radius:7px;color:#e06060;cursor:pointer;padding:3px 6px;font-size:12px;font-weight:700;flex-shrink:0;line-height:1;">✕</button>'
+      ? '<button onclick="event.stopPropagation();csShowDetail(\''+_escSQ(item.charId)+'\',\''+_escSQ(item.serverId)+'\',\''+safeName+'\')" style="font-size:11px;padding:3px 8px;background:var(--gold-d);border:none;border-radius:6px;cursor:pointer;color:#fff;font-weight:600;flex-shrink:0;">상세</button>'
+        +'<button onclick="event.stopPropagation();csRemoveRecent(\''+_escSQ(item.charId)+'\')\" style="background:rgba(255,80,80,0.12);border:1px solid rgba(255,80,80,0.35);border-radius:7px;color:#e06060;cursor:pointer;padding:3px 6px;font-size:12px;font-weight:700;flex-shrink:0;line-height:1;">✕</button>'
       : '')
     +'</div>';
 }
@@ -2435,7 +2435,10 @@ function _csEnrichStored(list, storageKey, renderFn) {
         if(!storedImg || storedImg.startsWith('/')) all[idx].profile_img = freshImg;
         try { localStorage.setItem(storageKey, JSON.stringify(all)); } catch(e){}
         renderFn();
-      }).catch(function(){});
+      }).catch(function(e){
+          var cpEl = document.querySelector('.cs-mcp-'+cid.replace(/[^a-zA-Z0-9]/g,'_'));
+          if(cpEl) cpEl.style.display='none';
+      });
   });
 }
 
@@ -2482,9 +2485,9 @@ function _csResultCard(c) {
   var cls0     = CLASS_MAP[c.className||c.class||''] || c.className || c.class || '';
   var cp0      = c.combatPower || c.combat_power || 0;
   var il0      = c.itemLevel   || c.item_level   || 0;
-  var safeName = c.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-  var safeImg  = img.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-  var safeSrv  = srvNm.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  var safeName = _escSQ(c.name);
+  var safeImg  = _escSQ(img);
+  var safeSrv  = _escSQ(srvNm);
   // characterId에 %,= 등 CSS 셀렉터 불가 문자 포함 → 안전한 클래스명으로 치환
   var cidSafe  = cid.replace(/[^a-zA-Z0-9]/g, '_');
 
@@ -2514,9 +2517,9 @@ function _csResultCard(c) {
     +'</div>'
     +cpHtml
     +'</div>'
-    +'<button class="cs-star-'+cidSafe+'" onclick="csToggleFav(\''+safeName+'\',\''+cid+'\',\''+sid+'\',\''+safeImg+'\',\''+cls0+'\',\''+safeSrv+'\')" '
+    +'<button class="cs-star-'+cidSafe+'" onclick="csToggleFav(\''+safeName+'\',\''+_escSQ(cid)+'\',\''+_escSQ(sid)+'\',\''+safeImg+'\',\''+_escSQ(cls0)+'\',\''+safeSrv+'\')" '
     +'style="'+favStyle+'border-radius:7px;font-size:14px;cursor:pointer;flex-shrink:0;padding:3px 5px;line-height:1;">'+(isFav?'⭐':'☆')+'</button>'
-    +'<button onclick="csShowDetail(\''+cid+'\',\''+sid+'\',\''+safeName+'\')" '
+    +'<button onclick="csShowDetail(\''+_escSQ(cid)+'\',\''+_escSQ(sid)+'\',\''+safeName+'\')" '
     +'style="font-size:11px;padding:3px 10px;background:var(--gold-d);border:none;border-radius:6px;cursor:pointer;color:#fff;font-weight:600;flex-shrink:0;">상세</button>'
     +'</div>';
 }
@@ -2884,11 +2887,12 @@ function initDb() {
         var old = members.find(function(x){ return x.id === m.id; });
         if(old && old.equipment) m.equipment = old.equipment;
       });
-      // 새 공지 팝업 감지
+      // 새 공지 팝업 감지 (중복 방지: _shownNoticeIds Set 공유)
       if(window._cachedNotices && window._cachedNotices.length) {
-        var knownIds = window._cachedNotices.map(function(n){ return n.id; });
-        freshNotices.filter(function(n){ return !knownIds.includes(n.id); })
+        if(!window._shownNoticeIds) window._shownNoticeIds = new Set(window._cachedNotices.map(function(n){ return n.id; }));
+        freshNotices.filter(function(n){ return !window._shownNoticeIds.has(n.id); })
           .forEach(function(n){
+            window._shownNoticeIds.add(n.id);
             showNoticeAlert(n);
             var label = n.type === '공지사항' ? '📢 새 공지사항' : '🛠 새 패치노트';
             toast(label + ': ' + n.title);
@@ -3001,8 +3005,10 @@ function initDb() {
 
     // Page Visibility API: 탭 포커스 시에만 폴링
     var _POLL_MS = 3 * 60 * 1000; // 3분
+    var _startPollingLock = false;
     function _startPolling() {
-      if(window._pollTimer) return;
+      if(window._pollTimer || _startPollingLock) return;
+      _startPollingLock = true;
       window._pollTimer = setInterval(function() {
         if(!document.hidden) _bgRefresh();
       }, _POLL_MS);
@@ -3026,9 +3032,10 @@ function initDb() {
           .then(function({ data, error }) {
             if(error || !data) return;
             if(window._cachedNotices && window._cachedNotices.length) {
-              var knownIds = window._cachedNotices.map(function(n){ return n.id; });
-              data.filter(function(n){ return !knownIds.includes(n.id); })
+              if(!window._shownNoticeIds) window._shownNoticeIds = new Set(window._cachedNotices.map(function(n){ return n.id; }));
+              data.filter(function(n){ return !window._shownNoticeIds.has(n.id); })
                 .forEach(function(n){
+                  window._shownNoticeIds.add(n.id);
                   showNoticeAlert(n);
                   toast((n.type === '공지사항' ? '📢 새 공지사항' : '🛠 새 패치노트') + ': ' + n.title);
                 });
@@ -3042,6 +3049,7 @@ function initDb() {
       if(window._recruitPollTimer){ clearInterval(window._recruitPollTimer); window._recruitPollTimer=null; }
       if(window._noticePollTimer){ clearInterval(window._noticePollTimer); window._noticePollTimer=null; }
       if(window._warPollTimer){ clearInterval(window._warPollTimer); window._warPollTimer=null; }
+      _startPollingLock = false;
     }
     document.addEventListener('visibilitychange', function() {
       if(document.hidden) {
@@ -3617,7 +3625,7 @@ function scanLeaveMembers() {
       <div id="scan-row-${i}" style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);">
         <span style="flex:1;font-size:13px;">${m.nickname}</span>
         <span style="font-size:11px;color:var(--muted);">레기온: <b style="color:var(--red);">${m.currentGuild}</b></span>
-        ${m.charId ? `<button class="btn btn-sm" style="background:var(--gold-d);border:none;color:#fff;" onclick="csShowDetail('${m.charId}','${m.serverId}','${m.nickname.replace(/'/g,"\\'")}')" >상세</button>` : ''}
+        ${m.charId ? `<button class="btn btn-sm" style="background:var(--gold-d);border:none;color:#fff;" onclick="csShowDetail('${_escSQ(m.charId)}','${_escSQ(m.serverId)}','${_escSQ(m.nickname)}')" >상세</button>` : ''}
         <button class="btn btn-sm" style="border-color:var(--red);color:var(--red);" onclick="removeScanMember(${i})">제거</button>
       </div>`).join('')}
     <div style="margin-top:10px;">
@@ -4646,7 +4654,7 @@ function renderRecentRecruit() {
         <span class="rc-author">by ${r.author}</span>
         <div style="display:flex;align-items:center;gap:8px">
           <span class="${r.slots>0?'slots-open':'slots-full'}">${r.slots>0?'모집중 '+r.slots+'자리':'마감'}</span>
-          <button class="btn btn-sm" onclick="openRecruit('${r.id}')">상세보기</button>
+          <button class="btn btn-sm" onclick="openRecruit('${_escSQ(r.id)}')">상세보기</button>
         </div>
       </div>
     </div>`).join('');
@@ -4692,7 +4700,7 @@ function renderMembers() {
     const isSyncing = syncingIds.has(m.id);
     const syncBtn = isSyncing
       ? `<button class="btn btn-sm" disabled><span class="spinner"></span>갱신 중</button>`
-      : `<button class="btn btn-sm" onclick="syncMember('${m.id}','${m.nickname}','${m.server_name||m.server||'all'}')">갱신</button>`;
+      : `<button class="btn btn-sm" onclick="syncMember('${_escSQ(m.id)}','${_escSQ(m.nickname)}','${_escSQ(m.server_name||m.server||'all')}')">갱신</button>`;
     const lastSync = m.last_synced ? `<span style="font-size:10px;color:var(--muted);margin-left:6px;white-space:nowrap;">${fmtTime(m.last_synced)}</span>` : '';
     const subMark = isSub ? `<span style="font-size:10px;color:var(--muted);margin-left:4px;border:1px solid var(--border);border-radius:3px;padding:1px 4px;">부캐</span>` : '';
     const prefix = isSub ? '└ ' : '';
@@ -4707,8 +4715,8 @@ function renderMembers() {
       <td><div class="equip-list">${equips(m.equipment)}</div></td>
       <td style="white-space:nowrap;vertical-align:middle;">${syncBtn}${lastSync}</td>
       <td style="white-space:nowrap;vertical-align:middle;">
-        <button class="btn btn-sm" onclick="openDetailById('${mId}')" style="font-size:11px;">상세</button>
-        <button class="btn btn-sm" onclick="openEdit('${m.id}','${m.rank||'군단병'}',${_isSub(m)?'false':'true'})">관리</button>
+        <button class="btn btn-sm" onclick="openDetailById('${_escSQ(mId)}')" style="font-size:11px;">상세</button>
+        <button class="btn btn-sm" onclick="openEdit('${_escSQ(m.id)}','${_escSQ(m.rank||'군단병')}',${_isSub(m)?'false':'true'})">관리</button>
       </td>
     </tr>`;
   };
@@ -4760,7 +4768,7 @@ function renderMembers() {
       mains.forEach(main => {
         const mainSubs = subs.filter(s => s.player_id === main.nickname);
         const subToggle = mainSubs.length > 0
-          ? `<div style="margin-top:3px;"><span id="sub-toggle-${main.id}" onclick="toggleSubs('${main.id}')" style="font-size:11px;color:var(--gold);cursor:pointer;user-select:none;">▶ 부캐 보기 (${mainSubs.length})</span></div>`
+          ? `<div style="margin-top:3px;"><span id="sub-toggle-${main.id}" onclick="toggleSubs('${_escSQ(main.id)}')" style="font-size:11px;color:var(--gold);cursor:pointer;user-select:none;">▶ 부캐 보기 (${mainSubs.length})</span></div>`
           : '';
         rows += rowHTML(main, false, subToggle);
         mainSubs.forEach(s => {
@@ -4842,7 +4850,7 @@ function renderRecruit() {
             <span class="rc-author">by ${r.author}</span>
             <div style="display:flex;align-items:center;gap:8px">
               <span class="${r.slots>0?'slots-open':'slots-full'}">${r.slots>0?'모집중 '+r.slots+'자리':'마감'}</span>
-              <button class="btn btn-sm" onclick="openRecruit('${r.id}')">상세보기</button>
+              <button class="btn btn-sm" onclick="openRecruit('${_escSQ(r.id)}')">상세보기</button>
             </div>
           </div>
         </div>`).join('')
@@ -5033,7 +5041,7 @@ function renderApplyList(recruitId) {
             ${cp?`<div style="font-size:11px;color:var(--muted);">${(+cp).toLocaleString()} 전투력</div>`:''}
           </div>
           <span style="font-size:11px;color:var(--muted);flex-shrink:0;">${a.time||''}</span>
-          ${mem?`<button onmousedown="event.preventDefault();" onclick="openDetailById('${mem.id}')" style="font-size:11px;padding:3px 8px;background:var(--gold-d);border:none;border-radius:4px;cursor:pointer;color:#fff;font-weight:600;flex-shrink:0;">상세</button>`:''}
+          ${mem?`<button onmousedown="event.preventDefault();" onclick="openDetailById('${_escSQ(mem.id)}')" style="font-size:11px;padding:3px 8px;background:var(--gold-d);border:none;border-radius:4px;cursor:pointer;color:#fff;font-weight:600;flex-shrink:0;">상세</button>`:''}
         </div>`;
       }).join('')
     : '<div style="font-size:12px;color:var(--muted);">신청자가 없어요</div>';
@@ -5061,7 +5069,7 @@ function renderCommentList(recruitId) {
           </div>
         </div>
         <span style="font-size:11px;color:var(--muted);flex-shrink:0;">${c.time||''}</span>
-        ${mem?`<button onmousedown="event.preventDefault();" onclick="openDetailById('${mem.id}')" style="font-size:11px;padding:4px 10px;background:var(--gold-d);border:none;border-radius:4px;cursor:pointer;color:#fff;font-weight:600;flex-shrink:0;">상세</button>`:''}
+        ${mem?`<button onmousedown="event.preventDefault();" onclick="openDetailById('${_escSQ(mem.id)}')" style="font-size:11px;padding:4px 10px;background:var(--gold-d);border:none;border-radius:4px;cursor:pointer;color:#fff;font-weight:600;flex-shrink:0;">상세</button>`:''}
       </div>
       <div style="font-size:13px;line-height:1.5;padding-left:36px;">${c.text}</div>
     </div>`;

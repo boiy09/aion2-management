@@ -34,7 +34,7 @@ export async function onRequest(context) {
       || (Array.isArray(data) ? data : null) || [];
 
     if (!Array.isArray(rawList) || rawList.length === 0) {
-      throw new Error('빈 목록: ' + JSON.stringify(Object.keys(data || {})));
+      throw new Error('빈 목록');
     }
 
     const notices = rawList.slice(0, 15).map(item => {
