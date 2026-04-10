@@ -1545,7 +1545,7 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '2.1.0';
+const BUILD_VERSION = '2.1.1';
 const BUILD_PATCHNOTE = {
   title: '아이온2 관리 도구 v2.0',
   content: '• 데바니온 노드판 보기 기능 추가 (보드 클릭 → 노드 그리드, 호버 툴팁)\n• 캐릭터 상세 정보 전반 개선'
@@ -2898,7 +2898,7 @@ function initDb() {
       checkVersion();
       if(!window._versionPollingStarted) {
         window._versionPollingStarted = true;
-        setInterval(checkVersion, 5000);
+        setInterval(checkVersion, 5 * 60 * 1000); // 5분마다 버전 확인
       }
       // config 변경도 60초 폴링으로 처리 (Realtime 채널 제거)
       migrateRanks();
@@ -5933,6 +5933,8 @@ function toggleShugoTimer() {
 const RIFT_HOURS = [2, 5, 8, 11, 14, 17, 20, 23];
 const RIFT_OPEN_MIN = 10;   // 10분간 입장
 const SHUGO_OPEN_SEC = 180; // 3분간 입장
+// TTS 중복 발화 방지 플래그 (타이머 drift 대비)
+var _riftSpokenH = -1, _shugoSpokenH = -1;
 
 function _fmtMs(ms) {
   if(ms <= 0) return '00:00:00';
@@ -5952,8 +5954,10 @@ function updateRiftDisplay() {
     const h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
     const isOpen = RIFT_HOURS.includes(h) && m < RIFT_OPEN_MIN;
 
-    // 정각 오픈 시 알람
-    if(s === 0 && m === 0 && RIFT_HOURS.includes(h)) speakRift();
+    // 정각 오픈 시 알람 (시간당 1회만)
+    if(s === 0 && m === 0 && RIFT_HOURS.includes(h) && _riftSpokenH !== h) {
+      _riftSpokenH = h; speakRift();
+    }
 
     // 다음 오픈 시간 계산
     let nextH = RIFT_HOURS.find(rh => rh > h || (rh === h && m < RIFT_OPEN_MIN));
@@ -6011,8 +6015,10 @@ function updateShugoFestaDisplay() {
       ? (SHUGO_OPEN_SEC - totalSec) * 1000
       : (60 * 60 - totalSec) * 1000;
 
-    // 매 정각 TTS 알림
-    if(s === 0 && m === 0) speakShugo();
+    // 매 정각 TTS 알림 (시간당 1회만)
+    if(s === 0 && m === 0 && _shugoSpokenH !== h) {
+      _shugoSpokenH = h; speakShugo();
+    }
 
     const timerEl = document.getElementById('shugo-festa-timer');
     if(timerEl) { timerEl.textContent = _fmtMmSs(remainMs); timerEl.style.color = isOpen ? '#00c88a' : 'var(--gold-l)'; }

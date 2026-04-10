@@ -56,28 +56,25 @@ export async function onRequest(context) {
       }
       // characterId: 검색 API가 %3D 형태로 반환하므로 먼저 decode 후 encode (이중인코딩 방지)
       const cleanId = (() => { try { return decodeURIComponent(rawId); } catch(e) { return rawId; } })();
-      const tried = [];
       // boardId: boardList의 id가 이미 11,12,13... 형태이므로 그대로 사용
-      for (const bid of [parseInt(boardId)]) {
-        const apiUrl = `https://aion2.plaync.com/api/character/daevanion/detail?lang=ko&characterId=${encodeURIComponent(cleanId)}&serverId=${serverId}&boardId=${bid}`;
-        try {
-          const r = await fetch(apiUrl, { headers });
-          const text = await r.text();
-          const d = JSON.parse(text);
-          const nl = d.nodeList || [];
-          if (nl.length > 0 || d.openStatEffectList) {
-            return new Response(JSON.stringify({
-              nodeList: nl,
-              openStatEffectList: d.openStatEffectList || [],
-              openSkillEffectList: d.openSkillEffectList || [],
-            }), { headers: corsHeaders });
-          }
-          tried.push(`boardId=${bid} → keys:${Object.keys(d).join(',')}`);
-        } catch(e) {
-          tried.push(`boardId=${bid} → ${e.message}`);
+      const bid = parseInt(boardId);
+      const apiUrl = `https://aion2.plaync.com/api/character/daevanion/detail?lang=ko&characterId=${encodeURIComponent(cleanId)}&serverId=${serverId}&boardId=${bid}`;
+      try {
+        const r = await fetch(apiUrl, { headers });
+        const text = await r.text();
+        const d = JSON.parse(text);
+        const nl = d.nodeList || [];
+        if (nl.length > 0 || d.openStatEffectList) {
+          return new Response(JSON.stringify({
+            nodeList: nl,
+            openStatEffectList: d.openStatEffectList || [],
+            openSkillEffectList: d.openSkillEffectList || [],
+          }), { headers: corsHeaders });
         }
+        return new Response(JSON.stringify({ error: '노드 데이터 없음', keys: Object.keys(d).join(',') }), { headers: corsHeaders });
+      } catch(e) {
+        return new Response(JSON.stringify({ error: '노드 파싱 실패', detail: e.message }), { headers: corsHeaders });
       }
-      return new Response(JSON.stringify({ error: '노드 데이터 없음', tried }), { headers: corsHeaders });
     } catch(err) {
       return new Response(JSON.stringify({ error: '노드 조회 실패', detail: err.message }), { status: 500, headers: corsHeaders });
     }
