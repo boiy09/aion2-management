@@ -1545,7 +1545,7 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '2.0.7';
+const BUILD_VERSION = '2.0.8';
 const BUILD_PATCHNOTE = {
   title: '아이온2 관리 도구 v2.0',
   content: '• 데바니온 노드판 보기 기능 추가 (보드 클릭 → 노드 그리드, 호버 툴팁)\n• 캐릭터 상세 정보 전반 개선'
@@ -3570,8 +3570,9 @@ function renderAll() {
 async function fetchCharacterData(nickname, serverId, characterId) {
   if (characterId) {
     // characterId로 직접 조회 (닉네임 검색 불필요)
+    // NC API는 숫자 serverId만 허용 — 서버명은 character.js에서 기본값(2001)으로 처리됨
     const cleanId = (() => { try { return decodeURIComponent(String(characterId)); } catch(e) { return String(characterId); } })();
-    const charRes = await fetch(`/api/character?characterId=${encodeURIComponent(cleanId)}&serverId=${encodeURIComponent(serverId||'')}`);
+    const charRes = await fetch(`/api/character?characterId=${encodeURIComponent(cleanId)}`);
     if (!charRes.ok) throw new Error(`캐릭터 API 오류: HTTP ${charRes.status}`);
     const charData = await charRes.json();
     if (charData.error) throw new Error(charData.error);
@@ -4033,7 +4034,7 @@ async function _autoSyncNicknames() {
     var m = targets[i];
     try {
       var cleanId = (function(cid){ try { return decodeURIComponent(String(cid)); } catch(e){ return String(cid); } })(m.character_id);
-      var res = await fetch('/api/character?characterId=' + encodeURIComponent(cleanId) + '&serverId=' + encodeURIComponent(m.server||'') + '&lite=1');
+      var res = await fetch('/api/character?characterId=' + encodeURIComponent(cleanId) + '&lite=1');
       if (!res.ok) continue;
       var data = await res.json();
       if (!data || data.error || !data.nickname) continue;

@@ -3,7 +3,9 @@ export async function onRequest(context) {
   const url = new URL(request.url);
   const characterId = url.searchParams.get('characterId') || '';
   const nickname = url.searchParams.get('nickname') || '';
-  const serverId = url.searchParams.get('serverId') || '2001';
+  // NC API는 숫자 serverId만 허용 — 서버명이 넘어오면 '2001' 기본값 사용
+  const rawServerId = url.searchParams.get('serverId') || '';
+  const serverId = /^\d+$/.test(rawServerId) ? rawServerId : '2001';
   const lite = url.searchParams.get('lite') === '1'; // 카드 미리보기용: info만 조회, equipment 제외
   const boardId = url.searchParams.get('boardId') || '';
 
