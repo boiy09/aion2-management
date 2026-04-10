@@ -709,6 +709,69 @@
       </div>
       <div id="leave-scan-result" style="font-size:12px;"></div>
     </div>
+
+    <!-- 관리자 전용: 일괄 등록 -->
+    <div id="bulk-register-section" style="display:none;margin-top:12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:0;">
+        <span style="font-size:12px;color:var(--gold);font-weight:600;">일괄 등록 (관리자 전용)</span>
+        <span style="font-size:11px;color:var(--muted);">멤버 목록을 붙여넣어 한 번에 등록합니다. NC API에서 스펙을 자동 조회합니다.</span>
+        <button class="btn btn-sm" id="bulk-toggle-btn" style="margin-left:auto;white-space:nowrap;" onclick="toggleBulkRegister()">펼치기 ▼</button>
+      </div>
+      <div id="bulk-register-body" style="display:none;margin-top:12px;">
+        <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:flex-end;">
+          <div class="form-group" style="flex:0 0 150px;margin:0;">
+            <label class="form-label" style="font-size:11px;">서버</label>
+            <select class="form-select" id="bulk-server" style="font-size:12px;">
+              <optgroup label="⚔ 천족">
+                <option value="시엘">시엘</option><option value="아리엘">아리엘</option>
+                <option value="네자칸">네자칸</option><option value="바이젤">바이젤</option>
+                <option value="유스티엘">유스티엘</option><option value="나니아">나니아</option>
+                <option value="카이시넬">카이시넬</option><option value="프레기온">프레기온</option>
+                <option value="타하바타">타하바타</option><option value="히타니에">히타니에</option>
+                <option value="카사카">카사카</option><option value="페르노스">페르노스</option>
+                <option value="메스람타에다">메스람타에다</option><option value="다미누">다미누</option>
+                <option value="루터스">루터스</option><option value="코치룽">코치룽</option>
+                <option value="챈가룽">챈가룽</option><option value="티아마트">티아마트</option>
+                <option value="바카르마">바카르마</option><option value="이슈타르">이슈타르</option>
+                <option value="포에타">포에타</option>
+              </optgroup>
+              <optgroup label="🔥 마족">
+                <option value="이스라펠" selected>이스라펠</option><option value="지켈">지켈</option>
+                <option value="아스펠">아스펠</option><option value="트리니엘">트리니엘</option>
+                <option value="마르쿠탄">마르쿠탄</option><option value="루미엘">루미엘</option>
+                <option value="네몬">네몬</option><option value="브리트라">브리트라</option>
+                <option value="무닌">무닌</option><option value="크로메데">크로메데</option>
+                <option value="루드라">루드라</option><option value="하달">하달</option>
+                <option value="젠카카">젠카카</option><option value="에레슈키갈">에레슈키갈</option>
+                <option value="바바룽">바바룽</option><option value="파프니르">파프니르</option>
+                <option value="인드나흐">인드나흐</option><option value="오다르">오다르</option>
+                <option value="콰이링">콰이링</option><option value="울고른">울고른</option>
+                <option value="이스할겐">이스할겐</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="form-group" style="flex:1;min-width:200px;margin:0;">
+            <label class="form-label" style="font-size:11px;">목록 붙여넣기 <span style="color:var(--muted);font-weight:normal;">(닉네임 계급 → 직업 순서로 반복)</span></label>
+            <textarea id="bulk-text" class="form-input" rows="6" style="font-size:12px;resize:vertical;font-family:inherit;" placeholder="으내 군단장&#10;궁성&#10;사탕 엘리트장교&#10;치유성&#10;피아 엘리트장교&#10;정령성&#10;..."></textarea>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-sm" onclick="parseBulkPreview()">미리보기</button>
+          <button class="btn btn-primary btn-sm" id="bulk-start-btn" style="display:none;" onclick="startBulkRegister()">등록 시작 (<span id="bulk-count">0</span>명)</button>
+          <span id="bulk-parse-msg" style="font-size:11px;color:var(--muted);"></span>
+        </div>
+        <div id="bulk-progress-wrap" style="display:none;margin-top:10px;">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:4px;">
+            <span id="bulk-status">등록 중...</span>
+            <span id="bulk-prog-count">0 / 0</span>
+          </div>
+          <div style="background:var(--border);border-radius:4px;height:5px;overflow:hidden;">
+            <div id="bulk-bar" style="height:100%;width:0%;background:var(--gold);border-radius:4px;transition:width .2s;"></div>
+          </div>
+        </div>
+        <div id="bulk-preview" style="margin-top:10px;max-height:240px;overflow-y:auto;font-size:12px;"></div>
+      </div>
+    </div>
   </div>
 
   <!-- 파티 모집 -->
@@ -1482,7 +1545,7 @@ const CLASS_MAP = {
   'Cleric':'치유성', 'Chanter':'호법성',
 };
 
-const BUILD_VERSION = '2.0.6';
+const BUILD_VERSION = '2.0.7';
 const BUILD_PATCHNOTE = {
   title: '아이온2 관리 도구 v2.0',
   content: '• 데바니온 노드판 보기 기능 추가 (보드 클릭 → 노드 그리드, 호버 툴팁)\n• 캐릭터 상세 정보 전반 개선'
@@ -3786,6 +3849,174 @@ async function syncAllMembers() {
   try { localStorage.removeItem(_CACHE_KEY); } catch(e) {} // 갱신 후 캐시 무효화
 }
 
+// ─── 일괄 등록 ────────────────────────────
+function toggleBulkRegister() {
+  var body = document.getElementById('bulk-register-body');
+  var btn  = document.getElementById('bulk-toggle-btn');
+  var open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : '';
+  btn.textContent = open ? '펼치기 ▼' : '접기 ▲';
+}
+
+function _parseBulkText(text) {
+  var RANKS = ['군단장','엘리트장교','장교','정예군단병','군단병','도태'];
+  var CLASS_SET = new Set(['검성','수호성','살성','궁성','마도성','정령성','치유성','호법성']);
+  var lines = text.split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
+  var result = [];
+  var i = 0;
+  while (i < lines.length) {
+    var line = lines[i];
+    var parts = line.split(/\s+/);
+    var lastWord = parts[parts.length - 1];
+    if (RANKS.indexOf(lastWord) !== -1 && parts.length >= 2) {
+      var nickname = parts.slice(0, -1).join(' ');
+      var rank     = lastWord;
+      var cls      = '';
+      if (i + 1 < lines.length && CLASS_SET.has(lines[i + 1])) {
+        cls = lines[i + 1];
+        i += 2;
+      } else {
+        i += 1;
+      }
+      result.push({ nickname: nickname, rank: rank, cls: cls });
+    } else {
+      i++;
+    }
+  }
+  return result;
+}
+
+var _bulkParsed = [];
+
+function parseBulkPreview() {
+  var text = document.getElementById('bulk-text').value;
+  _bulkParsed = _parseBulkText(text);
+  var previewEl = document.getElementById('bulk-preview');
+  var startBtn  = document.getElementById('bulk-start-btn');
+  var msgEl     = document.getElementById('bulk-parse-msg');
+  var countEl   = document.getElementById('bulk-count');
+
+  if (!_bulkParsed.length) {
+    previewEl.innerHTML = '<div style="color:var(--red);padding:6px 0;">파싱된 데이터가 없어요. 형식(닉네임 계급 / 직업 순서)을 확인해주세요.</div>';
+    startBtn.style.display = 'none';
+    msgEl.textContent = '';
+    return;
+  }
+
+  var existingSet = new Set(members.map(function(m){ return m.nickname; }));
+  var newCount = _bulkParsed.filter(function(m){ return !existingSet.has(m.nickname); }).length;
+  var dupCount = _bulkParsed.length - newCount;
+
+  countEl.textContent = newCount;
+  startBtn.style.display = '';
+  msgEl.textContent = '파싱: ' + _bulkParsed.length + '명 (신규: ' + newCount + ', 중복: ' + dupCount + ')';
+
+  previewEl.innerHTML =
+    '<table style="width:100%;border-collapse:collapse;"><thead>' +
+    '<tr style="font-size:11px;color:var(--muted);">' +
+    '<th style="text-align:left;padding:3px 6px;border-bottom:1px solid var(--border);">닉네임</th>' +
+    '<th style="text-align:left;padding:3px 6px;border-bottom:1px solid var(--border);">직업</th>' +
+    '<th style="text-align:left;padding:3px 6px;border-bottom:1px solid var(--border);">계급</th>' +
+    '<th style="text-align:left;padding:3px 6px;border-bottom:1px solid var(--border);"></th>' +
+    '</tr></thead><tbody>' +
+    _bulkParsed.map(function(m) {
+      var isDup = existingSet.has(m.nickname);
+      return '<tr style="font-size:12px;' + (isDup ? 'opacity:.45;' : '') + '">' +
+        '<td style="padding:3px 6px;">' + _escHtml(m.nickname) + '</td>' +
+        '<td style="padding:3px 6px;">' + _escHtml(m.cls) + '</td>' +
+        '<td style="padding:3px 6px;">' + _escHtml(m.rank) + '</td>' +
+        '<td style="padding:3px 6px;font-size:10px;color:var(--muted);">' + (isDup ? '이미 등록됨' : '') + '</td>' +
+        '</tr>';
+    }).join('') + '</tbody></table>';
+}
+
+async function startBulkRegister() {
+  if (!_bulkParsed.length) return;
+  if (!isAdmin()) { toast('관리자만 사용할 수 있어요'); return; }
+
+  var server    = document.getElementById('bulk-server').value;
+  var startBtn  = document.getElementById('bulk-start-btn');
+  var progWrap  = document.getElementById('bulk-progress-wrap');
+  var statusEl  = document.getElementById('bulk-status');
+  var progCount = document.getElementById('bulk-prog-count');
+  var barEl     = document.getElementById('bulk-bar');
+
+  startBtn.disabled = true;
+  progWrap.style.display = '';
+  barEl.style.width = '0%';
+
+  var existingSet = new Set(members.map(function(m){ return m.nickname; }));
+  var targets = _bulkParsed.filter(function(m){ return !existingSet.has(m.nickname); });
+  var total = targets.length;
+
+  if (!total) {
+    statusEl.textContent = '신규 등록할 멤버가 없어요 (전원 이미 등록됨)';
+    startBtn.disabled = false;
+    return;
+  }
+
+  var done = 0, fail = 0;
+
+  for (var i = 0; i < targets.length; i++) {
+    var m = targets[i];
+    statusEl.textContent = '(' + (i + 1) + '/' + total + ') ' + m.nickname + ' 조회 중...';
+    progCount.textContent = (i + 1) + ' / ' + total;
+    barEl.style.width = Math.round((i + 1) / total * 100) + '%';
+
+    try {
+      var data = await fetchCharacterData(m.nickname, server);
+      var cls  = CLASS_MAP[data.class] || data.class || m.cls || '';
+      var actualServer = data.server_name || server;
+      await db.from('members').upsert({
+        id:           m.nickname + '_' + actualServer,
+        nickname:     m.nickname,
+        server:       actualServer,
+        rank:         m.rank,
+        intro:        '',
+        is_main:      true,
+        player_id:    m.nickname,
+        class:        cls,
+        level:        data.level        || 0,
+        combat_power: data.combat_power || 0,
+        item_level:   data.item_level   || 0,
+        equipment:    data.equipment    || [],
+        stats:        data.stats        || [],
+        daevanion:    data.daevanion    || [],
+        ranking:      data.ranking      || [],
+        stigma:       data.stigma       || [],
+        arcana:       data.arcana       || [],
+        titles:       data.titles       || [],
+        pet:          data.pet          || null,
+        wing:         data.wing         || null,
+        server_name:  data.server_name  || '',
+        guild_name:   data.guild_name   || '',
+        race:         data.race         || '',
+        profile_img:  data.profile_img  || '',
+        character_id: data.characterId  || '',
+        last_synced:  new Date().toISOString(),
+        updated_at:   new Date().toISOString(),
+      });
+      done++;
+    } catch(e) {
+      fail++;
+    }
+    await new Promise(function(r){ setTimeout(r, 600); });
+  }
+
+  barEl.style.width = '100%';
+  var resultMsg = '완료! ' + done + '명 등록' +
+    (fail > 0 ? ', ' + fail + '명 실패' : '') +
+    (_bulkParsed.length - targets.length > 0 ? ', ' + (_bulkParsed.length - targets.length) + '명 중복 건너뜀' : '');
+  statusEl.textContent = resultMsg;
+  startBtn.disabled = false;
+  toast('일괄 등록 완료! ' + done + '명 성공' + (fail > 0 ? ' / ' + fail + '명 실패' : ''));
+
+  // 데이터 새로고침
+  try { localStorage.removeItem(_CACHE_KEY); } catch(e) {}
+  var res = await db.from('members').select(_MEMBER_COLS).order('combat_power', { ascending: false });
+  if (res.data) { members = res.data; renderAll(); }
+}
+
 // ─── 닉네임 자동 동기화 (백그라운드) ────────
 // 페이지 로드 후 1회 실행: character_id가 있는 멤버의 현재 닉네임을 NC에서 조회해
 // DB와 다르면 조용히 반영 (토스트/알림 없음)
@@ -5275,7 +5506,10 @@ function showTab(id) {
   if(id==='notice') { refreshNoticeWriteBtn(); loadNcNotices(); loadNcUpdates(); }
 
 
-  if(id==='members') { const ls=document.getElementById('leave-scan-section'); if(ls) ls.style.display=isAdmin()?'':'none'; }
+  if(id==='members') {
+    const ls=document.getElementById('leave-scan-section'); if(ls) ls.style.display=isAdmin()?'':'none';
+    const bs=document.getElementById('bulk-register-section'); if(bs) bs.style.display=isAdmin()?'':'none';
+  }
   try { localStorage.setItem('activeTab', id); } catch(e) {}
 }
 function openModal(id) { 
