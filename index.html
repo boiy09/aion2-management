@@ -1019,9 +1019,51 @@
 
   <!-- 아르카나 계산기 -->
   <div id="tab-arcana" class="tab-content">
-    <div class="section-title">🧮 아르카나 계산기</div>
-    <div style="display:flex;align-items:center;justify-content:center;min-height:300px;color:var(--text-muted);font-size:16px;">
-      🚧 개발 중입니다.
+    <div style="max-width:1280px;">
+
+      <!-- 헤더 -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+        <div class="section-title" style="margin-bottom:0;">🧮 아르카나 스킬 레벨 계산기</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <label style="font-size:12px;color:var(--muted);">클래스</label>
+          <select id="arc-class" onchange="arcSetClass(this.value)"
+            style="background:var(--card);border:1px solid var(--border);color:var(--text);padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;">
+            <option value="">— 선택 —</option>
+            <option>검성</option><option>수호성</option>
+            <option>마도성</option><option>정령성</option>
+            <option>치유성</option><option>호법성</option>
+            <option>궁성</option><option>살성</option>
+          </select>
+          <button class="btn btn-sm" onclick="ARC.reset()">🔄 초기화</button>
+        </div>
+      </div>
+
+      <!-- 안내 문구 -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:12px;color:var(--muted);line-height:1.7;">
+        📖 <strong style="color:var(--text);">사용법</strong>: 클래스 선택 → 각 부위 등급 설정 → 스킬 슬롯에 보유 스킬 입력 → 결과 테이블에서 기본/장비/데바니온 값 조정<br>
+        💡 아르카나 슬롯 수: <strong style="color:var(--gold-l);">일반 1개 · 희귀 2개 · 전승 3개 · 유일 4개</strong> &nbsp;|&nbsp; 스킬 레벨 목표: <strong style="color:#f0a040;">16레벨 (3차 특화)</strong> / <strong style="color:var(--gold-l);">20레벨 (최종 특화)</strong>
+      </div>
+
+      <!-- CP 요약 바 -->
+      <div id="arc-cp-bar" style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:20px;"></div>
+
+      <!-- 아르카나 6부위 그리드 -->
+      <div id="arc-pieces-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;"></div>
+
+      <!-- 결과 테이블 -->
+      <div id="arc-results"></div>
+
+      <!-- 세트효과 참고 -->
+      <div style="margin-top:24px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px;">
+        <div class="section-title" style="font-size:12px;">⚙️ 세트 효과 참고</div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;font-size:12px;color:var(--muted);">
+          <div><strong style="color:var(--text);">태초의 활력</strong><br>2세트: HP 70% 이상 시 PVE 공격력 +60<br>4세트: HP 70% 이상 시 PVE 공격력 +150</div>
+          <div><strong style="color:var(--text);">마력 갑옷</strong><br>2세트: MP 20% 이하 시 MP 1,500 즉시 회복 (쿨 30초)<br>4세트: MP 50% 이상 시 PVE 방어력 +1,000</div>
+          <div><strong style="color:var(--text);">광분</strong><br>2세트: 보스 피해 증폭<br>4세트: 피해 저항 증가</div>
+          <div><strong style="color:var(--text);">순수</strong><br>2세트: 치명타 피해 증폭<br>4세트: 방어력 +1,000</div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -5765,8 +5807,9 @@ function showTab(id) {
   document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   tabEl.classList.add('active');
-  ['notice','dashboard','members','recruit','war','force','timer','homework','register','charsearch'].forEach((t,i)=>{ if(t===id) document.querySelectorAll('.nav-btn')[i].classList.add('active'); });
+  ['notice','dashboard','members','recruit','war','force','timer','arcana','homework','register','charsearch'].forEach((t,i)=>{ if(t===id) document.querySelectorAll('.nav-btn')[i].classList.add('active'); });
   if(id==='force') { if(window._forceRender) window._forceRender(); }
+  if(id==='arcana') { if(window.ARC && !ARC._inited) { ARC.init(); ARC._inited=true; } }
   if(id==='war'){const wb=document.getElementById('war-create-btn');if(wb)wb.style.display=isAdmin()?'inline-block':'none';const wr=document.getElementById('war-reset-btn');if(wr)wr.style.display=isAdmin()?'inline-block':'none';renderWarSurveys();}
   if(id==='notice') { refreshNoticeWriteBtn(); loadNcNotices(); loadNcUpdates(); }
 
@@ -7817,6 +7860,298 @@ window.forceRestoreHistory=forceRestoreHistory; window.forceDeleteHistory=forceD
 window.forceModalClose=forceModalClose; window.forcePickCls=forcePickCls;
 
 })();
+
+// ════════════════════════════════════════════════════════════════
+//  아르카나 계산기 (ARC)
+// ════════════════════════════════════════════════════════════════
+const ARC = (function(){
+  // ── 상수 ──────────────────────────────────────────────────────
+  const PARTS = [
+    { id:'종',    label:'종',    icon:'🔔', type:'passive', drop:'데우스 연구기지' },
+    { id:'나침반', label:'나침반', icon:'🧭', type:'active',  drop:'데우스 연구기지' },
+    { id:'성배',  label:'성배',  icon:'🏆', type:'both',    drop:'데우스/아르카니스 (10단계)' },
+    { id:'거울',  label:'거울',  icon:'🪞', type:'passive', drop:'조각난 아르카니스' },
+    { id:'양피지', label:'양피지', icon:'📜', type:'active',  drop:'조각난 아르카니스' },
+    { id:'천칭',  label:'천칭',  icon:'⚖️', type:'both',    drop:'가라앉는 생명의 신전' },
+  ];
+
+  const GRADES = ['없음','일반','희귀','전승','유일'];
+  const GRADE_SLOTS = { '없음':0,'일반':1,'희귀':2,'전승':3,'유일':4 };
+  const GRADE_CP    = { '없음':0,'일반':20,'희귀':40,'전승':60,'유일':80 };
+  const GRADE_COLOR = { '없음':'var(--muted)','일반':'#aaa','희귀':'#5aadff','전승':'#b06aff','유일':'#ffcc44' };
+
+  const CLASS_SKILLS = {
+    '치유성': {
+      passive:['따뜻한 가호','주신의 은총','불사의 장막','집중의 기도','생존 의지','주신의 가호','치유력 강화','회복 차단','찬란한 가호','대지의 은총'],
+      active: ['심판의 번개','신성한 기운','재생의 빛','치유의 빛','벼락 난사','충격 해제','대지의 응징','약화의 표식','고통의 사슬','심판','찬란한 치유','번개 강타'],
+    },
+    '호법성': {
+      passive:['공격 준비','충격 적중','고치의 주문','대지의 약속','생명의 축복','방패 의지','수호 기원','신앙의 힘','헌신의 기도'],
+      active: ['불패의 진원','질주의 진원','질풍의 건능','분쇄격','어둠의 강타','열파','파멸 강타','거룩한 화염','방어 자세','도발'],
+    },
+    '마도성': {
+      passive:['마력 집중','원소 지식','화염 전문가','냉기 전문가','마법 폭발력','원소 가속','마나 효율'],
+      active: ['화염 화살','화염 폭발','우박 바람','화염 창','얼음 화살','마력 폭발','화염 구체','냉기 폭풍','마력 폭풍','거대 화염'],
+    },
+    '정령성': {
+      passive:['정령 계약','원소 공명','마나 효율','자연의 힘','정령의 가호','원소 증폭','교감의 힘'],
+      active: ['정령 소환','화염 정령','얼음 정령','번개 정령','정령 폭발','대지의 분노','정령 돌진','원소 폭발','바람 정령'],
+    },
+    '살성': {
+      passive:['민첩함','심장 저격','독 전문가','은신 달인','급소 지식','암살 본능','그림자 숙련'],
+      active: ['빠른 찌르기','심장 관통','독 던지기','연속 찌르기','급소 찌르기','암살 베기','독무','그림자 도약','연막탄','치명적 일격'],
+    },
+    '검성': {
+      passive:['전사의 기질','강인한 체력','검술 달인','공격 본능','방어 본능','전투 의지','분노의 힘'],
+      active: ['강철 베기','회전 베기','폭풍의 검','대지 가르기','천지 베기','파멸의 검','돌진 베기','쌍검 폭풍','분노의 베기'],
+    },
+    '수호성': {
+      passive:['방패 수련','철벽 수비','굳건한 의지','수호 본능','방어 강화','완벽한 수비','철의 심장'],
+      active: ['방패 강타','도발','수호의 외침','방벽 세우기','철갑 방어','수호 강타','성스러운 방패','철의 의지','분노의 방패'],
+    },
+    '궁성': {
+      passive:['정밀 조준','원거리 달인','화살 관통','신속 사격','집중 사격','예리한 눈','사냥꾼의 직감'],
+      active: ['일반 사격','관통 화살','폭발 화살','다중 사격','저격','화살비','독화살','냉기 화살','폭풍 화살','폭발 탄환'],
+    },
+  };
+
+  // ── 상태 ──────────────────────────────────────────────────────
+  let state = {
+    cls: '',
+    pieces: Object.fromEntries(PARTS.map(p => [p.id, { grade:'없음', enhance:0, skills:[] }])),
+    bonus: {},  // skillName -> { base:10, equip:0, devanion:0 }
+  };
+
+  // ── 헬퍼 ──────────────────────────────────────────────────────
+  function getSkillPool(cls, partType) {
+    if (!cls || !CLASS_SKILLS[cls]) return [];
+    const d = CLASS_SKILLS[cls];
+    if (partType === 'passive') return [...d.passive];
+    if (partType === 'active')  return [...d.active];
+    return [...d.active, ...d.passive];
+  }
+
+  function calcArcBonus() {
+    const map = new Map();
+    for (const p of PARTS) {
+      for (const sk of state.pieces[p.id].skills) {
+        if (sk && sk.trim()) {
+          const k = sk.trim();
+          map.set(k, (map.get(k)||0) + 1);
+        }
+      }
+    }
+    return map;
+  }
+
+  function calcTotalCP() {
+    return PARTS.reduce((s, p) => {
+      const pc = state.pieces[p.id];
+      return s + (GRADE_CP[pc.grade]||0) + (parseInt(pc.enhance)||0);
+    }, 0);
+  }
+
+  // ── 렌더 ──────────────────────────────────────────────────────
+  function renderCPBar() {
+    const el = document.getElementById('arc-cp-bar');
+    if (!el) return;
+    const total = calcTotalCP();
+    let html = PARTS.map(p => {
+      const pc = state.pieces[p.id];
+      const cp = (GRADE_CP[pc.grade]||0) + (parseInt(pc.enhance)||0);
+      const gc = GRADE_COLOR[pc.grade]||'var(--muted)';
+      return `<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 6px;text-align:center;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:3px;">${p.icon} ${p.label}</div>
+        <div style="font-size:20px;font-weight:800;color:${gc};">${cp}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px;">${pc.grade==='없음'?'미장착':pc.grade}</div>
+      </div>`;
+    }).join('');
+    html += `<div style="background:var(--surface);border:2px solid var(--gold-d);border-radius:8px;padding:10px 6px;text-align:center;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:3px;">🔢 합계</div>
+      <div style="font-size:20px;font-weight:800;color:var(--gold-l);">${total}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:2px;">전투력</div>
+    </div>`;
+    el.innerHTML = html;
+  }
+
+  function renderPieces() {
+    const grid = document.getElementById('arc-pieces-grid');
+    if (!grid) return;
+    grid.innerHTML = PARTS.map(p => {
+      const pc = state.pieces[p.id];
+      const slots = GRADE_SLOTS[pc.grade]||0;
+      const pool  = getSkillPool(state.cls, p.type);
+      const dlId  = `arc-dl-${p.id}`;
+      const typeLabel = p.type==='passive'?'패시브':p.type==='active'?'액티브':'패시브+액티브';
+      const typeColor = p.type==='passive'?'#5aadff':p.type==='active'?'#f0a040':'var(--gold-l)';
+      const gcol = GRADE_COLOR[pc.grade]||'var(--muted)';
+
+      const slotInputs = Array.from({length:4},(_,i) => {
+        if (i >= slots) {
+          return `<div style="height:34px;background:var(--bg);border:1px dashed #2a2f3d;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#3a3f4d;font-size:11px;">슬롯 ${i+1}</div>`;
+        }
+        const val = pc.skills[i]||'';
+        return `<input list="${dlId}" value="${val.replace(/"/g,'&quot;')}" placeholder="스킬 입력 또는 선택"
+          style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 9px;border-radius:6px;font-size:12px;outline:none;"
+          onchange="ARC._setSkill('${p.id}',${i},this.value)"
+          oninput="ARC._setSkill('${p.id}',${i},this.value)">`;
+      }).join('');
+
+      const dataOpts = pool.map(s=>`<option value="${s}">`).join('');
+
+      return `<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;">
+        <datalist id="${dlId}">${dataOpts}</datalist>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div style="font-size:14px;font-weight:700;color:var(--text);">${p.icon} ${p.label}</div>
+          <span style="font-size:11px;color:${typeColor};background:${typeColor}22;padding:2px 8px;border-radius:10px;">${typeLabel}</span>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:10px;">📍 ${p.drop}</div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+          <select onchange="ARC._setGrade('${p.id}',this.value)"
+            style="flex:1;background:var(--bg);border:1px solid var(--border);color:${gcol};padding:5px 8px;border-radius:6px;font-size:12px;cursor:pointer;">
+            ${GRADES.map(g=>`<option style="color:${GRADE_COLOR[g]||'#aaa'};"${g===pc.grade?' selected':''}>${g}</option>`).join('')}
+          </select>
+          <div style="display:flex;align-items:center;gap:4px;white-space:nowrap;">
+            <span style="font-size:11px;color:var(--muted);">강화</span>
+            <input type="number" min="0" max="40" value="${pc.enhance}"
+              style="width:52px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 4px;border-radius:6px;font-size:12px;text-align:center;outline:none;"
+              oninput="ARC._setEnhance('${p.id}',this.value)">
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">${slotInputs}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderResults() {
+    const el = document.getElementById('arc-results');
+    if (!el) return;
+    const arcMap = calcArcBonus();
+
+    if (arcMap.size === 0) { el.innerHTML = ''; return; }
+
+    // Collect all known skills for selected class too
+    const allSkills = state.cls ? [...(CLASS_SKILLS[state.cls]?.passive||[]), ...(CLASS_SKILLS[state.cls]?.active||[])] : [];
+    // Only show skills that have arcana contribution
+    const entries = [...arcMap.entries()].sort((a,b)=>b[1]-a[1]);
+
+    let rows = entries.map(([sk, arcBonus]) => {
+      const sb = state.bonus[sk] || { base:10, equip:0, devanion:0 };
+      const total = sb.base + sb.equip + sb.devanion + arcBonus;
+      let totalColor = 'var(--muted)';
+      let badge = '';
+      if (total >= 20) { totalColor='var(--gold-l)'; badge='<span style="font-size:10px;background:#00c88a33;color:var(--gold-l);padding:1px 6px;border-radius:8px;margin-left:4px;">MAX ✨</span>'; }
+      else if (total >= 16) { totalColor='#00c88a'; badge='<span style="font-size:10px;background:#00c88a22;color:#00c88a;padding:1px 6px;border-radius:8px;margin-left:4px;">3차 특화 ✅</span>'; }
+      else if (total >= 12) { totalColor='#f0a040'; }
+
+      const barWidth = Math.min(100, (total/20)*100);
+      const barColor = total>=20?'var(--gold)':total>=16?'#00c88a':total>=12?'#f0a040':'#c14a4a';
+
+      return `<tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:9px 12px;font-weight:600;font-size:13px;">${sk}</td>
+        <td style="padding:9px 6px;text-align:center;">
+          <input type="number" min="0" max="10" value="${sb.base}"
+            style="width:46px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:5px;text-align:center;font-size:12px;outline:none;"
+            oninput="ARC._setBonus('${sk.replace(/'/g,"\\'")}','base',this.value)">
+        </td>
+        <td style="padding:9px 6px;text-align:center;">
+          <input type="number" min="0" max="10" value="${sb.equip}"
+            style="width:46px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:5px;text-align:center;font-size:12px;outline:none;"
+            oninput="ARC._setBonus('${sk.replace(/'/g,"\\'")}','equip',this.value)">
+        </td>
+        <td style="padding:9px 6px;text-align:center;">
+          <input type="number" min="0" max="10" value="${sb.devanion}"
+            style="width:46px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:5px;text-align:center;font-size:12px;outline:none;"
+            oninput="ARC._setBonus('${sk.replace(/'/g,"\\'")}','devanion',this.value)">
+        </td>
+        <td style="padding:9px 6px;text-align:center;font-weight:700;color:var(--gold-l);">${arcBonus}</td>
+        <td style="padding:9px 12px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:18px;font-weight:800;color:${totalColor};min-width:28px;">${total}</span>
+            ${badge}
+            <div style="flex:1;height:6px;background:var(--border);border-radius:3px;min-width:60px;">
+              <div style="width:${barWidth}%;height:100%;background:${barColor};border-radius:3px;transition:width .3s;"></div>
+            </div>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+
+    el.innerHTML = `<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+      <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <div class="section-title" style="margin-bottom:0;">📊 스킬 레벨 시뮬레이션</div>
+        <span style="font-size:11px;color:var(--muted);">기본/장비/데바니온 값을 직접 수정 가능</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;min-width:560px;">
+          <thead>
+            <tr style="background:var(--surface);">
+              <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);">스킬</th>
+              <th style="padding:8px 6px;text-align:center;font-size:11px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);">기본<br><span style="font-weight:400;">(스킬포인트)</span></th>
+              <th style="padding:8px 6px;text-align:center;font-size:11px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);">장비<br><span style="font-weight:400;">(옵션)</span></th>
+              <th style="padding:8px 6px;text-align:center;font-size:11px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);">데바니온<br><span style="font-weight:400;">(스킬북)</span></th>
+              <th style="padding:8px 6px;text-align:center;font-size:11px;color:var(--gold);font-weight:600;border-bottom:1px solid var(--border);">아르카나<br><span style="font-weight:400;">(계산)</span></th>
+              <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);">합계 레벨</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <div style="padding:10px 16px;border-top:1px solid var(--border);display:flex;gap:20px;flex-wrap:wrap;font-size:11px;color:var(--muted);">
+        <span>🔴 12 미만</span>
+        <span style="color:#f0a040;">🟠 12–15</span>
+        <span style="color:#00c88a;">🟢 16–19 (3차 특화)</span>
+        <span style="color:var(--gold-l);">✨ 20 (최종 특화)</span>
+      </div>
+    </div>`;
+  }
+
+  function render() {
+    renderCPBar();
+    renderPieces();
+    renderResults();
+  }
+
+  // ── 공개 API ─────────────────────────────────────────────────
+  return {
+    _inited: false,
+    init() { render(); },
+    setClass(cls) { state.cls = cls; render(); },
+    reset() {
+      state.cls = '';
+      state.pieces = Object.fromEntries(PARTS.map(p=>[p.id,{grade:'없음',enhance:0,skills:[]}]));
+      state.bonus = {};
+      const sel = document.getElementById('arc-class');
+      if (sel) sel.value = '';
+      render();
+    },
+    _setGrade(partId, grade) {
+      const pc = state.pieces[partId];
+      const newN = GRADE_SLOTS[grade]||0;
+      pc.grade = grade;
+      pc.skills = pc.skills.slice(0, newN);
+      while (pc.skills.length < newN) pc.skills.push('');
+      render();
+    },
+    _setEnhance(partId, val) {
+      state.pieces[partId].enhance = parseInt(val)||0;
+      renderCPBar();
+    },
+    _setSkill(partId, idx, val) {
+      const pc = state.pieces[partId];
+      while (pc.skills.length <= idx) pc.skills.push('');
+      pc.skills[idx] = val;
+      renderResults();
+    },
+    _setBonus(skill, field, val) {
+      if (!state.bonus[skill]) state.bonus[skill] = {base:10,equip:0,devanion:0};
+      state.bonus[skill][field] = parseInt(val)||0;
+      renderResults();
+    },
+  };
+})();
+
+function arcSetClass(v) { ARC.setClass(v); }
 
 </script>
 </body>
