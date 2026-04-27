@@ -7883,35 +7883,35 @@ const ARC = (function(){
   const CLASS_SKILLS = {
     '치유성': {
       passive:['따뜻한 가호','주신의 은총','불사의 장막','집중의 기도','생존 의지','주신의 가호','치유력 강화','회복 차단','찬란한 가호','대지의 은총'],
-      active: ['심판의 번개','신성한 기운','재생의 빛','치유의 빛','벼락 난사','충격 해제','대지의 응징','약화의 표식','고통의 사슬','심판','찬란한 치유','번개 강타'],
-    },
-    '호법성': {
-      passive:['공격 준비','충격 적중','고치의 주문','대지의 약속','생명의 축복','방패 의지','수호 기원','신앙의 힘','헌신의 기도'],
-      active: ['불패의 진원','질주의 진원','질풍의 건능','분쇄격','어둠의 강타','열파','파멸 강타','거룩한 화염','방어 자세','도발'],
-    },
-    '마도성': {
-      passive:['마력 집중','원소 지식','화염 전문가','냉기 전문가','마법 폭발력','원소 가속','마나 효율'],
-      active: ['화염 화살','화염 폭발','우박 바람','화염 창','얼음 화살','마력 폭발','화염 구체','냉기 폭풍','마력 폭풍','거대 화염'],
-    },
-    '정령성': {
-      passive:['정령 계약','원소 공명','마나 효율','자연의 힘','정령의 가호','원소 증폭','교감의 힘'],
-      active: ['정령 소환','화염 정령','얼음 정령','번개 정령','정령 폭발','대지의 분노','정령 돌진','원소 폭발','바람 정령'],
-    },
-    '살성': {
-      passive:['민첩함','심장 저격','독 전문가','은신 달인','급소 지식','암살 본능','그림자 숙련'],
-      active: ['빠른 찌르기','심장 관통','독 던지기','연속 찌르기','급소 찌르기','암살 베기','독무','그림자 도약','연막탄','치명적 일격'],
-    },
-    '검성': {
-      passive:['전사의 기질','강인한 체력','검술 달인','공격 본능','방어 본능','전투 의지','분노의 힘'],
-      active: ['강철 베기','회전 베기','폭풍의 검','대지 가르기','천지 베기','파멸의 검','돌진 베기','쌍검 폭풍','분노의 베기'],
+      active: ['심판의 번개','신성한 기운','재생의 빛','치유의 빛','벼락 난사','충격 해제','대지의 응보','약화의 낙인','고통의 연쇄','단죄','쾌유의 광휘','벽력'],
     },
     '수호성': {
-      passive:['방패 수련','철벽 수비','굳건한 의지','수호 본능','방어 강화','완벽한 수비','철의 심장'],
-      active: ['방패 강타','도발','수호의 외침','방벽 세우기','철갑 방어','수호 강타','성스러운 방패','철의 의지','분노의 방패'],
+      passive:['격앙','체력강화','단죄의 가호','철벽방어','충격 적중','고통 차단'],
+      active: ['연속난타','섬광난무','비호의 일격','맹렬한 일격','심판','징벌','섬멸','쇠약의 맹타'],
+    },
+    '마도성': {
+      passive:['불의 표식','불꽃의 로브','마력 집중','원소 지식','화염 전문가','냉기 전문가'],
+      active: ['혹한의 바람','불폭발','불화살','집기','지화','작살','마력 폭발'],
+    },
+    '정령성': {
+      passive:['정령타격','정신집중','침식','정령 계약','원소 공명'],
+      active: ['화염전소','냉기충격','원소융합','저주','정령 소환'],
+    },
+    '살성': {
+      passive:['민첩함','급소 지식','암살 본능','그림자 숙련'],
+      active: ['심장 관통','빠른 찌르기','연속 찌르기','급소 찌르기'],
+    },
+    '검성': {
+      passive:['전사의 기질','강인한 체력','검술 달인','공격 본능'],
+      active: ['예리한 일격','도약 찍기','내려찍기','발목 베기','파멸의 가르기','파멸의 맹타','파쇄파','검기 난무'],
+    },
+    '호법성': {
+      passive:['공격 준비','충격 적중','고치의 주문','대지의 약속','생명의 축복'],
+      active: ['불패의 진원','질주의 진원','질풍의 건능','분쇄격'],
     },
     '궁성': {
-      passive:['정밀 조준','원거리 달인','화살 관통','신속 사격','집중 사격','예리한 눈','사냥꾼의 직감'],
-      active: ['일반 사격','관통 화살','폭발 화살','다중 사격','저격','화살비','독화살','냉기 화살','폭풍 화살','폭발 탄환'],
+      passive:['정밀 조준','원거리 달인','화살 관통','신속 사격'],
+      active: ['속사','화살난사','저격','관통 화살'],
     },
   };
 
@@ -7926,9 +7926,12 @@ const ARC = (function(){
   function getSkillPool(cls, partType) {
     if (!cls || !CLASS_SKILLS[cls]) return [];
     const d = CLASS_SKILLS[cls];
-    if (partType === 'passive') return [...d.passive];
-    if (partType === 'active')  return [...d.active];
-    return [...d.active, ...d.passive];
+    if (partType === 'passive') return d.passive.map(n => ({ name:n, type:'passive' }));
+    if (partType === 'active')  return d.active.map(n  => ({ name:n, type:'active'  }));
+    return [
+      ...d.active.map(n  => ({ name:n, type:'active'  })),
+      ...d.passive.map(n => ({ name:n, type:'passive' })),
+    ];
   }
 
   function calcArcBonus() {
@@ -7949,6 +7952,98 @@ const ARC = (function(){
       const pc = state.pieces[p.id];
       return s + (GRADE_CP[pc.grade]||0) + (parseInt(pc.enhance)||0);
     }, 0);
+  }
+
+  // ── CSS 주입 ──────────────────────────────────────────────────
+  function injectCSS() {
+    if (document.getElementById('arc-drop-css')) return;
+    const st = document.createElement('style');
+    st.id = 'arc-drop-css';
+    st.textContent = [
+      '.arc-drop-wrap{position:relative;width:100%;}',
+      '.arc-drop-btn{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 9px;border-radius:6px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;min-height:34px;box-sizing:border-box;user-select:none;}',
+      '.arc-drop-btn:hover{border-color:var(--gold-d);}',
+      '.arc-drop-menu{position:absolute;top:calc(100% + 2px);left:0;right:0;z-index:999;background:var(--card);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.5);overflow:hidden;flex-direction:column;max-height:240px;display:none;}',
+      '.arc-drop-menu.open{display:flex;}',
+      '.arc-drop-search{margin:8px 8px 4px;padding:5px 8px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:5px;font-size:12px;outline:none;}',
+      '.arc-drop-list{overflow-y:auto;flex:1;}',
+      '.arc-drop-item{padding:6px 10px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:7px;}',
+      '.arc-drop-item:hover{background:var(--surface);}',
+      '.arc-drop-item.selected{background:var(--surface);color:var(--gold-l);}',
+      '.arc-drop-none{padding:6px 10px;font-size:12px;color:var(--muted);font-style:italic;}',
+      '.arc-badge{display:inline-flex;align-items:center;justify-content:center;width:20px;height:18px;border-radius:4px;font-size:10px;font-weight:700;flex-shrink:0;}',
+      '.arc-badge-active{background:#f0a04033;color:#f0a040;}',
+      '.arc-badge-passive{background:#5aadff33;color:#5aadff;}',
+    ].join('');
+    document.head.appendChild(st);
+  }
+
+  // ── 드롭다운 헬퍼 ────────────────────────────────────────────
+  let _openDropId = null;
+
+  function arcDropCloseAll() {
+    document.querySelectorAll('.arc-drop-menu.open').forEach(m => m.classList.remove('open'));
+    _openDropId = null;
+  }
+  window.arcDropCloseAll = arcDropCloseAll;
+
+  window.arcDropToggle = function(wrapId) {
+    const wrap = document.getElementById(wrapId);
+    if (!wrap) return;
+    const menu = wrap.querySelector('.arc-drop-menu');
+    const isOpen = menu.classList.contains('open');
+    arcDropCloseAll();
+    if (!isOpen) {
+      menu.classList.add('open');
+      _openDropId = wrapId;
+      const search = menu.querySelector('.arc-drop-search');
+      if (search) { search.value = ''; arcDropFilter(search); search.focus(); }
+    }
+  };
+
+  window.arcDropFilter = function(input) {
+    const q = (input.value || '').trim().toLowerCase();
+    const menu = input.closest('.arc-drop-menu');
+    if (!menu) return;
+    const list = menu.querySelector('.arc-drop-list');
+    if (!list) return;
+    let any = false;
+    list.querySelectorAll('.arc-drop-item').forEach(el => {
+      const show = !q || (el.dataset.name || '').toLowerCase().includes(q);
+      el.style.display = show ? '' : 'none';
+      if (show) any = true;
+    });
+    let none = list.querySelector('.arc-drop-none');
+    if (!any) {
+      if (!none) { none = document.createElement('div'); none.className = 'arc-drop-none'; none.textContent = '검색 결과 없음'; list.appendChild(none); }
+      none.style.display = '';
+    } else if (none) { none.style.display = 'none'; }
+  };
+
+  document.addEventListener('mousedown', function(e) {
+    if (_openDropId && !e.target.closest('.arc-drop-wrap')) arcDropCloseAll();
+  }, true);
+
+  function buildDropdown(wrapId, partId, idx, val, pool) {
+    const items = pool.map(s => {
+      const badge = s.type === 'active'
+        ? '<span class="arc-badge arc-badge-active">액</span>'
+        : '<span class="arc-badge arc-badge-passive">패</span>';
+      const sel = s.name === val ? ' selected' : '';
+      return `<div class="arc-drop-item${sel}" data-name="${s.name}" onclick="ARC._setSkillDrop('${partId}',${idx},'${s.name}',this)">${badge}${s.name}</div>`;
+    }).join('');
+    const valText = val || '스킬 선택';
+    const valStyle = val ? '' : 'color:var(--muted)';
+    return `<div class="arc-drop-wrap" id="${wrapId}">
+      <div class="arc-drop-btn" onclick="arcDropToggle('${wrapId}')">
+        <span class="arc-drop-val" style="${valStyle}">${valText}</span>
+        <span style="font-size:10px;color:var(--muted);">▼</span>
+      </div>
+      <div class="arc-drop-menu">
+        <input class="arc-drop-search" placeholder="검색..." oninput="arcDropFilter(this)">
+        <div class="arc-drop-list">${items}</div>
+      </div>
+    </div>`;
   }
 
   // ── 렌더 ──────────────────────────────────────────────────────
@@ -7981,7 +8076,6 @@ const ARC = (function(){
       const pc = state.pieces[p.id];
       const slots = GRADE_SLOTS[pc.grade]||0;
       const pool  = getSkillPool(state.cls, p.type);
-      const dlId  = `arc-dl-${p.id}`;
       const typeLabel = p.type==='passive'?'패시브':p.type==='active'?'액티브':'패시브+액티브';
       const typeColor = p.type==='passive'?'#5aadff':p.type==='active'?'#f0a040':'var(--gold-l)';
       const gcol = GRADE_COLOR[pc.grade]||'var(--muted)';
@@ -7991,16 +8085,11 @@ const ARC = (function(){
           return `<div style="height:34px;background:var(--bg);border:1px dashed #2a2f3d;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#3a3f4d;font-size:11px;">슬롯 ${i+1}</div>`;
         }
         const val = pc.skills[i]||'';
-        return `<input list="${dlId}" value="${val.replace(/"/g,'&quot;')}" placeholder="스킬 입력 또는 선택"
-          style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 9px;border-radius:6px;font-size:12px;outline:none;"
-          onchange="ARC._setSkill('${p.id}',${i},this.value)"
-          oninput="ARC._setSkill('${p.id}',${i},this.value)">`;
+        const wrapId = `arc-drop-${p.id}-${i}`;
+        return buildDropdown(wrapId, p.id, i, val, pool);
       }).join('');
 
-      const dataOpts = pool.map(s=>`<option value="${s}">`).join('');
-
-      return `<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;">
-        <datalist id="${dlId}">${dataOpts}</datalist>
+      return `<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;overflow:visible;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
           <div style="font-size:14px;font-weight:700;color:var(--text);">${p.icon} ${p.label}</div>
           <span style="font-size:11px;color:${typeColor};background:${typeColor}22;padding:2px 8px;border-radius:10px;">${typeLabel}</span>
@@ -8115,7 +8204,7 @@ const ARC = (function(){
   // ── 공개 API ─────────────────────────────────────────────────
   return {
     _inited: false,
-    init() { render(); },
+    init() { injectCSS(); render(); },
     setClass(cls) { state.cls = cls; render(); },
     reset() {
       state.cls = '';
@@ -8141,6 +8230,21 @@ const ARC = (function(){
       const pc = state.pieces[partId];
       while (pc.skills.length <= idx) pc.skills.push('');
       pc.skills[idx] = val;
+      renderResults();
+    },
+    _setSkillDrop(partId, idx, name, itemEl) {
+      const pc = state.pieces[partId];
+      while (pc.skills.length <= idx) pc.skills.push('');
+      pc.skills[idx] = name;
+      const wrap = itemEl.closest('.arc-drop-wrap');
+      if (wrap) {
+        const valEl = wrap.querySelector('.arc-drop-val');
+        if (valEl) { valEl.textContent = name; valEl.style.color = ''; }
+        wrap.querySelectorAll('.arc-drop-item').forEach(el => {
+          el.classList.toggle('selected', el.dataset.name === name);
+        });
+      }
+      arcDropCloseAll();
       renderResults();
     },
     _setBonus(skill, field, val) {
