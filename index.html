@@ -228,6 +228,24 @@
   .od-clr-grid { display:flex; gap:6px; flex-wrap:wrap; }
   .od-clr-btn { width:26px; height:26px; border-radius:50%; border:3px solid transparent; cursor:pointer; transition:border-color .15s; }
   .od-clr-btn.sel { border-color:#fff; }
+  /* 포스 편성 */
+  .force-layout { display:grid; grid-template-columns:220px 1fr; gap:14px; align-items:start; }
+  @media(max-width:700px){ .force-layout { grid-template-columns:1fr; } }
+  .force-panel { background:var(--card); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+  .force-panel-hdr { padding:8px 12px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; background:rgba(0,0,0,.2); }
+  .force-panel-title { font-size:11px; font-weight:700; color:var(--gold); text-transform:uppercase; letter-spacing:.06em; }
+  .force-member-item { display:flex; align-items:center; gap:5px; padding:5px 10px; border-bottom:1px solid rgba(255,255,255,.04); font-size:12px; }
+  .force-member-item:hover { background:rgba(255,255,255,.03); }
+  .force-recruit-banner { background:linear-gradient(90deg,rgba(239,68,68,.12),rgba(255,140,0,.1)); border:1px solid rgba(239,68,68,.4); border-radius:8px; padding:10px 16px; margin-bottom:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .force-party { background:var(--card); border:1px solid var(--border); border-radius:8px; margin-bottom:10px; overflow:hidden; }
+  .force-party-hdr { display:flex; align-items:center; gap:6px; padding:8px 12px; background:rgba(0,0,0,.25); border-bottom:1px solid var(--border); flex-wrap:wrap; }
+  .force-subparty { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; padding:8px 10px; border-bottom:1px solid rgba(255,255,255,.04); }
+  .force-subparty:last-child { border-bottom:none; }
+  .force-slot { min-height:52px; border-radius:6px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:4px 6px; cursor:pointer; text-align:center; user-select:none; transition:border-color .15s,background .15s; }
+  .force-slot.empty { border:1px dashed var(--border); background:rgba(255,255,255,.01); color:var(--muted); font-size:11px; }
+  .force-slot.filled { border:1px solid var(--gold-d); background:rgba(0,200,138,.05); }
+  .force-slot.drag-over { border-color:var(--gold) !important; background:rgba(0,200,138,.12) !important; }
+  .force-slot-name { font-weight:700; font-size:12px; color:var(--text); line-height:1.2; word-break:break-all; }
   /* 뷰 토글 */
   .view-toggle { display:flex; gap:3px; background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:3px; }
   .vt { background:none; border:none; color:var(--muted); padding:4px 10px; border-radius:4px; font-size:12px; cursor:pointer; transition:all .15s; }
@@ -572,6 +590,7 @@
   <button class="nav-btn" onclick="showTab('war')">🗡️ 쟁 참여조사</button>
   <button class="nav-btn" onclick="showTab('timer')">⏰ 시공/슈고 알리미</button>
   <button class="nav-btn" onclick="showTab('homework')">📋 숙제 도우미(개발중)</button>
+  <button class="nav-btn" onclick="showTab('force')">⚔️ 포스 편성</button>
   <button class="nav-btn" onclick="showTab('register')">👤 멤버 등록</button>
   <button class="nav-btn" onclick="showTab('charsearch')">🔍 캐릭터 검색</button>
 </div>
@@ -1146,6 +1165,35 @@
         <div id="hw-weekly-area"><!-- JS로 렌더링 --></div>
       </div>
 
+    </div>
+  </div>
+
+  <!-- 포스 편성 -->
+  <div id="tab-force" class="tab-content">
+    <div style="max-width:1100px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+        <div class="hw-section-title">⚔️ 포스 편성</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn btn-sm" onclick="forceOpenRecruitModal()">📢 모집 설정</button>
+          <button class="btn btn-sm" onclick="forceAddParty()">+ 파티</button>
+          <button class="btn btn-sm" onclick="forceSaveHistory()">💾 저장</button>
+          <button class="btn btn-sm" onclick="forceShowHistory()">📜 히스토리</button>
+        </div>
+      </div>
+      <div id="force-recruit-banner" style="display:none;" class="force-recruit-banner"></div>
+      <div class="force-layout">
+        <!-- 참여자 패널 -->
+        <div class="force-panel" style="position:sticky;top:116px;">
+          <div class="force-panel-hdr">
+            <span class="force-panel-title">참여자</span>
+            <button onclick="forceAddMember()" class="btn btn-sm" style="padding:2px 8px;font-size:11px;">+ 추가</button>
+          </div>
+          <div id="force-members-list" style="max-height:520px;overflow-y:auto;"></div>
+          <div id="force-member-count" style="padding:6px 10px;border-top:1px solid rgba(255,255,255,.04);font-size:11px;color:var(--muted);"></div>
+        </div>
+        <!-- 파티 블록들 -->
+        <div id="force-parties-list"></div>
+      </div>
     </div>
   </div>
 
@@ -5708,7 +5756,8 @@ function showTab(id) {
   document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   tabEl.classList.add('active');
-  ['notice','dashboard','members','recruit','war','timer','homework','register'].forEach((t,i)=>{ if(t===id) document.querySelectorAll('.nav-btn')[i].classList.add('active'); });
+  ['notice','dashboard','members','recruit','war','timer','homework','force','register','charsearch'].forEach((t,i)=>{ if(t===id) document.querySelectorAll('.nav-btn')[i].classList.add('active'); });
+  if(id==='force') { if(window._forceRender) window._forceRender(); }
   if(id==='war'){const wb=document.getElementById('war-create-btn');if(wb)wb.style.display=isAdmin()?'inline-block':'none';const wr=document.getElementById('war-reset-btn');if(wr)wr.style.display=isAdmin()?'inline-block':'none';renderWarSurveys();}
   if(id==='notice') { refreshNoticeWriteBtn(); loadNcNotices(); loadNcUpdates(); }
 
@@ -7299,6 +7348,464 @@ window._odRenderAll=odRender;
 
 // 초기 렌더
 if(document.getElementById('tab-homework') && document.getElementById('tab-homework').classList.contains('active')) odRender();
+
+})();
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 포스 편성 관리
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+var FORCE_KEY = 'aion2_force_v1';
+var _dragInfo = null;
+
+var CLS_COLORS = { '검성':'#4ecdc4','수호성':'#4a80c4','살성':'#5ab860','궁성':'#3a9468','마도성':'#7b55cc','정령성':'#9540aa','치유성':'#d4aa30','호법성':'#c48c38' };
+var CLS_LIST = ['검성','수호성','살성','궁성','마도성','정령성','치유성','호법성'];
+
+function clsStyle(cls) {
+  var c = CLS_COLORS[cls] || '#888';
+  return 'background:'+c+'22;border:1px solid '+c+'55;color:'+c+';border-radius:3px;padding:1px 5px;font-size:10px;';
+}
+function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
+function forceNewParty(name) {
+  return { id:'p'+uid(), name:name||'파티', subparties:[[null,null,null,null],[null,null,null,null]] };
+}
+function forceDefault() {
+  return { recruit:{active:false,contentName:'',recruitStart:null,forceForm:null,contentStart:null,capacity:null}, members:[], parties:[forceNewParty('파티1')], history:[] };
+}
+function forceLoad() { try { var d=JSON.parse(localStorage.getItem(FORCE_KEY)); return d && d.parties ? d : forceDefault(); } catch(e){return forceDefault();} }
+function forceSave(d) { try { localStorage.setItem(FORCE_KEY,JSON.stringify(d)); } catch(e){} }
+function _esc(s) { return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+function _h(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function forceAssignedNames(data) {
+  var map = {};
+  data.parties.forEach(function(p){ p.subparties.forEach(function(sub){ sub.forEach(function(s){ if(s&&s.name) map[s.name]=true; }); }); });
+  return map;
+}
+
+function fmtTs(ts) {
+  if(!ts) return '';
+  var d=new Date(ts), h=d.getHours(), m=d.getMinutes(), ampm=h<12?'오전':'오후';
+  return (d.getMonth()+1)+'/'+(d.getDate())+' '+ampm+' '+(h===0?12:h>12?h-12:h)+':'+String(m).padStart(2,'0');
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function forceRender() {
+  var data = forceLoad();
+  forceRenderBanner(data);
+  forceRenderMembers(data);
+  forceRenderParties(data);
+}
+window._forceRender = forceRender;
+
+function forceRenderBanner(data) {
+  var el = document.getElementById('force-recruit-banner'); if(!el) return;
+  var r = data.recruit;
+  if(!r.active) { el.style.display='none'; return; }
+  el.style.display='flex';
+  var parts = [];
+  parts.push('<b style="font-size:15px;color:#ef4444;white-space:nowrap;">📢 '+(r.contentName?_h(r.contentName):'모집 중')+'</b>');
+  if(r.recruitStart) parts.push('<span style="font-size:12px;color:#aaa;">모집 <b style="color:#eee;">'+fmtTs(r.recruitStart)+'</b></span>');
+  if(r.forceForm)    parts.push('<span style="font-size:12px;color:#aaa;">포스결성 <b style="color:#ffd700;">'+fmtTs(r.forceForm)+'</b></span>');
+  if(r.contentStart) parts.push('<span style="font-size:12px;color:#aaa;">컨텐츠 <b style="color:#34d399;">'+fmtTs(r.contentStart)+'</b></span>');
+  var joined = data.members.filter(function(m){return m.joined;}).length;
+  if(r.capacity!=null) parts.push('<span style="font-size:12px;color:#aaa;">참여 <b style="color:#34d399;">'+joined+'/'+r.capacity+'</b></span>');
+  else if(joined) parts.push('<span style="font-size:12px;color:#aaa;">참여 <b style="color:#34d399;">'+joined+'명</b></span>');
+  el.innerHTML = parts.join('<span style="color:#444;margin:0 3px;">·</span>');
+}
+
+function forceRenderMembers(data) {
+  var el = document.getElementById('force-members-list');
+  var cnt = document.getElementById('force-member-count');
+  if(!el) return;
+  var assigned = forceAssignedNames(data);
+  var joined = data.members.filter(function(m){return m.joined;});
+  var notJoined = data.members.filter(function(m){return !m.joined;});
+  if(!data.members.length) {
+    el.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px;">참여자를 추가하세요</div>';
+    if(cnt) cnt.textContent=''; return;
+  }
+  var html='';
+  joined.forEach(function(m) {
+    var isAsgn = !!assigned[m.name];
+    var col = CLS_COLORS[m.cls]||'#888';
+    html += '<div class="force-member-item" draggable="'+(!isAsgn)+'" '
+      +(isAsgn?'':' ondragstart="forceMemberDragStart(\''+_esc(m.id)+'\')"')
+      +' style="cursor:'+(isAsgn?'default':'grab')+';opacity:'+(isAsgn?.5:1)+'">'
+      +'<div style="width:8px;height:8px;border-radius:50%;background:'+col+';flex-shrink:0;"></div>'
+      +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'+(isAsgn?'text-decoration:line-through;color:var(--muted);':'')+'">'+_h(m.name)+'</span>'
+      +'<span style="'+clsStyle(m.cls)+';white-space:nowrap;">'+_h(m.cls)+'</span>'
+      +'<button onclick="forceMemberJoin(\''+_esc(m.id)+'\')" title="미참여 전환" style="font-size:11px;padding:1px 4px;border:none;background:rgba(52,211,153,.15);color:#34d399;border-radius:3px;cursor:pointer;flex-shrink:0;">✓</button>'
+      +'<button onclick="forceDelMember(\''+_esc(m.id)+'\')" title="삭제" style="font-size:11px;padding:1px 4px;border:none;background:none;color:var(--muted);cursor:pointer;flex-shrink:0;">×</button>'
+      +'</div>';
+  });
+  if(notJoined.length) {
+    html+='<div style="padding:4px 10px;font-size:10px;color:var(--muted);border-top:1px solid rgba(255,255,255,.06);border-bottom:1px solid rgba(255,255,255,.06);">미참여</div>';
+    notJoined.forEach(function(m) {
+      var col = CLS_COLORS[m.cls]||'#888';
+      html += '<div class="force-member-item" style="opacity:.4;">'
+        +'<div style="width:8px;height:8px;border-radius:50%;background:'+col+';flex-shrink:0;"></div>'
+        +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+_h(m.name)+'</span>'
+        +'<span style="'+clsStyle(m.cls)+';white-space:nowrap;">'+_h(m.cls)+'</span>'
+        +'<button onclick="forceMemberJoin(\''+_esc(m.id)+'\')" title="참여로 변경" style="font-size:11px;padding:1px 4px;border:none;background:rgba(255,255,255,.08);color:var(--muted);border-radius:3px;cursor:pointer;flex-shrink:0;">+</button>'
+        +'<button onclick="forceDelMember(\''+_esc(m.id)+'\')" style="font-size:11px;padding:1px 4px;border:none;background:none;color:var(--muted);cursor:pointer;flex-shrink:0;">×</button>'
+        +'</div>';
+    });
+  }
+  el.innerHTML = html;
+  if(cnt) cnt.textContent = '참여 '+joined.length+' / 전체 '+data.members.length;
+}
+
+function forceRenderParties(data) {
+  var el = document.getElementById('force-parties-list'); if(!el) return;
+  if(!data.parties.length) {
+    el.innerHTML='<div style="padding:40px;text-align:center;color:var(--muted);font-size:13px;">파티가 없습니다. [+ 파티] 버튼으로 추가하세요.</div>';
+    return;
+  }
+  var html='';
+  data.parties.forEach(function(party) {
+    html += '<div class="force-party">'
+      +'<div class="force-party-hdr">'
+      +'<span style="font-size:13px;font-weight:700;color:var(--gold-l);">⚔️ '+_h(party.name)+'</span>'
+      +'<button onclick="forceRenameParty(\''+_esc(party.id)+'\')" class="btn btn-sm" style="padding:2px 7px;font-size:11px;margin-left:6px;">이름</button>'
+      +'<button onclick="forceAddSubparty(\''+_esc(party.id)+'\')" class="btn btn-sm" style="padding:2px 7px;font-size:11px;margin-left:4px;">+ 서브파티</button>'
+      +'<button onclick="forceDelParty(\''+_esc(party.id)+'\')" class="btn btn-sm btn-danger" style="padding:2px 7px;font-size:11px;margin-left:auto;">삭제</button>'
+      +'</div>';
+    party.subparties.forEach(function(sub, subIdx) {
+      html += '<div class="force-subparty" ondragover="event.preventDefault()" ondrop="forceDropToSubparty(event,\''+_esc(party.id)+'\','+subIdx+')">';
+      sub.forEach(function(slot, slotIdx) {
+        var sid = 'fs_'+party.id+'_'+subIdx+'_'+slotIdx;
+        if(slot && slot.name) {
+          var col = CLS_COLORS[slot.cls]||'#888';
+          html += '<div class="force-slot filled" id="'+sid+'" draggable="true"'
+            +' ondragstart="forceSlotDragStart(\''+_esc(party.id)+'\','+subIdx+','+slotIdx+')"'
+            +' ondragover="forceSlotDragOver(event,\''+sid+'\')"'
+            +' ondragleave="forceSlotDragLeave(\''+sid+'\')"'
+            +' ondrop="forceSlotDrop(event,\''+_esc(party.id)+'\','+subIdx+','+slotIdx+')"'
+            +' onclick="forceSlotClick(\''+_esc(party.id)+'\','+subIdx+','+slotIdx+')"'
+            +' style="border-color:'+col+'55;background:'+col+'12;">'
+            +'<span class="force-slot-name">'+_h(slot.name)+'</span>'
+            +'<span style="'+clsStyle(slot.cls)+';margin-top:3px;">'+_h(slot.cls||'')+'</span>'
+            +'</div>';
+        } else {
+          html += '<div class="force-slot empty" id="'+sid+'"'
+            +' ondragover="forceSlotDragOver(event,\''+sid+'\')"'
+            +' ondragleave="forceSlotDragLeave(\''+sid+'\')"'
+            +' ondrop="forceSlotDrop(event,\''+_esc(party.id)+'\','+subIdx+','+slotIdx+')"'
+            +' onclick="forceSlotClick(\''+_esc(party.id)+'\','+subIdx+','+slotIdx+')">'
+            +'<span style="opacity:.35;font-size:11px;">빈 슬롯</span>'
+            +'</div>';
+        }
+      });
+      html += '</div>'; // subparty
+      if(party.subparties.length > 1) {
+        html += '<div style="display:flex;justify-content:flex-end;padding:2px 10px 4px;">'
+          +'<button onclick="forceDelSubparty(\''+_esc(party.id)+'\','+subIdx+')" style="font-size:10px;padding:1px 6px;background:none;border:1px solid rgba(180,50,50,.3);color:var(--red);border-radius:3px;cursor:pointer;opacity:.7;">서브파티 삭제</button>'
+          +'</div>';
+      }
+    });
+    html += '</div>'; // force-party
+  });
+  el.innerHTML = html;
+}
+
+// ─── DRAG & DROP ─────────────────────────────────────────────────────────────
+function forceMemberDragStart(memberId) { _dragInfo = {type:'member', memberId:memberId}; }
+function forceSlotDragStart(partyId, subIdx, slotIdx) { _dragInfo = {type:'slot', partyId:partyId, subIdx:subIdx, slotIdx:slotIdx}; }
+function forceSlotDragOver(e, sid) { e.preventDefault(); var el=document.getElementById(sid); if(el) el.classList.add('drag-over'); }
+function forceSlotDragLeave(sid) { var el=document.getElementById(sid); if(el) el.classList.remove('drag-over'); }
+function forceSlotDrop(e, partyId, subIdx, slotIdx) {
+  e.preventDefault();
+  var sid='fs_'+partyId+'_'+subIdx+'_'+slotIdx;
+  forceSlotDragLeave(sid);
+  if(!_dragInfo) return;
+  var data = forceLoad();
+  var tParty = data.parties.find(function(p){return p.id===partyId;});
+  if(!tParty) return;
+  var cur = tParty.subparties[subIdx][slotIdx];
+  if(_dragInfo.type==='member') {
+    var m = data.members.find(function(x){return x.id===_dragInfo.memberId;});
+    if(!m) return;
+    data.parties.forEach(function(p){ p.subparties.forEach(function(sub){ for(var i=0;i<sub.length;i++){ if(sub[i]&&sub[i].name===m.name) sub[i]=null; } }); });
+    tParty.subparties[subIdx][slotIdx] = {name:m.name, cls:m.cls};
+  } else if(_dragInfo.type==='slot') {
+    var sParty = data.parties.find(function(p){return p.id===_dragInfo.partyId;});
+    if(!sParty) return;
+    var src = sParty.subparties[_dragInfo.subIdx][_dragInfo.slotIdx];
+    tParty.subparties[subIdx][slotIdx] = src;
+    sParty.subparties[_dragInfo.subIdx][_dragInfo.slotIdx] = cur;
+  }
+  _dragInfo = null;
+  forceSave(data); forceRender();
+}
+function forceDropToSubparty(e, partyId, subIdx) { /* handled by slot drop */ }
+
+// ─── SLOT CLICK ──────────────────────────────────────────────────────────────
+var _pickCls = '';
+function forcePickCls(cls) {
+  _pickCls = cls;
+  CLS_LIST.forEach(function(c) {
+    var b = document.getElementById('fclsbtn_'+c);
+    if(b) b.style.outline = c===cls ? '2px solid '+(CLS_COLORS[c]||'#888') : 'none';
+  });
+}
+
+function clsBtns(selectedCls) {
+  var html='<div style="display:flex;flex-wrap:wrap;gap:5px;">';
+  CLS_LIST.forEach(function(cls) {
+    var col=CLS_COLORS[cls];
+    html += '<button id="fclsbtn_'+cls+'" onclick="forcePickCls(\''+cls+'\')" style="padding:3px 9px;border-radius:4px;border:1px solid '+col+'55;background:'+col+'22;color:'+col+';cursor:pointer;font-size:11px;outline:'+(selectedCls===cls?'2px solid '+col:'none')+';">'+cls+'</button>';
+  });
+  return html+'</div>';
+}
+
+function forceSlotClick(partyId, subIdx, slotIdx) {
+  var data = forceLoad();
+  var party = data.parties.find(function(p){return p.id===partyId;});
+  if(!party) return;
+  var slot = party.subparties[subIdx][slotIdx];
+  if(slot && slot.name) {
+    _pickCls = slot.cls||'';
+    var html = '<div style="padding:20px;">'
+      +'<div style="font-size:14px;font-weight:700;color:var(--gold-l);margin-bottom:16px;">슬롯 편집: '+_h(slot.name)+'</div>'
+      +'<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">직업</div>'
+      +clsBtns(slot.cls)
+      +'<div style="font-size:12px;color:var(--muted);margin:12px 0 6px;">이름</div>'
+      +'<input id="fslotname" class="form-input" value="'+_h(slot.name)+'" style="margin-bottom:14px;" />'
+      +'<div style="display:flex;gap:8px;">'
+      +'<button onclick="forceSlotUpdate(\''+_esc(partyId)+'\','+subIdx+','+slotIdx+')" class="btn btn-primary btn-sm">저장</button>'
+      +'<button onclick="forceSlotClear(\''+_esc(partyId)+'\','+subIdx+','+slotIdx+')" class="btn btn-sm btn-danger">비우기</button>'
+      +'<button onclick="forceModalClose()" class="btn btn-sm">취소</button>'
+      +'</div></div>';
+    forceModal(html);
+  } else {
+    _pickCls = '';
+    var assigned = forceAssignedNames(data);
+    var avail = data.members.filter(function(m){return m.joined && !assigned[m.name];});
+    var html = '<div style="padding:20px;">'
+      +'<div style="font-size:14px;font-weight:700;color:var(--gold-l);margin-bottom:16px;">슬롯에 배치</div>';
+    if(avail.length) {
+      html += '<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">참여자 선택</div>'
+        +'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;">';
+      avail.forEach(function(m) {
+        var col=CLS_COLORS[m.cls]||'#888';
+        html += '<button onclick="forceSlotFromMember(\''+_esc(partyId)+'\','+subIdx+','+slotIdx+',\''+_esc(m.id)+'\')" style="display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:4px;border:1px solid '+col+'55;background:'+col+'22;cursor:pointer;">'
+          +'<span style="font-size:12px;color:'+col+';">'+_h(m.name)+'</span>'
+          +'<span style="font-size:10px;color:var(--muted);">'+_h(m.cls)+'</span>'
+          +'</button>';
+      });
+      html += '</div><hr style="border-color:rgba(255,255,255,.08);margin-bottom:14px;" />';
+    }
+    html += '<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">직접 입력</div>'
+      +'<input id="fslotname" class="form-input" placeholder="닉네임" style="margin-bottom:8px;" />'
+      +clsBtns('')
+      +'<div style="display:flex;gap:8px;margin-top:14px;">'
+      +'<button onclick="forceSlotManual(\''+_esc(partyId)+'\','+subIdx+','+slotIdx+')" class="btn btn-primary btn-sm">배치</button>'
+      +'<button onclick="forceModalClose()" class="btn btn-sm">취소</button>'
+      +'</div></div>';
+    forceModal(html);
+  }
+}
+
+function forceSlotFromMember(partyId, subIdx, slotIdx, memberId) {
+  var data = forceLoad();
+  var m = data.members.find(function(x){return x.id===memberId;});
+  if(!m) return;
+  data.parties.forEach(function(p){ p.subparties.forEach(function(sub){ for(var i=0;i<sub.length;i++){ if(sub[i]&&sub[i].name===m.name) sub[i]=null; } }); });
+  var party = data.parties.find(function(p){return p.id===partyId;});
+  if(party) party.subparties[subIdx][slotIdx] = {name:m.name, cls:m.cls};
+  forceSave(data); forceModalClose(); forceRender();
+}
+function forceSlotManual(partyId, subIdx, slotIdx) {
+  var n=(document.getElementById('fslotname')||{}).value||''; n=n.trim();
+  if(!n){alert('닉네임을 입력하세요');return;}
+  var data=forceLoad(); var party=data.parties.find(function(p){return p.id===partyId;});
+  if(party) party.subparties[subIdx][slotIdx]={name:n, cls:_pickCls};
+  forceSave(data); forceModalClose(); forceRender();
+}
+function forceSlotUpdate(partyId, subIdx, slotIdx) {
+  var n=(document.getElementById('fslotname')||{}).value||''; n=n.trim();
+  if(!n){alert('닉네임을 입력하세요');return;}
+  var data=forceLoad(); var party=data.parties.find(function(p){return p.id===partyId;});
+  var slot=party&&party.subparties[subIdx][slotIdx]; if(slot){slot.name=n; slot.cls=_pickCls||slot.cls;}
+  forceSave(data); forceModalClose(); forceRender();
+}
+function forceSlotClear(partyId, subIdx, slotIdx) {
+  var data=forceLoad(); var party=data.parties.find(function(p){return p.id===partyId;});
+  if(party) party.subparties[subIdx][slotIdx]=null;
+  forceSave(data); forceModalClose(); forceRender();
+}
+
+// ─── PARTY MANAGEMENT ────────────────────────────────────────────────────────
+function forceAddParty() {
+  var data=forceLoad(); data.parties.push(forceNewParty('파티'+(data.parties.length+1)));
+  forceSave(data); forceRender();
+}
+function forceDelParty(partyId) {
+  if(!confirm('이 파티를 삭제하시겠습니까?')) return;
+  var data=forceLoad(); data.parties=data.parties.filter(function(p){return p.id!==partyId;});
+  forceSave(data); forceRender();
+}
+function forceRenameParty(partyId) {
+  var data=forceLoad(); var party=data.parties.find(function(p){return p.id===partyId;}); if(!party) return;
+  var n=prompt('파티 이름:', party.name); if(n===null) return;
+  party.name=n.trim()||party.name; forceSave(data); forceRender();
+}
+function forceAddSubparty(partyId) {
+  var data=forceLoad(); var party=data.parties.find(function(p){return p.id===partyId;}); if(!party) return;
+  party.subparties.push([null,null,null,null]); forceSave(data); forceRender();
+}
+function forceDelSubparty(partyId, subIdx) {
+  if(!confirm('이 서브파티를 삭제하시겠습니까?')) return;
+  var data=forceLoad(); var party=data.parties.find(function(p){return p.id===partyId;}); if(!party) return;
+  party.subparties.splice(subIdx,1);
+  if(!party.subparties.length) party.subparties.push([null,null,null,null]);
+  forceSave(data); forceRender();
+}
+
+// ─── MEMBER MANAGEMENT ───────────────────────────────────────────────────────
+function forceAddMember() {
+  _pickCls = CLS_LIST[0];
+  var html='<div style="padding:20px;">'
+    +'<div style="font-size:14px;font-weight:700;color:var(--gold-l);margin-bottom:16px;">참여자 추가</div>'
+    +'<div style="margin-bottom:10px;"><label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">닉네임</label>'
+    +'<input id="fslotname" class="form-input" placeholder="닉네임" /></div>'
+    +'<div style="margin-bottom:14px;"><label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">직업</label>'
+    +clsBtns(CLS_LIST[0])+'</div>'
+    +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">'
+    +'<input type="checkbox" id="fadd-joined" checked style="width:16px;height:16px;accent-color:var(--gold);">'
+    +'<label for="fadd-joined" style="font-size:13px;cursor:pointer;">참여 확정</label></div>'
+    +'<div style="display:flex;gap:8px;">'
+    +'<button onclick="forceConfirmAddMember()" class="btn btn-primary btn-sm">추가</button>'
+    +'<button onclick="forceModalClose()" class="btn btn-sm">취소</button>'
+    +'</div></div>';
+  forceModal(html);
+}
+function forceConfirmAddMember() {
+  var n=(document.getElementById('fslotname')||{}).value||''; n=n.trim();
+  if(!n){alert('닉네임을 입력하세요');return;}
+  var joined=document.getElementById('fadd-joined'); joined=joined?joined.checked:true;
+  var data=forceLoad();
+  data.members.push({id:'m'+uid(), name:n, cls:_pickCls||'', joined:joined});
+  forceSave(data); forceModalClose(); forceRender();
+}
+function forceMemberJoin(memberId) {
+  var data=forceLoad(); var m=data.members.find(function(x){return x.id===memberId;});
+  if(m) m.joined=!m.joined; forceSave(data); forceRender();
+}
+function forceDelMember(memberId) {
+  var data=forceLoad(); var m=data.members.find(function(x){return x.id===memberId;});
+  if(m) { data.parties.forEach(function(p){ p.subparties.forEach(function(sub){ for(var i=0;i<sub.length;i++){ if(sub[i]&&sub[i].name===m.name) sub[i]=null; } }); }); }
+  data.members=data.members.filter(function(x){return x.id!==memberId;});
+  forceSave(data); forceRender();
+}
+
+// ─── RECRUIT ─────────────────────────────────────────────────────────────────
+function forceOpenRecruitModal() {
+  var data=forceLoad(); var r=data.recruit;
+  function toInput(ts){if(!ts)return'';var d=new Date(ts),pad=function(n){return String(n).padStart(2,'0')};return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes());}
+  var html='<div style="padding:20px;">'
+    +'<div style="font-size:14px;font-weight:700;color:var(--gold-l);margin-bottom:16px;">📢 모집 설정</div>'
+    +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">'
+    +'<input type="checkbox" id="frc-active" '+(r.active?'checked':'')+' style="width:16px;height:16px;accent-color:var(--gold);">'
+    +'<label for="frc-active" style="font-size:13px;cursor:pointer;">모집 활성화 (상단 배너 표시)</label></div>'
+    +'<div style="margin-bottom:10px;"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">컨텐츠명</label>'
+    +'<input id="frc-name" class="form-input" value="'+_h(r.contentName||'')+'" placeholder="예: 루드라, 아티쟁" /></div>'
+    +'<div style="margin-bottom:10px;"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">모집 시작</label>'
+    +'<input id="frc-start" type="datetime-local" class="form-input" value="'+toInput(r.recruitStart)+'" /></div>'
+    +'<div style="margin-bottom:10px;"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">포스 결성</label>'
+    +'<input id="frc-form" type="datetime-local" class="form-input" value="'+toInput(r.forceForm)+'" /></div>'
+    +'<div style="margin-bottom:10px;"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">컨텐츠 시작</label>'
+    +'<input id="frc-content" type="datetime-local" class="form-input" value="'+toInput(r.contentStart)+'" /></div>'
+    +'<div style="margin-bottom:16px;"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">최대 인원 (비워두면 제한없음)</label>'
+    +'<input id="frc-cap" type="number" min="1" max="100" class="form-input" value="'+(r.capacity!=null?r.capacity:'')+'" /></div>'
+    +'<div style="display:flex;gap:8px;">'
+    +'<button onclick="forceSaveRecruit()" class="btn btn-primary btn-sm">저장</button>'
+    +'<button onclick="forceModalClose()" class="btn btn-sm">취소</button>'
+    +'</div></div>';
+  forceModal(html);
+}
+function forceSaveRecruit() {
+  function toTs(id){var e=document.getElementById(id);return e&&e.value?new Date(e.value).getTime():null;}
+  var data=forceLoad();
+  var capEl=document.getElementById('frc-cap');
+  data.recruit={
+    active:document.getElementById('frc-active').checked,
+    contentName:(document.getElementById('frc-name').value||'').trim(),
+    recruitStart:toTs('frc-start'), forceForm:toTs('frc-form'), contentStart:toTs('frc-content'),
+    capacity:capEl&&capEl.value?parseInt(capEl.value):null
+  };
+  forceSave(data); forceModalClose(); forceRender();
+}
+
+// ─── HISTORY ─────────────────────────────────────────────────────────────────
+function forceSaveHistory() {
+  var memo=prompt('메모 (예: 4/24 루드라 4:2 승리):',''); if(memo===null) return;
+  var data=forceLoad();
+  data.history.unshift({id:'h'+uid(), savedAt:Date.now(), memo:memo.trim(), members:JSON.parse(JSON.stringify(data.members)), parties:JSON.parse(JSON.stringify(data.parties))});
+  if(data.history.length>30) data.history=data.history.slice(0,30);
+  forceSave(data); alert('저장되었습니다.');
+}
+function forceShowHistory() {
+  var data=forceLoad();
+  if(!data.history.length){alert('저장된 히스토리가 없습니다.');return;}
+  var html='<div style="padding:20px;"><div style="font-size:14px;font-weight:700;color:var(--gold-l);margin-bottom:16px;">📜 히스토리</div>';
+  data.history.forEach(function(h) {
+    var d=new Date(h.savedAt);
+    var ds=(d.getMonth()+1)+'/'+d.getDate()+' '+d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');
+    html+='<div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.06);">'
+      +'<div style="flex:1;min-width:0;">'
+      +'<div style="font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(h.memo||'(메모 없음)')+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);">'+ds+' · 참여자 '+((h.members||[]).length)+'명 · 파티 '+((h.parties||[]).length)+'개</div>'
+      +'</div>'
+      +'<button onclick="forceRestoreHistory(\''+_esc(h.id)+'\')" style="font-size:11px;padding:3px 8px;background:rgba(0,200,138,.1);border:1px solid rgba(0,200,138,.3);color:#00c88a;border-radius:4px;cursor:pointer;white-space:nowrap;">복원</button>'
+      +'<button onclick="forceDeleteHistory(\''+_esc(h.id)+'\')" style="font-size:11px;padding:3px 8px;background:none;border:1px solid rgba(180,50,50,.3);color:var(--red);border-radius:4px;cursor:pointer;white-space:nowrap;">삭제</button>'
+      +'</div>';
+  });
+  html+='</div>';
+  forceModal(html);
+}
+function forceRestoreHistory(histId) {
+  if(!confirm('현재 편성을 이 히스토리로 덮어씌우시겠습니까?')) return;
+  var data=forceLoad(); var h=data.history.find(function(x){return x.id===histId;}); if(!h) return;
+  data.members=JSON.parse(JSON.stringify(h.members));
+  data.parties=JSON.parse(JSON.stringify(h.parties));
+  forceSave(data); forceModalClose(); forceRender();
+}
+function forceDeleteHistory(histId) {
+  if(!confirm('이 히스토리를 삭제하시겠습니까?')) return;
+  var data=forceLoad(); data.history=data.history.filter(function(h){return h.id!==histId;}); forceSave(data);
+  forceModalClose(); forceShowHistory();
+}
+
+// ─── MODAL ───────────────────────────────────────────────────────────────────
+function forceModal(html) {
+  var ov=document.getElementById('force-modal-overlay');
+  if(!ov){ ov=document.createElement('div'); ov.id='force-modal-overlay';
+    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px;';
+    ov.onclick=function(e){if(e.target===ov)forceModalClose();};
+    document.body.appendChild(ov); }
+  ov.innerHTML='<div style="background:var(--surface);border:1px solid var(--gold-d);border-radius:12px;max-width:500px;width:100%;max-height:85vh;overflow-y:auto;">'+html+'</div>';
+  ov.style.display='flex';
+}
+function forceModalClose() { var ov=document.getElementById('force-modal-overlay'); if(ov) ov.style.display='none'; }
+
+// expose globals
+window.forceAddParty=forceAddParty; window.forceDelParty=forceDelParty;
+window.forceRenameParty=forceRenameParty; window.forceAddSubparty=forceAddSubparty; window.forceDelSubparty=forceDelSubparty;
+window.forceSlotClick=forceSlotClick; window.forceSlotDragStart=forceSlotDragStart;
+window.forceSlotDragOver=forceSlotDragOver; window.forceSlotDragLeave=forceSlotDragLeave;
+window.forceSlotDrop=forceSlotDrop; window.forceDropToSubparty=forceDropToSubparty;
+window.forceMemberDragStart=forceMemberDragStart;
+window.forceSlotFromMember=forceSlotFromMember; window.forceSlotManual=forceSlotManual;
+window.forceSlotUpdate=forceSlotUpdate; window.forceSlotClear=forceSlotClear;
+window.forceAddMember=forceAddMember; window.forceConfirmAddMember=forceConfirmAddMember;
+window.forceMemberJoin=forceMemberJoin; window.forceDelMember=forceDelMember;
+window.forceOpenRecruitModal=forceOpenRecruitModal; window.forceSaveRecruit=forceSaveRecruit;
+window.forceSaveHistory=forceSaveHistory; window.forceShowHistory=forceShowHistory;
+window.forceRestoreHistory=forceRestoreHistory; window.forceDeleteHistory=forceDeleteHistory;
+window.forceModalClose=forceModalClose; window.forcePickCls=forcePickCls;
 
 })();
 
