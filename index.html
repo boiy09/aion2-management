@@ -188,6 +188,46 @@
   .hw-qa-btn { padding:6px 14px; border-radius:6px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:12px; cursor:pointer; transition:all .15s; }
   .hw-qa-btn:hover { border-color:var(--gold-d); color:var(--gold-l); }
   .hw-kina-input { width:100%; box-sizing:border-box; border:1px solid var(--border); background:var(--surface); color:var(--text); border-radius:6px; padding:6px 10px; font-size:13px; outline:none; }
+  /* 오드/티켓 관리 */
+  .od-sum-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(148px,1fr)); gap:10px; margin-bottom:14px; }
+  .od-sum-card { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:12px 14px; }
+  .od-sum-label { font-size:10px; color:var(--muted); margin-bottom:4px; text-transform:uppercase; letter-spacing:.05em; }
+  .od-sum-val { font-size:20px; font-weight:700; color:var(--gold-l); line-height:1.1; }
+  .od-sum-sub { font-size:11px; color:var(--muted); margin-top:3px; }
+  .od-sum-bar { height:4px; background:var(--border); border-radius:2px; margin-top:8px; overflow:hidden; }
+  .od-sum-bar-fill { height:100%; border-radius:2px; transition:width .3s; }
+  .od-acc-block { background:var(--card); border:1px solid var(--border); border-radius:8px; margin-bottom:10px; overflow:hidden; }
+  .od-acc-hdr { display:flex; align-items:center; gap:6px; padding:10px 14px; cursor:pointer; transition:background .15s; user-select:none; flex-wrap:wrap; }
+  .od-acc-hdr:hover { background:rgba(255,255,255,.04); }
+  .od-tbl-wrap { overflow-x:auto; }
+  .od-tbl-hdr { display:grid; padding:6px 14px; font-size:10px; color:var(--muted); border-bottom:1px solid var(--border); background:rgba(0,0,0,.2); letter-spacing:.04em; min-width:800px; }
+  .od-char-row { display:grid; padding:9px 14px; border-bottom:1px solid rgba(255,255,255,.04); align-items:center; gap:6px; font-size:12px; min-width:800px; }
+  .od-char-row:last-child { border-bottom:none; }
+  .od-act-btn { width:54px; height:30px; border-radius:5px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:11px; font-weight:600; cursor:pointer; transition:all .15s; user-select:none; position:relative; }
+  .od-act-btn:hover:not(:disabled) { border-color:var(--gold-d); color:var(--gold-l); }
+  .od-act-btn:disabled { opacity:.3; cursor:not-allowed; }
+  .od-undo-dot { position:absolute; top:-5px; right:-5px; width:14px; height:14px; background:#3b82f6; border-radius:50%; font-size:9px; color:#fff; display:flex; align-items:center; justify-content:center; pointer-events:none; }
+  .od-val-btn { cursor:pointer; padding:1px 5px; border-radius:3px; border:none; background:none; font-family:inherit; transition:background .15s; }
+  .od-val-btn:hover { background:rgba(255,255,255,.08); }
+  .od-extra { color:#3b82f6; font-size:11px; font-weight:600; cursor:pointer; padding:1px 4px; border-radius:3px; }
+  .od-extra:hover { background:rgba(59,130,246,.15); }
+  .od-warn-text { color:#f59e0b; }
+  .od-dot { display:inline-block; width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .mbship-badge { font-size:10px; padding:1px 5px; border-radius:3px; background:rgba(234,179,8,.12); color:var(--gold-l); border:1px solid rgba(234,179,8,.25); }
+  .od-hw-check { width:18px; height:18px; border-radius:4px; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; transition:all .15s; font-size:11px; }
+  .od-hw-check.chk { background:var(--gold); border-color:var(--gold); color:#111; }
+  .od-acc-footer { padding:10px 14px; border-top:1px solid rgba(255,255,255,.05); display:flex; gap:10px; flex-wrap:wrap; align-items:center; background:rgba(0,0,0,.15); }
+  .od-tc-btn { width:20px; height:20px; border-radius:3px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; }
+  .od-memo-dot { position:absolute; top:-3px; right:-3px; width:6px; height:6px; border-radius:50%; background:#22c55e; }
+  .od-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.65); z-index:300; display:flex; align-items:center; justify-content:center; padding:16px; }
+  .od-modal { background:var(--card); border:1px solid var(--border); border-radius:10px; width:100%; max-width:420px; max-height:85vh; overflow-y:auto; padding:20px; }
+  .od-modal h3 { font-size:15px; font-weight:700; margin-bottom:16px; color:var(--gold-l); }
+  .od-form-label { font-size:12px; color:var(--muted); margin-bottom:4px; }
+  .od-form-input { width:100%; background:var(--surface); border:1px solid var(--border); color:var(--text); border-radius:6px; padding:7px 10px; font-size:13px; outline:none; box-sizing:border-box; }
+  .od-form-input:focus { border-color:var(--gold-d); }
+  .od-clr-grid { display:flex; gap:6px; flex-wrap:wrap; }
+  .od-clr-btn { width:26px; height:26px; border-radius:50%; border:3px solid transparent; cursor:pointer; transition:border-color .15s; }
+  .od-clr-btn.sel { border-color:#fff; }
   /* 뷰 토글 */
   .view-toggle { display:flex; gap:3px; background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:3px; }
   .vt { background:none; border:none; color:var(--muted); padding:4px 10px; border-radius:4px; font-size:12px; cursor:pointer; transition:all .15s; }
@@ -960,6 +1000,27 @@
   <!-- 숙제 도우미 -->
   <div id="tab-homework" class="tab-content">
     <div class="section-title">📋 숙제 도우미</div>
+
+    <!-- ─── 오드/티켓 다계정 관리 ─── -->
+    <div style="max-width:960px;margin-bottom:24px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+        <div class="hw-section-title" style="margin-bottom:0;">⚡ 오드/티켓 관리</div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-primary btn-sm" onclick="odMgrAddAccount()">+ 계정</button>
+          <button class="btn btn-sm" onclick="odMgrBackup()">💾 백업</button>
+          <button class="btn btn-sm" onclick="odMgrRestoreModal()">📂 불러오기</button>
+        </div>
+      </div>
+      <div class="od-sum-grid" id="od-sum-cards"></div>
+      <div id="od-accounts-list"></div>
+      <div id="od-empty-state" style="display:none;padding:32px;text-align:center;" class="card">
+        <div style="font-size:28px;margin-bottom:8px;">🏹</div>
+        <div style="color:var(--muted);font-size:13px;margin-bottom:12px;">등록된 계정이 없습니다<br><span style="font-size:11px;">계정을 추가하면 오드·티켓·체크리스트를 관리할 수 있어요</span></div>
+        <button class="btn btn-primary" onclick="odMgrAddAccount()">+ 계정 추가</button>
+      </div>
+    </div>
+
+    <div style="border-top:1px solid var(--border);margin-bottom:20px;"></div>
     <div style="max-width:600px;">
 
       <!-- 리셋 안내 -->
@@ -6750,9 +6811,495 @@ function hwQuickResetDaily() {
     const origShow = window.showTab;
     window.showTab = function(tab) {
       origShow(tab);
-      if(tab === 'homework') _hwRenderAll();
+      if(tab === 'homework') { _hwRenderAll(); if(window._odRenderAll) window._odRenderAll(); }
     };
   } catch(e) {}
+})();
+
+// ─── 오드/티켓 다계정 관리 ─────────────────────────────────────────────────
+(function() {
+'use strict';
+
+var OD_RULES = {
+  od: { maxBase: 720, costNoMembership: 40, costMembership: 20 },
+  expedition: { maxBase: 14, weeklyMaxPerChar: 5, weeklyAccountWarnAt: 10 },
+  transcendence: { maxBase: 7, weeklyMaxPerChar: 3, weeklyAccountWarnAt: 6 },
+  shugo: { maxBase: 14 },
+  invasion: { maxBase: 7 },
+  dailyResetHour: 5,
+  weeklyResetDay: 3,
+  weeklyResetHour: 5,
+  corridorResetDays: [3, 6],
+  corridorResetHour: 22
+};
+var OD_COLORS = {
+  green:{dot:'#22c55e'}, blue:{dot:'#3b82f6'}, violet:{dot:'#8b5cf6'},
+  red:{dot:'#ef4444'}, yellow:{dot:'#eab308'}, orange:{dot:'#f97316'}, gray:{dot:'#6b7280'}
+};
+var OD_COLOR_LIST = ['green','blue','violet','red','yellow','orange','gray'];
+var OD_KEY = 'aion2_od_v1';
+var OD_UNDO_KEY = 'aion2_od_undo';
+var OD_COLS = 'grid-template-columns:1fr 1.2fr 1.2fr 1.1fr 36px 36px 58px 58px 58px 60px';
+
+function odLoad() {
+  try { var d = JSON.parse(localStorage.getItem(OD_KEY)||'null'); return (d&&Array.isArray(d.accounts)) ? d : {accounts:[],characters:[]}; }
+  catch(e) { return {accounts:[],characters:[]}; }
+}
+function odSave(d) { try { localStorage.setItem(OD_KEY, JSON.stringify(d)); } catch(e) {} }
+function odUndoLoad() { try { return JSON.parse(sessionStorage.getItem(OD_UNDO_KEY)||'[]'); } catch(e) { return []; } }
+function odUndoSave(log) { try { sessionStorage.setItem(OD_UNDO_KEY, JSON.stringify(log)); } catch(e) {} }
+function odUndoAdd(entry) { var log=odUndoLoad(); log.push(entry); odUndoSave(log); }
+function odUndoCnt(uid, type) { return odUndoLoad().filter(function(e){return e.charUid===uid&&e.type===type;}).length; }
+function odUID() { return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+
+function odKst() { return new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Seoul'})); }
+function odWeeklyReset(now) {
+  var d=new Date(now||odKst()); var day=d.getDay();
+  var diff=(day>=OD_RULES.weeklyResetDay)?day-OD_RULES.weeklyResetDay:day+7-OD_RULES.weeklyResetDay;
+  d.setDate(d.getDate()-diff); d.setHours(OD_RULES.weeklyResetHour,0,0,0);
+  if(d>odKst()) d.setDate(d.getDate()-7); return d;
+}
+function odIsNewWeek(iso) { if(!iso) return true; return odWeeklyReset()>new Date(iso); }
+function odIsNewDay(iso) {
+  if(!iso) return true;
+  var now=odKst(); var r=new Date(now); r.setHours(OD_RULES.dailyResetHour,0,0,0);
+  if(now.getHours()<OD_RULES.dailyResetHour) r.setDate(r.getDate()-1);
+  return new Date(iso)<r;
+}
+function odIsNewCorridor(iso) {
+  if(!iso) return true;
+  var now=odKst(); var days=OD_RULES.corridorResetDays; var hr=OD_RULES.corridorResetHour;
+  for(var i=0;i<7;i++){ var t=new Date(now); t.setDate(t.getDate()-i); t.setHours(hr,0,0,0);
+    if(days.indexOf(t.getDay())>=0&&t<=now) return new Date(iso)<t; }
+  return false;
+}
+
+function odNormalize(data) {
+  var wr=odWeeklyReset();
+  data.accounts.forEach(function(acc){
+    if(odIsNewWeek(acc.weeklyResetAt)){acc.weeklyExpeditionCount=0;acc.weeklyTranscendenceCount=0;acc.weeklyResetAt=wr.toISOString();}
+    if(odIsNewDay(acc.missionResetAt)){acc.missionChecked=false;acc.missionResetAt=new Date().toISOString();}
+  });
+  data.characters.forEach(function(ch){
+    if(odIsNewWeek(ch.weeklyResetAt)){ch.weeklyExpLeft=OD_RULES.expedition.weeklyMaxPerChar;ch.weeklyTransLeft=OD_RULES.transcendence.weeklyMaxPerChar;ch.awakeningChecked=false;ch.sanctuaryChecked=false;ch.weeklyResetAt=wr.toISOString();}
+    if(odIsNewCorridor(ch.corridorResetAt)){ch.corridorChecked=false;}
+  });
+  return data;
+}
+
+function odNewAcc(name, mbship) {
+  return {uid:odUID(),name:name,hasMembership:!!mbship,shugoBase:OD_RULES.shugo.maxBase,shugoExtra:0,invasionBase:OD_RULES.invasion.maxBase,invasionExtra:0,weeklyExpeditionCount:0,weeklyTranscendenceCount:0,weeklyResetAt:odWeeklyReset().toISOString(),ildeonChecked:false,missionChecked:false,missionResetAt:null,collapsed:false};
+}
+function odNewChar(accUid, name, color) {
+  return {uid:odUID(),accountUid:accUid,name:name,classColor:color||'green',baseOd:OD_RULES.od.maxBase,extraOd:0,expeditionBase:OD_RULES.expedition.maxBase,expeditionExtra:0,transcendenceBase:OD_RULES.transcendence.maxBase,transcendenceExtra:0,weeklyExpLeft:OD_RULES.expedition.weeklyMaxPerChar,weeklyTransLeft:OD_RULES.transcendence.weeklyMaxPerChar,corridorChecked:false,awakeningChecked:false,sanctuaryChecked:false,corridorResetAt:null,weeklyResetAt:odWeeklyReset().toISOString(),memo:''};
+}
+
+// ─ 액션 ─
+function odActExpedition(uid) {
+  var data=odNormalize(odLoad()); var ch=data.characters.find(function(c){return c.uid===uid;}); if(!ch) return;
+  var acc=data.accounts.find(function(a){return a.uid===ch.accountUid;});
+  var cost=(acc&&acc.hasMembership)?OD_RULES.od.costMembership:OD_RULES.od.costNoMembership;
+  var totalOd=ch.baseOd+ch.extraOd;
+  if((ch.expeditionBase+ch.expeditionExtra)<=0||ch.weeklyExpLeft<=0||totalOd<cost){odToast('실행 불가 (오드부족 또는 티켓/한도 없음)');return;}
+  var useBase=ch.expeditionBase>0; var baseSpent=Math.min(ch.baseOd,cost); var extraSpent=cost-baseSpent;
+  odUndoAdd({type:'expedition',charUid:uid,accountUid:acc?acc.uid:null,baseSpent:baseSpent,extraSpent:extraSpent,usedBase:useBase});
+  ch.baseOd=Math.max(0,ch.baseOd-baseSpent); ch.extraOd=Math.max(0,ch.extraOd-extraSpent);
+  if(useBase) ch.expeditionBase=Math.max(0,ch.expeditionBase-1); else ch.expeditionExtra=Math.max(0,ch.expeditionExtra-1);
+  ch.weeklyExpLeft=Math.max(0,ch.weeklyExpLeft-1);
+  if(acc) acc.weeklyExpeditionCount=(acc.weeklyExpeditionCount||0)+1;
+  odSave(data); odRender();
+}
+function odUndoExpedition(uid) {
+  var log=odUndoLoad(); var idx=-1;
+  for(var i=log.length-1;i>=0;i--){if(log[i].charUid===uid&&log[i].type==='expedition'){idx=i;break;}}
+  if(idx<0){odToast('취소할 기록 없음 (세션 내 기록만 가능)');return;}
+  var e=log[idx]; var data=odNormalize(odLoad()); var ch=data.characters.find(function(c){return c.uid===uid;}); if(!ch) return;
+  ch.baseOd=Math.min(OD_RULES.od.maxBase,ch.baseOd+e.baseSpent); ch.extraOd=ch.extraOd+e.extraSpent;
+  if(e.usedBase) ch.expeditionBase=Math.min(OD_RULES.expedition.maxBase,ch.expeditionBase+1); else ch.expeditionExtra=ch.expeditionExtra+1;
+  ch.weeklyExpLeft=Math.min(OD_RULES.expedition.weeklyMaxPerChar,ch.weeklyExpLeft+1);
+  if(e.accountUid){var acc=data.accounts.find(function(a){return a.uid===e.accountUid;});if(acc) acc.weeklyExpeditionCount=Math.max(0,(acc.weeklyExpeditionCount||0)-1);}
+  log.splice(idx,1); odUndoSave(log); odSave(data); odRender();
+}
+function odActTranscendence(uid) {
+  var data=odNormalize(odLoad()); var ch=data.characters.find(function(c){return c.uid===uid;}); if(!ch) return;
+  var acc=data.accounts.find(function(a){return a.uid===ch.accountUid;});
+  var cost=(acc&&acc.hasMembership)?OD_RULES.od.costMembership:OD_RULES.od.costNoMembership;
+  var totalOd=ch.baseOd+ch.extraOd;
+  if((ch.transcendenceBase+ch.transcendenceExtra)<=0||ch.weeklyTransLeft<=0||totalOd<cost){odToast('실행 불가');return;}
+  var useBase=ch.transcendenceBase>0; var baseSpent=Math.min(ch.baseOd,cost); var extraSpent=cost-baseSpent;
+  odUndoAdd({type:'transcendence',charUid:uid,accountUid:acc?acc.uid:null,baseSpent:baseSpent,extraSpent:extraSpent,usedBase:useBase});
+  ch.baseOd=Math.max(0,ch.baseOd-baseSpent); ch.extraOd=Math.max(0,ch.extraOd-extraSpent);
+  if(useBase) ch.transcendenceBase=Math.max(0,ch.transcendenceBase-1); else ch.transcendenceExtra=Math.max(0,ch.transcendenceExtra-1);
+  ch.weeklyTransLeft=Math.max(0,ch.weeklyTransLeft-1);
+  if(acc) acc.weeklyTranscendenceCount=(acc.weeklyTranscendenceCount||0)+1;
+  odSave(data); odRender();
+}
+function odUndoTranscendence(uid) {
+  var log=odUndoLoad(); var idx=-1;
+  for(var i=log.length-1;i>=0;i--){if(log[i].charUid===uid&&log[i].type==='transcendence'){idx=i;break;}}
+  if(idx<0){odToast('취소할 기록 없음');return;}
+  var e=log[idx]; var data=odNormalize(odLoad()); var ch=data.characters.find(function(c){return c.uid===uid;}); if(!ch) return;
+  ch.baseOd=Math.min(OD_RULES.od.maxBase,ch.baseOd+e.baseSpent); ch.extraOd=ch.extraOd+e.extraSpent;
+  if(e.usedBase) ch.transcendenceBase=Math.min(OD_RULES.transcendence.maxBase,ch.transcendenceBase+1); else ch.transcendenceExtra=ch.transcendenceExtra+1;
+  ch.weeklyTransLeft=Math.min(OD_RULES.transcendence.weeklyMaxPerChar,ch.weeklyTransLeft+1);
+  if(e.accountUid){var acc=data.accounts.find(function(a){return a.uid===e.accountUid;});if(acc) acc.weeklyTranscendenceCount=Math.max(0,(acc.weeklyTranscendenceCount||0)-1);}
+  log.splice(idx,1); odUndoSave(log); odSave(data); odRender();
+}
+function odActSanctuary(uid) {
+  var data=odNormalize(odLoad()); var ch=data.characters.find(function(c){return c.uid===uid;}); if(!ch) return;
+  var acc=data.accounts.find(function(a){return a.uid===ch.accountUid;});
+  var cost=(acc&&acc.hasMembership)?OD_RULES.od.costMembership:OD_RULES.od.costNoMembership;
+  if((ch.baseOd+ch.extraOd)<cost){odToast('오드 부족');return;}
+  var baseSpent=Math.min(ch.baseOd,cost); var extraSpent=cost-baseSpent;
+  odUndoAdd({type:'sanctuary',charUid:uid,baseSpent:baseSpent,extraSpent:extraSpent});
+  ch.baseOd=Math.max(0,ch.baseOd-baseSpent); ch.extraOd=Math.max(0,ch.extraOd-extraSpent);
+  odSave(data); odRender();
+}
+function odUndoSanctuary(uid) {
+  var log=odUndoLoad(); var idx=-1;
+  for(var i=log.length-1;i>=0;i--){if(log[i].charUid===uid&&log[i].type==='sanctuary'){idx=i;break;}}
+  if(idx<0){odToast('취소할 기록 없음');return;}
+  var e=log[idx]; var data=odNormalize(odLoad()); var ch=data.characters.find(function(c){return c.uid===uid;}); if(!ch) return;
+  ch.baseOd=Math.min(OD_RULES.od.maxBase,ch.baseOd+e.baseSpent); ch.extraOd=ch.extraOd+e.extraSpent;
+  log.splice(idx,1); odUndoSave(log); odSave(data); odRender();
+}
+function odActShugo(repUid) {
+  var data=odNormalize(odLoad()); var ch=data.characters.find(function(c){return c.uid===repUid;}); if(!ch) return;
+  var acc=data.accounts.find(function(a){return a.uid===ch.accountUid;}); if(!acc||(acc.shugoBase+acc.shugoExtra)<=0){odToast('슈고 티켓 없음');return;}
+  var useBase=acc.shugoBase>0;
+  odUndoAdd({type:'shugo',charUid:repUid,accountUid:acc.uid,usedBase:useBase});
+  if(useBase) acc.shugoBase=Math.max(0,acc.shugoBase-1); else acc.shugoExtra=Math.max(0,acc.shugoExtra-1);
+  odSave(data); odRender();
+}
+function odUndoShugo(repUid) {
+  var log=odUndoLoad(); var idx=-1;
+  for(var i=log.length-1;i>=0;i--){if(log[i].charUid===repUid&&log[i].type==='shugo'){idx=i;break;}}
+  if(idx<0){odToast('취소할 기록 없음');return;}
+  var e=log[idx]; var data=odNormalize(odLoad()); var acc=data.accounts.find(function(a){return a.uid===e.accountUid;}); if(!acc) return;
+  if(e.usedBase) acc.shugoBase=Math.min(OD_RULES.shugo.maxBase,acc.shugoBase+1); else acc.shugoExtra=acc.shugoExtra+1;
+  log.splice(idx,1); odUndoSave(log); odSave(data); odRender();
+}
+function odActInvasion(repUid) {
+  var data=odNormalize(odLoad()); var ch=data.characters.find(function(c){return c.uid===repUid;}); if(!ch) return;
+  var acc=data.accounts.find(function(a){return a.uid===ch.accountUid;}); if(!acc||(acc.invasionBase+acc.invasionExtra)<=0){odToast('침공 티켓 없음');return;}
+  var useBase=acc.invasionBase>0;
+  odUndoAdd({type:'invasion',charUid:repUid,accountUid:acc.uid,usedBase:useBase});
+  if(useBase) acc.invasionBase=Math.max(0,acc.invasionBase-1); else acc.invasionExtra=Math.max(0,acc.invasionExtra-1);
+  odSave(data); odRender();
+}
+function odUndoInvasion(repUid) {
+  var log=odUndoLoad(); var idx=-1;
+  for(var i=log.length-1;i>=0;i--){if(log[i].charUid===repUid&&log[i].type==='invasion'){idx=i;break;}}
+  if(idx<0){odToast('취소할 기록 없음');return;}
+  var e=log[idx]; var data=odNormalize(odLoad()); var acc=data.accounts.find(function(a){return a.uid===e.accountUid;}); if(!acc) return;
+  if(e.usedBase) acc.invasionBase=Math.min(OD_RULES.invasion.maxBase,acc.invasionBase+1); else acc.invasionExtra=acc.invasionExtra+1;
+  log.splice(idx,1); odUndoSave(log); odSave(data); odRender();
+}
+
+// ─ 체크/값 조정 ─
+function odToggle(field, uid, isAcc) {
+  var data=odLoad(); var arr=isAcc?data.accounts:data.characters;
+  var item=arr.find(function(x){return x.uid===uid;}); if(item){item[field]=!item[field];odSave(data);odRender();}
+}
+function odAdj(field, uid, delta, isAcc, min, max) {
+  var data=odLoad(); var arr=isAcc?data.accounts:data.characters;
+  var item=arr.find(function(x){return x.uid===uid;}); if(!item) return;
+  var v=item[field]||0; v=v+delta; if(min!==undefined) v=Math.max(min,v); if(max!==undefined) v=Math.min(max,v);
+  item[field]=v; odSave(data); odRender();
+}
+
+// ─ 렌더 ─
+function odChkHtml(checked, onclick) {
+  return '<span class="od-hw-check'+(checked?' chk':'')+'" onclick="'+onclick+'">'+( checked?'✓':'')+'</span>';
+}
+function odActBtnHtml(label, canDo, undoCnt, onClickJs, onRightJs) {
+  return '<button class="od-act-btn"'+(canDo?'':' disabled')+' onclick="'+onClickJs+'" oncontextmenu="event.preventDefault();'+onRightJs+'" title="좌클릭 실행 / 우클릭 취소">'
+    +label+(undoCnt>0?'<span class="od-undo-dot">'+undoCnt+'</span>':'')+'</button>';
+}
+
+function odRenderSummary(data) {
+  var el=document.getElementById('od-sum-cards'); if(!el) return;
+  var chars=data.characters; var accs=data.accounts;
+  var totBase=chars.reduce(function(s,c){return s+c.baseOd;},0);
+  var totExtra=chars.reduce(function(s,c){return s+c.extraOd;},0);
+  var maxBase=chars.length*OD_RULES.od.maxBase;
+  var over400=chars.filter(function(c){return c.baseOd>=400;}).length;
+  var over720=chars.filter(function(c){return c.baseOd>=OD_RULES.od.maxBase;}).length;
+  var totExp=accs.reduce(function(s,a){return s+(a.weeklyExpeditionCount||0);},0);
+  var totTrans=accs.reduce(function(s,a){return s+(a.weeklyTranscendenceCount||0);},0);
+  var totShugo=accs.reduce(function(s,a){return s+a.shugoBase+a.shugoExtra;},0);
+  var totInvasion=accs.reduce(function(s,a){return s+a.invasionBase+a.invasionExtra;},0);
+  var pctBase=maxBase>0?Math.min(100,Math.round(totBase/maxBase*100)):0;
+  var expWarn=accs.length*OD_RULES.expedition.weeklyAccountWarnAt;
+  var transWarn=accs.length*OD_RULES.transcendence.weeklyAccountWarnAt;
+  var cards=[
+    {label:'총 기본오드',val:totBase+(maxBase>0?' <small style="font-size:11px;color:var(--muted);">/ '+maxBase+'</small>':''),sub:pctBase+'% · 추가오드 '+totExtra,bar:{pct:pctBase,color:'#22c55e'}},
+    {label:'기본오드 400+',val:'<span style="color:#3b82f6;">'+over400+'</span>',sub:'캐릭터'},
+    {label:'기본오드 720+',val:'<span style="color:#ef4444;">'+over720+'</span>',sub:'(MAX)'},
+    {label:'원정 주간',val:(totExp>=expWarn&&expWarn>0?'<span class="od-warn-text">':'')+totExp+(totExp>=expWarn&&expWarn>0?'</span>':'')+(expWarn>0?' <small style="font-size:11px;color:var(--muted);">/ '+expWarn+'</small>':''),sub:'경고: '+expWarn+'회',bar:{pct:expWarn>0?Math.min(100,Math.round(totExp/expWarn*100)):0,color:'#8b5cf6'}},
+    {label:'초월 주간',val:(totTrans>=transWarn&&transWarn>0?'<span class="od-warn-text">':'')+totTrans+(totTrans>=transWarn&&transWarn>0?'</span>':'')+(transWarn>0?' <small style="font-size:11px;color:var(--muted);">/ '+transWarn+'</small>':''),sub:'경고: '+transWarn+'회',bar:{pct:transWarn>0?Math.min(100,Math.round(totTrans/transWarn*100)):0,color:'#ec4899'}},
+    {label:'슈고 잔여',val:totShugo,sub:'기본+추가'},
+    {label:'침공 잔여',val:totInvasion,sub:'기본+추가'}
+  ];
+  el.innerHTML=cards.map(function(c){
+    return '<div class="od-sum-card"><div class="od-sum-label">'+c.label+'</div>'
+      +'<div class="od-sum-val">'+c.val+'</div>'
+      +'<div class="od-sum-sub">'+c.sub+'</div>'
+      +(c.bar?'<div class="od-sum-bar"><div class="od-sum-bar-fill" style="width:'+c.bar.pct+'%;background:'+c.bar.color+'"></div></div>':'')
+      +'</div>';
+  }).join('');
+}
+
+function odRenderAccounts(data) {
+  var listEl=document.getElementById('od-accounts-list');
+  var emptyEl=document.getElementById('od-empty-state');
+  if(!listEl) return;
+  if(data.accounts.length===0){listEl.innerHTML='';if(emptyEl)emptyEl.style.display='';return;}
+  if(emptyEl) emptyEl.style.display='none';
+  listEl.innerHTML=data.accounts.map(function(acc){
+    var chars=data.characters.filter(function(c){return c.accountUid===acc.uid;});
+    var collapsed=!!acc.collapsed;
+    var expWarn=(acc.weeklyExpeditionCount||0)>=OD_RULES.expedition.weeklyAccountWarnAt;
+    var transWarn=(acc.weeklyTranscendenceCount||0)>=OD_RULES.transcendence.weeklyAccountWarnAt;
+    var repUid=chars.length>0?chars[0].uid:null;
+    var h='<div class="od-acc-block">'
+      +'<div class="od-acc-hdr" onclick="odMgrCollapse(\''+acc.uid+'\')">'
+      +'<span style="font-size:14px;font-weight:700;">'+_escHtml(acc.name)+'</span>'
+      +(acc.hasMembership?'<span class="mbship-badge">멤버십</span>':'')
+      +'<span style="font-size:11px;color:var(--muted);">'+chars.length+'명</span>'
+      +'<span style="margin-left:auto;display:flex;gap:10px;align-items:center;font-size:11px;">'
+      +'<span class="'+(expWarn?'od-warn-text':'')+'">원정 '+(acc.weeklyExpeditionCount||0)+'<span style="color:var(--muted);opacity:.5;">/'+OD_RULES.expedition.weeklyAccountWarnAt+'</span></span>'
+      +'<span class="'+(transWarn?'od-warn-text':'')+'">초월 '+(acc.weeklyTranscendenceCount||0)+'<span style="color:var(--muted);opacity:.5;">/'+OD_RULES.transcendence.weeklyAccountWarnAt+'</span></span>'
+      +'<span style="color:var(--muted);">'+(collapsed?'▼':'▲')+'</span>'
+      +'</span>'
+      +'<button onclick="event.stopPropagation();odMgrEditAcc(\''+acc.uid+'\')" class="btn btn-sm" style="font-size:10px;padding:2px 7px;">수정</button>'
+      +'<button onclick="event.stopPropagation();odMgrAddChar(\''+acc.uid+'\')" class="btn btn-primary btn-sm" style="font-size:10px;padding:2px 7px;">+ 캐릭터</button>'
+      +'<button onclick="event.stopPropagation();odMgrDelAcc(\''+acc.uid+'\')" class="btn btn-sm btn-danger" style="font-size:10px;padding:2px 7px;">×</button>'
+      +'</div>';
+    if(!collapsed){
+      h+='<div class="od-tbl-wrap">';
+      if(chars.length===0){
+        h+='<div style="padding:18px;text-align:center;color:var(--muted);font-size:12px;">등록된 캐릭터가 없습니다</div>';
+      } else {
+        h+='<div class="od-tbl-hdr" style="'+OD_COLS+'">'
+          +'<span>캐릭터</span><span>오드(기본+추가)</span><span>원정티켓|주간</span><span>초월티켓|주간</span>'
+          +'<span style="text-align:center;">회랑</span><span style="text-align:center;">각성</span>'
+          +'<span style="text-align:center;">원정</span><span style="text-align:center;">초월</span>'
+          +'<span style="text-align:center;">성역</span><span style="text-align:center;">편집</span></div>';
+        h+=chars.map(function(ch){
+          var cost=(acc.hasMembership)?OD_RULES.od.costMembership:OD_RULES.od.costNoMembership;
+          var totOd=ch.baseOd+ch.extraOd;
+          var canExp=(ch.expeditionBase+ch.expeditionExtra)>0&&ch.weeklyExpLeft>0&&totOd>=cost;
+          var canTrans=(ch.transcendenceBase+ch.transcendenceExtra)>0&&ch.weeklyTransLeft>0&&totOd>=cost;
+          var canSanc=totOd>=cost;
+          var expUC=odUndoCnt(ch.uid,'expedition'), transUC=odUndoCnt(ch.uid,'transcendence'), sancUC=odUndoCnt(ch.uid,'sanctuary');
+          var dot=(OD_COLORS[ch.classColor]||OD_COLORS.green).dot;
+          var odPct=Math.min(100,Math.round(ch.baseOd/OD_RULES.od.maxBase*100));
+          var hasMemo=!!(ch.memo&&ch.memo.trim());
+          var odColor=ch.baseOd>=OD_RULES.od.maxBase?'#ef4444':ch.baseOd<=40?'#f59e0b':'var(--gold-l)';
+          return '<div class="od-char-row" style="'+OD_COLS+'">'
+            +'<div style="display:flex;align-items:center;gap:5px;min-width:0;">'
+            +'<span class="od-dot" style="background:'+dot+'"></span>'
+            +'<span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+_escHtml(ch.name)+'</span></div>'
+            +'<div>'
+            +'<div style="display:flex;align-items:center;gap:2px;">'
+            +'<button class="od-val-btn" style="color:'+odColor+';font-size:14px;font-weight:700;" onclick="odAdj(\'baseOd\',\''+ch.uid+'\',-10,false,0,'+OD_RULES.od.maxBase+')" oncontextmenu="event.preventDefault();odAdj(\'baseOd\',\''+ch.uid+'\',10,false,0,'+OD_RULES.od.maxBase+')" title="좌클릭-10 우클릭+10">'+ch.baseOd+'</button>'
+            +'<span class="od-extra" onclick="odAdj(\'extraOd\',\''+ch.uid+'\',-10,false,0,undefined)" oncontextmenu="event.preventDefault();odAdj(\'extraOd\',\''+ch.uid+'\',10,false,0,undefined)" title="추가오드 좌클릭-10 우클릭+10">+'+(ch.extraOd||0)+'</span>'
+            +'</div>'
+            +'<div style="height:3px;background:var(--border);border-radius:2px;width:56px;margin:3px 0;overflow:hidden;"><div style="height:100%;width:'+odPct+'%;background:'+(ch.baseOd>=OD_RULES.od.maxBase?'#ef4444':'#22c55e')+'"></div></div>'
+            +'<div style="font-size:10px;color:var(--muted);">비용 '+cost+'</div>'
+            +'</div>'
+            +'<div>'
+            +'<div style="display:flex;align-items:center;gap:2px;">'
+            +'<button class="od-val-btn" style="color:'+(ch.expeditionBase<=0?'var(--muted)':'var(--gold-l)')+';font-weight:700;" onclick="odAdj(\'expeditionBase\',\''+ch.uid+'\',-1,false,0,'+OD_RULES.expedition.maxBase+')" oncontextmenu="event.preventDefault();odAdj(\'expeditionBase\',\''+ch.uid+'\',1,false,0,'+OD_RULES.expedition.maxBase+')" title="원정기본 좌-1 우+1">'+ch.expeditionBase+'</button>'
+            +'<span class="od-extra" onclick="odAdj(\'expeditionExtra\',\''+ch.uid+'\',-1,false,0,undefined)" oncontextmenu="event.preventDefault();odAdj(\'expeditionExtra\',\''+ch.uid+'\',1,false,0,undefined)" title="원정추가 좌-1 우+1">+'+(ch.expeditionExtra||0)+'</span>'
+            +'</div>'
+            +'<div style="display:flex;align-items:center;gap:2px;margin-top:2px;">'
+            +'<button class="od-val-btn" style="color:'+(ch.weeklyExpLeft<=0?'var(--muted)':'var(--text)')+';font-size:11px;" onclick="odAdj(\'weeklyExpLeft\',\''+ch.uid+'\',-1,false,0,'+OD_RULES.expedition.weeklyMaxPerChar+')" oncontextmenu="event.preventDefault();odAdj(\'weeklyExpLeft\',\''+ch.uid+'\',1,false,0,'+OD_RULES.expedition.weeklyMaxPerChar+')" title="주간처치가능 좌-1 우+1">'+ch.weeklyExpLeft+'</button>'
+            +'<span style="font-size:10px;color:var(--muted);">/'+OD_RULES.expedition.weeklyMaxPerChar+'</span>'
+            +'</div></div>'
+            +'<div>'
+            +'<div style="display:flex;align-items:center;gap:2px;">'
+            +'<button class="od-val-btn" style="color:'+(ch.transcendenceBase<=0?'var(--muted)':'var(--gold-l)')+';font-weight:700;" onclick="odAdj(\'transcendenceBase\',\''+ch.uid+'\',-1,false,0,'+OD_RULES.transcendence.maxBase+')" oncontextmenu="event.preventDefault();odAdj(\'transcendenceBase\',\''+ch.uid+'\',1,false,0,'+OD_RULES.transcendence.maxBase+')" title="초월기본 좌-1 우+1">'+ch.transcendenceBase+'</button>'
+            +'<span class="od-extra" onclick="odAdj(\'transcendenceExtra\',\''+ch.uid+'\',-1,false,0,undefined)" oncontextmenu="event.preventDefault();odAdj(\'transcendenceExtra\',\''+ch.uid+'\',1,false,0,undefined)" title="초월추가 좌-1 우+1">+'+(ch.transcendenceExtra||0)+'</span>'
+            +'</div>'
+            +'<div style="display:flex;align-items:center;gap:2px;margin-top:2px;">'
+            +'<button class="od-val-btn" style="color:'+(ch.weeklyTransLeft<=0?'var(--muted)':'var(--text)')+';font-size:11px;" onclick="odAdj(\'weeklyTransLeft\',\''+ch.uid+'\',-1,false,0,'+OD_RULES.transcendence.weeklyMaxPerChar+')" oncontextmenu="event.preventDefault();odAdj(\'weeklyTransLeft\',\''+ch.uid+'\',1,false,0,'+OD_RULES.transcendence.weeklyMaxPerChar+')" title="주간처치가능 좌-1 우+1">'+ch.weeklyTransLeft+'</button>'
+            +'<span style="font-size:10px;color:var(--muted);">/'+OD_RULES.transcendence.weeklyMaxPerChar+'</span>'
+            +'</div></div>'
+            +'<div style="display:flex;justify-content:center;">'+odChkHtml(ch.corridorChecked,'odToggle(\'corridorChecked\',\''+ch.uid+'\',false)')+'</div>'
+            +'<div style="display:flex;justify-content:center;">'+odChkHtml(ch.awakeningChecked,'odToggle(\'awakeningChecked\',\''+ch.uid+'\',false)')+'</div>'
+            +'<div style="display:flex;justify-content:center;">'+odActBtnHtml('원정',canExp,expUC,'odActExpedition(\''+ch.uid+'\')','odUndoExpedition(\''+ch.uid+'\')')+'</div>'
+            +'<div style="display:flex;justify-content:center;">'+odActBtnHtml('초월',canTrans,transUC,'odActTranscendence(\''+ch.uid+'\')','odUndoTranscendence(\''+ch.uid+'\')')+'</div>'
+            +'<div style="display:flex;justify-content:center;">'+odActBtnHtml('성역',canSanc,sancUC,'odActSanctuary(\''+ch.uid+'\')','odUndoSanctuary(\''+ch.uid+'\')')+'</div>'
+            +'<div style="display:flex;flex-direction:column;gap:3px;align-items:center;">'
+            +'<button onclick="odMgrEditChar(\''+ch.uid+'\')" class="btn btn-sm" style="font-size:10px;padding:2px 7px;position:relative;">편집'+(hasMemo?'<span class="od-memo-dot"></span>':'')+'</button>'
+            +'<button onclick="odMgrDelChar(\''+ch.uid+'\')" class="btn btn-sm btn-danger" style="font-size:10px;padding:2px 6px;">×</button>'
+            +'</div></div>';
+        }).join('');
+      }
+      h+='</div>';
+      // 계정 푸터 (슈고/침공/일일던전/사명)
+      h+='<div class="od-acc-footer">'
+        +'<div style="display:flex;align-items:center;gap:5px;"><span style="font-size:11px;color:var(--muted);font-weight:600;">슈고</span>'
+        +'<button class="od-tc-btn" onclick="odAdj(\'shugoBase\',\''+acc.uid+'\',-1,true,0,'+OD_RULES.shugo.maxBase+')" oncontextmenu="event.preventDefault();odAdj(\'shugoBase\',\''+acc.uid+'\',1,true,0,'+OD_RULES.shugo.maxBase+')">−</button>'
+        +'<span style="font-size:13px;font-weight:700;color:'+(acc.shugoBase<=0?'var(--muted)':'var(--gold-l)')+';">'+acc.shugoBase+'</span>'
+        +(acc.shugoExtra>0?'<span class="od-extra" onclick="odAdj(\'shugoExtra\',\''+acc.uid+'\',-1,true,0,undefined)" oncontextmenu="event.preventDefault();odAdj(\'shugoExtra\',\''+acc.uid+'\',1,true,0,undefined)">+'+acc.shugoExtra+'</span>':'')
+        +'<button class="od-tc-btn" onclick="odAdj(\'shugoBase\',\''+acc.uid+'\',1,true,0,'+OD_RULES.shugo.maxBase+')" oncontextmenu="event.preventDefault();odAdj(\'shugoBase\',\''+acc.uid+'\',-1,true,0,'+OD_RULES.shugo.maxBase+')">+</button>'
+        +(repUid?odActBtnHtml('슈고',(acc.shugoBase+acc.shugoExtra)>0,odUndoCnt(repUid,'shugo'),'odActShugo(\''+repUid+'\')','odUndoShugo(\''+repUid+'\')'):'')
+        +'</div>'
+        +'<div style="display:flex;align-items:center;gap:5px;"><span style="font-size:11px;color:var(--muted);font-weight:600;">침공</span>'
+        +'<button class="od-tc-btn" onclick="odAdj(\'invasionBase\',\''+acc.uid+'\',-1,true,0,'+OD_RULES.invasion.maxBase+')" oncontextmenu="event.preventDefault();odAdj(\'invasionBase\',\''+acc.uid+'\',1,true,0,'+OD_RULES.invasion.maxBase+')">−</button>'
+        +'<span style="font-size:13px;font-weight:700;color:'+(acc.invasionBase<=0?'var(--muted)':'var(--gold-l)')+';">'+acc.invasionBase+'</span>'
+        +(acc.invasionExtra>0?'<span class="od-extra" onclick="odAdj(\'invasionExtra\',\''+acc.uid+'\',-1,true,0,undefined)" oncontextmenu="event.preventDefault();odAdj(\'invasionExtra\',\''+acc.uid+'\',1,true,0,undefined)">+'+acc.invasionExtra+'</span>':'')
+        +'<button class="od-tc-btn" onclick="odAdj(\'invasionBase\',\''+acc.uid+'\',1,true,0,'+OD_RULES.invasion.maxBase+')" oncontextmenu="event.preventDefault();odAdj(\'invasionBase\',\''+acc.uid+'\',-1,true,0,'+OD_RULES.invasion.maxBase+')">+</button>'
+        +(repUid?odActBtnHtml('침공',(acc.invasionBase+acc.invasionExtra)>0,odUndoCnt(repUid,'invasion'),'odActInvasion(\''+repUid+'\')','odUndoInvasion(\''+repUid+'\')'):'')
+        +'</div>'
+        +'<div style="display:flex;align-items:center;gap:5px;"><span style="font-size:11px;color:var(--muted);">일일던전</span>'+odChkHtml(!!acc.ildeonChecked,'odToggle(\'ildeonChecked\',\''+acc.uid+'\',true)')+'</div>'
+        +'<div style="display:flex;align-items:center;gap:5px;"><span style="font-size:11px;color:var(--muted);">사명</span>'+odChkHtml(!!acc.missionChecked,'odToggle(\'missionChecked\',\''+acc.uid+'\',true)')+'</div>'
+        +'</div>';
+    }
+    h+='</div>';
+    return h;
+  }).join('');
+}
+
+function odRender() {
+  var data=odNormalize(odLoad());
+  odRenderSummary(data);
+  odRenderAccounts(data);
+}
+
+// ─ 모달 ─
+function odModal(html) {
+  var o=document.createElement('div'); o.className='od-modal-overlay'; o.id='od-overlay';
+  o.innerHTML='<div class="od-modal">'+html+'</div>';
+  o.addEventListener('click',function(e){if(e.target===o)odModalClose();});
+  document.body.appendChild(o);
+}
+function odModalClose() { var e=document.getElementById('od-overlay'); if(e) e.remove(); }
+
+function odMgrAddAcc() {
+  odModal('<h3>계정 추가</h3>'
+    +'<div style="margin-bottom:12px;"><div class="od-form-label">계정명</div><input class="od-form-input" id="od-acc-name" placeholder="계정명"></div>'
+    +'<div style="margin-bottom:16px;"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="od-acc-mbship" style="width:15px;height:15px;"><span style="font-size:13px;">멤버십 (오드 소모 감소)</span></label></div>'
+    +'<div style="display:flex;gap:8px;justify-content:flex-end;"><button class="btn" onclick="odModalClose()">취소</button><button class="btn btn-primary" onclick="odMgrSaveAcc()">추가</button></div>');
+  setTimeout(function(){var e=document.getElementById('od-acc-name');if(e)e.focus();},50);
+}
+function odMgrSaveAcc() {
+  var name=((document.getElementById('od-acc-name')||{}).value||'').trim();
+  var mbship=!!(document.getElementById('od-acc-mbship')||{}).checked;
+  if(!name){alert('계정명을 입력해주세요');return;}
+  var data=odLoad(); data.accounts.push(odNewAcc(name,mbship)); odSave(data); odModalClose(); odRender();
+}
+function odMgrEditAcc(uid) {
+  var data=odLoad(); var acc=data.accounts.find(function(a){return a.uid===uid;}); if(!acc) return;
+  odModal('<h3>계정 수정</h3>'
+    +'<div style="margin-bottom:12px;"><div class="od-form-label">계정명</div><input class="od-form-input" id="od-acc-name" value="'+_escHtml(acc.name)+'"></div>'
+    +'<div style="margin-bottom:16px;"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="od-acc-mbship" style="width:15px;height:15px;"'+(acc.hasMembership?' checked':'')+'><span style="font-size:13px;">멤버십</span></label></div>'
+    +'<div style="display:flex;gap:8px;justify-content:flex-end;"><button class="btn" onclick="odModalClose()">취소</button><button class="btn btn-primary" onclick="odMgrUpdateAcc(\''+uid+'\')">저장</button></div>');
+}
+function odMgrUpdateAcc(uid) {
+  var name=((document.getElementById('od-acc-name')||{}).value||'').trim();
+  var mbship=!!(document.getElementById('od-acc-mbship')||{}).checked;
+  if(!name){alert('계정명을 입력해주세요');return;}
+  var data=odLoad(); var acc=data.accounts.find(function(a){return a.uid===uid;}); if(acc){acc.name=name;acc.hasMembership=mbship;odSave(data);}
+  odModalClose(); odRender();
+}
+function odMgrDelAcc(uid) {
+  if(!confirm('계정과 모든 캐릭터를 삭제할까요?')) return;
+  var data=odLoad(); data.accounts=data.accounts.filter(function(a){return a.uid!==uid;}); data.characters=data.characters.filter(function(c){return c.accountUid!==uid;}); odSave(data); odRender();
+}
+function odMgrCollapse(uid) {
+  var data=odLoad(); var acc=data.accounts.find(function(a){return a.uid===uid;}); if(acc){acc.collapsed=!acc.collapsed;odSave(data);odRender();}
+}
+function odMgrAddChar(accUid) {
+  var clrBtns=OD_COLOR_LIST.map(function(c){var dot=(OD_COLORS[c]||OD_COLORS.green).dot;return '<button class="od-clr-btn" style="background:'+dot+';'+(c==='green'?'border-color:#fff;':'')+'" onclick="odMgrPickColor(this,\''+c+'\')"></button>';}).join('');
+  odModal('<h3>캐릭터 추가</h3>'
+    +'<input type="hidden" id="od-char-color" value="green">'
+    +'<div style="margin-bottom:12px;"><div class="od-form-label">캐릭터명</div><input class="od-form-input" id="od-char-name" placeholder="캐릭터명"></div>'
+    +'<div style="margin-bottom:16px;"><div class="od-form-label" style="margin-bottom:6px;">색상</div><div class="od-clr-grid">'+clrBtns+'</div></div>'
+    +'<div style="display:flex;gap:8px;justify-content:flex-end;"><button class="btn" onclick="odModalClose()">취소</button><button class="btn btn-primary" onclick="odMgrSaveChar(\''+accUid+'\')">추가</button></div>');
+  setTimeout(function(){var e=document.getElementById('od-char-name');if(e)e.focus();},50);
+}
+function odMgrPickColor(btn, color) {
+  document.querySelectorAll('#od-overlay .od-clr-btn').forEach(function(b){b.style.borderColor='transparent';});
+  btn.style.borderColor='#fff';
+  var inp=document.getElementById('od-char-color'); if(inp) inp.value=color;
+}
+function odMgrSaveChar(accUid) {
+  var name=((document.getElementById('od-char-name')||{}).value||'').trim();
+  var color=((document.getElementById('od-char-color')||{}).value)||'green';
+  if(!name){alert('캐릭터명을 입력해주세요');return;}
+  var data=odLoad(); data.characters.push(odNewChar(accUid,name,color)); odSave(data); odModalClose(); odRender();
+}
+function odMgrEditChar(uid) {
+  var data=odLoad(); var ch=data.characters.find(function(c){return c.uid===uid;}); if(!ch) return;
+  var clrBtns=OD_COLOR_LIST.map(function(c){var dot=(OD_COLORS[c]||OD_COLORS.green).dot;return '<button class="od-clr-btn" style="background:'+dot+';'+(c===ch.classColor?'border-color:#fff;':'')+'" onclick="odMgrPickColor(this,\''+c+'\')"></button>';}).join('');
+  odModal('<h3>캐릭터 수정</h3>'
+    +'<input type="hidden" id="od-char-color" value="'+ch.classColor+'">'
+    +'<div style="margin-bottom:12px;"><div class="od-form-label">캐릭터명</div><input class="od-form-input" id="od-char-name" value="'+_escHtml(ch.name)+'"></div>'
+    +'<div style="margin-bottom:12px;"><div class="od-form-label" style="margin-bottom:6px;">색상</div><div class="od-clr-grid">'+clrBtns+'</div></div>'
+    +'<div style="margin-bottom:16px;"><div class="od-form-label">메모</div><textarea class="od-form-input" id="od-char-memo" style="height:80px;resize:vertical;">'+_escHtml(ch.memo||'')+'</textarea></div>'
+    +'<div style="display:flex;gap:8px;justify-content:flex-end;"><button class="btn" onclick="odModalClose()">취소</button><button class="btn btn-primary" onclick="odMgrUpdateChar(\''+uid+'\')">저장</button></div>');
+}
+function odMgrUpdateChar(uid) {
+  var name=((document.getElementById('od-char-name')||{}).value||'').trim();
+  var color=((document.getElementById('od-char-color')||{}).value)||'green';
+  var memo=((document.getElementById('od-char-memo')||{}).value)||'';
+  if(!name){alert('캐릭터명을 입력해주세요');return;}
+  var data=odLoad(); var ch=data.characters.find(function(c){return c.uid===uid;}); if(ch){ch.name=name;ch.classColor=color;ch.memo=memo;odSave(data);}
+  odModalClose(); odRender();
+}
+function odMgrDelChar(uid) {
+  if(!confirm('캐릭터를 삭제할까요?')) return;
+  var data=odLoad(); data.characters=data.characters.filter(function(c){return c.uid!==uid;}); odSave(data); odRender();
+}
+
+function odMgrBackup() {
+  var str=JSON.stringify(odLoad(),null,2);
+  var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([str],{type:'application/json'}));
+  a.download='aion2-od-'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+}
+function odMgrRestoreModal() {
+  odModal('<h3>데이터 불러오기</h3>'
+    +'<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">백업 JSON을 붙여넣으세요. 기존 데이터가 덮어씌워집니다.</div>'
+    +'<textarea class="od-form-input" id="od-restore-txt" style="height:140px;resize:vertical;font-size:11px;font-family:monospace;" placeholder=\'{"accounts":[...],"characters":[...]}\'></textarea>'
+    +'<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;"><button class="btn" onclick="odModalClose()">취소</button><button class="btn btn-primary" onclick="odMgrDoRestore()">불러오기</button></div>');
+}
+function odMgrDoRestore() {
+  try {
+    var txt=((document.getElementById('od-restore-txt')||{}).value||'').trim();
+    var d=JSON.parse(txt);
+    if(!Array.isArray(d.accounts)||!Array.isArray(d.characters)) throw new Error('형식 오류');
+    odSave(d); odModalClose(); odRender(); odToast('데이터를 불러왔습니다');
+  } catch(e) { alert('데이터 형식이 올바르지 않습니다. 백업 파일 내용을 그대로 붙여넣어 주세요.'); }
+}
+
+function odToast(msg) {
+  var el=document.createElement('div');
+  el.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);color:var(--text);padding:10px 20px;border-radius:8px;font-size:13px;z-index:400;box-shadow:0 4px 20px rgba(0,0,0,.5);white-space:nowrap;';
+  el.textContent=msg; document.body.appendChild(el);
+  setTimeout(function(){el.remove();},2800);
+}
+
+// 전역 노출
+window.odMgrAddAccount=odMgrAddAcc; window.odMgrBackup=odMgrBackup; window.odMgrRestoreModal=odMgrRestoreModal;
+window.odMgrCollapse=odMgrCollapse; window.odMgrEditAcc=odMgrEditAcc; window.odMgrUpdateAcc=odMgrUpdateAcc; window.odMgrDelAcc=odMgrDelAcc;
+window.odMgrSaveAcc=odMgrSaveAcc; window.odMgrAddChar=odMgrAddChar; window.odMgrSaveChar=odMgrSaveChar;
+window.odMgrEditChar=odMgrEditChar; window.odMgrUpdateChar=odMgrUpdateChar; window.odMgrDelChar=odMgrDelChar;
+window.odMgrPickColor=odMgrPickColor; window.odMgrDoRestore=odMgrDoRestore; window.odModalClose=odModalClose;
+window.odActExpedition=odActExpedition; window.odUndoExpedition=odUndoExpedition;
+window.odActTranscendence=odActTranscendence; window.odUndoTranscendence=odUndoTranscendence;
+window.odActSanctuary=odActSanctuary; window.odUndoSanctuary=odUndoSanctuary;
+window.odActShugo=odActShugo; window.odUndoShugo=odUndoShugo;
+window.odActInvasion=odActInvasion; window.odUndoInvasion=odUndoInvasion;
+window.odToggle=odToggle; window.odAdj=odAdj;
+window._odRenderAll=odRender;
+
+// 초기 렌더
+if(document.getElementById('tab-homework') && document.getElementById('tab-homework').classList.contains('active')) odRender();
+
 })();
 
 </script>
