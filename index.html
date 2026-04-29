@@ -7867,11 +7867,11 @@ window.forceModalClose=forceModalClose; window.forcePickCls=forcePickCls;
 const ARC = (function(){
   // ── 상수 ──────────────────────────────────────────────────────
   const PARTS = [
-    { id:'종',    label:'종',    icon:'🔔', type:'passive', drop:'데우스 연구기지' },
-    { id:'나침반', label:'나침반', icon:'🧭', type:'active',  drop:'데우스 연구기지' },
     { id:'성배',  label:'성배',  icon:'🏆', type:'both',    drop:'데우스/아르카니스 (10단계)' },
-    { id:'거울',  label:'거울',  icon:'🪞', type:'passive', drop:'조각난 아르카니스' },
     { id:'양피지', label:'양피지', icon:'📜', type:'active',  drop:'조각난 아르카니스' },
+    { id:'나침반', label:'나침반', icon:'🧭', type:'active',  drop:'데우스 연구기지' },
+    { id:'종',    label:'종',    icon:'🔔', type:'passive', drop:'데우스 연구기지' },
+    { id:'거울',  label:'거울',  icon:'🪞', type:'passive', drop:'조각난 아르카니스' },
     { id:'천칭',  label:'천칭',  icon:'⚖️', type:'both',    drop:'가라앉는 생명의 신전' },
   ];
 
@@ -8061,20 +8061,25 @@ const ARC = (function(){
     st.id = 'arc-drop-css';
     st.textContent = [
       '.arc-drop-wrap{position:relative;width:100%;}',
-      '.arc-drop-btn{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 9px;border-radius:6px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;min-height:34px;box-sizing:border-box;user-select:none;}',
+      '.arc-drop-btn{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:6px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;min-height:32px;box-sizing:border-box;user-select:none;transition:border-color .15s,box-shadow .15s;}',
       '.arc-drop-btn:hover{border-color:var(--gold-d);}',
-      '.arc-drop-menu{position:fixed;z-index:9999;background:var(--card);border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.6);overflow:hidden;flex-direction:column;max-height:240px;display:none;}',
+      '.arc-drop-btn.open{border-color:var(--gold-d);box-shadow:0 0 0 1px var(--gold-d);}',
+      '.arc-drop-menu{position:fixed;z-index:9999;background:var(--card);border:1px solid var(--gold-d);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.75);overflow:hidden;flex-direction:column;max-height:240px;display:none;}',
       '.arc-drop-menu.open{display:flex;}',
-      '.arc-drop-search{margin:8px 8px 4px;padding:5px 8px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:5px;font-size:12px;outline:none;}',
+      '.arc-drop-search{margin:8px 8px 4px;padding:5px 8px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:5px;font-size:12px;outline:none;transition:border-color .15s;}',
+      '.arc-drop-search:focus{border-color:var(--gold-d);}',
       '.arc-drop-list{overflow-y:auto;flex:1;}',
-      '.arc-drop-item{padding:6px 10px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:7px;}',
-      '.arc-drop-item:hover{background:var(--surface);}',
-      '.arc-drop-item.selected{background:var(--surface);color:var(--gold-l);}',
+      '.arc-drop-item{padding:6px 10px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:7px;transition:background .1s;}',
+      '.arc-drop-item:hover:not(.arc-skill-used){background:var(--surface);}',
+      '.arc-drop-item.selected{background:#003322;color:var(--gold-l);}',
+      '.arc-drop-item.selected:hover{background:#004433;}',
       '.arc-drop-none{padding:6px 10px;font-size:12px;color:var(--muted);font-style:italic;}',
       '.arc-badge{display:inline-flex;align-items:center;justify-content:center;width:20px;height:18px;border-radius:4px;font-size:10px;font-weight:700;flex-shrink:0;}',
       '.arc-badge-active{background:#f0a04033;color:#f0a040;}',
       '.arc-badge-passive{background:#5aadff33;color:#5aadff;}',
       '.arc-skill-img{width:16px;height:16px;border-radius:3px;object-fit:cover;flex-shrink:0;vertical-align:middle;}',
+      '.arc-skill-used{opacity:0.28;pointer-events:none;}',
+      '.arc-skill-used-tag{font-size:10px;color:var(--muted);margin-left:auto;flex-shrink:0;}',
     ].join('');
     document.head.appendChild(st);
   }
@@ -8084,6 +8089,7 @@ const ARC = (function(){
 
   function arcDropCloseAll() {
     document.querySelectorAll('.arc-drop-menu.open').forEach(m => m.classList.remove('open'));
+    document.querySelectorAll('.arc-drop-btn.open').forEach(b => b.classList.remove('open'));
     _openDropId = null;
   }
   window.arcDropCloseAll = arcDropCloseAll;
@@ -8104,6 +8110,7 @@ const ARC = (function(){
       menu.style.width  = rect.width + 'px';
       menu.style.maxHeight = (menuH > 80 ? menuH : 200) + 'px';
       menu.classList.add('open');
+      btn.classList.add('open');
       _openDropId = wrapId;
       const search = menu.querySelector('.arc-drop-search');
       if (search) { search.value = ''; arcDropFilter(search); search.focus(); }
@@ -8128,6 +8135,36 @@ const ARC = (function(){
       none.style.display = '';
     } else if (none) { none.style.display = 'none'; }
   };
+
+  function updateDropdownAvailability() {
+    // 슬롯별 사용 중인 스킬 → wrapId 매핑 구축
+    const usage = new Map(); // skillName -> Set<wrapId>
+    for (const p of PARTS) {
+      const pc = state.pieces[p.id];
+      for (let i = 0; i < pc.skills.length; i++) {
+        const sk = (pc.skills[i] || '').trim();
+        if (!sk) continue;
+        const wid = `arc-drop-${p.id}-${i}`;
+        if (!usage.has(sk)) usage.set(sk, new Set());
+        usage.get(sk).add(wid);
+      }
+    }
+    document.querySelectorAll('.arc-drop-wrap').forEach(wrap => {
+      const wid = wrap.id;
+      wrap.querySelectorAll('.arc-drop-item').forEach(item => {
+        const name = item.dataset.name;
+        const usedIn = usage.get(name);
+        // 다른 슬롯에서 이미 사용 중이면 비활성화
+        const usedElsewhere = usedIn && (usedIn.size > 1 || !usedIn.has(wid));
+        item.classList.toggle('arc-skill-used', !!usedElsewhere);
+        // "(사용중)" 태그 추가/제거
+        let tag = item.querySelector('.arc-skill-used-tag');
+        if (usedElsewhere) {
+          if (!tag) { tag = document.createElement('span'); tag.className = 'arc-skill-used-tag'; tag.textContent = '사용중'; item.appendChild(tag); }
+        } else if (tag) { tag.remove(); }
+      });
+    });
+  }
 
   document.addEventListener('mousedown', function(e) {
     if (_openDropId && !e.target.closest('.arc-drop-wrap')) arcDropCloseAll();
@@ -8215,27 +8252,28 @@ const ARC = (function(){
         slotSection = `<div style="display:flex;flex-direction:column;gap:5px;">${slotInputs}</div>`;
       }
 
-      return `<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;">
+      return `<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;border-top:2px solid ${typeColor}44;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
           <div style="font-size:14px;font-weight:700;color:var(--text);">${p.icon} ${p.label}</div>
-          <span style="font-size:11px;color:${typeColor};background:${typeColor}22;padding:2px 8px;border-radius:10px;">${typeLabel}</span>
+          <span style="font-size:11px;color:${typeColor};background:${typeColor}1a;padding:2px 8px;border-radius:10px;border:1px solid ${typeColor}44;">${typeLabel}</span>
         </div>
         <div style="font-size:10px;color:var(--muted);margin-bottom:8px;">📍 ${p.drop}</div>
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:${slots>0?'10px':'0'};">
           <select onchange="ARC._setGrade('${p.id}',this.value)"
-            style="flex:1;background:var(--bg);border:1px solid var(--border);color:${gcol};padding:5px 8px;border-radius:6px;font-size:12px;cursor:pointer;">
+            style="flex:1;background:var(--surface);border:1px solid var(--border);color:${gcol};padding:5px 8px;border-radius:6px;font-size:12px;cursor:pointer;transition:border-color .15s;outline:none;">
             ${GRADES.map(g=>`<option style="color:${GRADE_COLOR[g]||'#aaa'};"${g===pc.grade?' selected':''}>${g}</option>`).join('')}
           </select>
           <div style="display:flex;align-items:center;gap:4px;white-space:nowrap;">
             <span style="font-size:11px;color:var(--muted);">강화</span>
             <input type="number" min="0" max="40" value="${pc.enhance}"
-              style="width:52px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 4px;border-radius:6px;font-size:12px;text-align:center;outline:none;"
+              style="width:52px;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:5px 4px;border-radius:6px;font-size:12px;text-align:center;outline:none;"
               oninput="ARC._setEnhance('${p.id}',this.value)">
           </div>
         </div>
         ${slotSection}
       </div>`;
     }).join('');
+    updateDropdownAvailability();
   }
 
   function renderResults() {
@@ -8371,6 +8409,7 @@ const ARC = (function(){
         wrap.querySelectorAll('.arc-drop-item').forEach(el => el.classList.remove('selected'));
       }
       renderResults();
+      updateDropdownAvailability();
     },
     _setSkillDrop(partId, idx, name, itemEl) {
       const pc = state.pieces[partId];
@@ -8399,6 +8438,7 @@ const ARC = (function(){
       }
       arcDropCloseAll();
       renderResults();
+      updateDropdownAvailability();
     },
     _setBonus(skill, field, val) {
       if (!state.bonus[skill]) state.bonus[skill] = {base:10,equip:0,devanion:0};
