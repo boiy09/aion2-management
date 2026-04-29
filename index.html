@@ -8035,7 +8035,7 @@ const ARC = (function(){
   // ── 상태 ──────────────────────────────────────────────────────
   let state = {
     cls: '',
-    pieces: Object.fromEntries(PARTS.map(p => [p.id, { grade:'없음', enhance:0, skills:[] }])),
+    pieces: Object.fromEntries(PARTS.map(p => [p.id, { grade:'없음', enhance:0, skills:[], skillLevels:[] }])),
     bonus: {},  // skillName -> { base:10, equip:0, devanion:0 }
   };
 
@@ -8054,10 +8054,12 @@ const ARC = (function(){
   function calcArcBonus() {
     const map = new Map();
     for (const p of PARTS) {
-      for (const sk of state.pieces[p.id].skills) {
-        if (sk && sk.trim()) {
-          const k = sk.trim();
-          map.set(k, (map.get(k)||0) + 1);
+      const pc = state.pieces[p.id];
+      for (let i = 0; i < pc.skills.length; i++) {
+        const sk = (pc.skills[i] || '').trim();
+        if (sk) {
+          const lvl = (pc.skillLevels && pc.skillLevels[i]) || 1;
+          map.set(sk, (map.get(sk)||0) + lvl);
         }
       }
     }
@@ -8170,7 +8172,9 @@ const ARC = (function(){
     let btnInner;
     if (val && selItem) {
       const icon = skillIcon(selItem.name, selItem.type);
-      btnInner = `<span style="display:flex;align-items:center;gap:6px;min-width:0;">${icon}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${val}</span></span>`;
+      const pc = state.pieces[partId];
+      const lv = (pc.skillLevels && pc.skillLevels[idx]) || 1;
+      btnInner = `<span style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;">${icon}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${val}</span><span style="display:flex;align-items:center;gap:2px;flex-shrink:0;" onclick="event.stopPropagation()"><span onclick="ARC._adjLevel('${partId}',${idx},-1)" style="width:18px;height:18px;background:var(--surface);border:1px solid var(--border);border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);line-height:1;">−</span><span class="arc-slot-lvl" style="min-width:22px;text-align:center;font-size:12px;font-weight:700;color:var(--gold-l);">${lv}</span><span onclick="ARC._adjLevel('${partId}',${idx},1)" style="width:18px;height:18px;background:var(--surface);border:1px solid var(--border);border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);line-height:1;">+</span></span></span>`;
     } else {
       btnInner = `<span style="color:var(--muted);font-size:12px;">슬롯 ${idx+1} — 스킬 선택</span>`;
     }
@@ -8210,7 +8214,7 @@ const ARC = (function(){
     html += `<div style="background:var(--surface);border:2px solid var(--gold-d);border-radius:8px;padding:10px 6px;text-align:center;">
       <div style="font-size:12px;color:var(--muted);margin-bottom:3px;">🔢 합계</div>
       <div style="font-size:20px;font-weight:800;color:var(--gold-l);">${total}</div>
-      <div style="font-size:10px;color:var(--muted);margin-top:2px;">전투력</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:2px;">아이템 레벨</div>
     </div>`;
     el.innerHTML = html;
   }
@@ -8362,7 +8366,7 @@ const ARC = (function(){
     setClass(cls) { state.cls = cls; render(); },
     reset() {
       state.cls = '';
-      state.pieces = Object.fromEntries(PARTS.map(p=>[p.id,{grade:'없음',enhance:0,skills:[]}]));
+      state.pieces = Object.fromEntries(PARTS.map(p=>[p.id,{grade:'없음',enhance:0,skills:[],skillLevels:[]}]));
       state.bonus = {};
       const sel = document.getElementById('arc-class');
       if (sel) sel.value = '';
@@ -8374,6 +8378,8 @@ const ARC = (function(){
       pc.grade = grade;
       pc.skills = pc.skills.slice(0, newN);
       while (pc.skills.length < newN) pc.skills.push('');
+      pc.skillLevels = (pc.skillLevels || []).slice(0, newN);
+      while (pc.skillLevels.length < newN) pc.skillLevels.push(1);
       render();
     },
     _setEnhance(partId, val) {
@@ -8414,12 +8420,16 @@ const ARC = (function(){
       const pc = state.pieces[partId];
       while (pc.skills.length <= idx) pc.skills.push('');
       pc.skills[idx] = name;
+      if (!pc.skillLevels) pc.skillLevels = [];
+      while (pc.skillLevels.length <= idx) pc.skillLevels.push(1);
+      if (!pc.skillLevels[idx]) pc.skillLevels[idx] = 1;
       const wrap = itemEl.closest('.arc-drop-wrap');
       if (wrap) {
         const type = itemEl.dataset.type || 'active';
         const icon = skillIcon(name, type);
+        const lv = pc.skillLevels[idx];
         const valEl = wrap.querySelector('.arc-drop-val');
-        if (valEl) valEl.innerHTML = `<span style="display:flex;align-items:center;gap:6px;">${icon}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${name}</span></span>`;
+        if (valEl) valEl.innerHTML = `<span style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;">${icon}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${name}</span><span style="display:flex;align-items:center;gap:2px;flex-shrink:0;" onclick="event.stopPropagation()"><span onclick="ARC._adjLevel('${partId}',${idx},-1)" style="width:18px;height:18px;background:var(--surface);border:1px solid var(--border);border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);line-height:1;">−</span><span class="arc-slot-lvl" style="min-width:22px;text-align:center;font-size:12px;font-weight:700;color:var(--gold-l);">${lv}</span><span onclick="ARC._adjLevel('${partId}',${idx},1)" style="width:18px;height:18px;background:var(--surface);border:1px solid var(--border);border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);line-height:1;">+</span></span></span>`;
         // ensure clear button exists
         const btn = wrap.querySelector('.arc-drop-btn');
         if (btn && !btn.querySelector('span[title="초기화"]')) {
@@ -8437,6 +8447,18 @@ const ARC = (function(){
       }
       renderResults();
       updateDropdownAvailability();
+    },
+    _adjLevel(partId, idx, delta) {
+      const pc = state.pieces[partId];
+      if (!pc.skillLevels) pc.skillLevels = [];
+      while (pc.skillLevels.length <= idx) pc.skillLevels.push(1);
+      pc.skillLevels[idx] = Math.max(1, Math.min(5, (pc.skillLevels[idx] || 1) + delta));
+      const wrap = document.getElementById(`arc-drop-${partId}-${idx}`);
+      if (wrap) {
+        const lvlEl = wrap.querySelector('.arc-slot-lvl');
+        if (lvlEl) lvlEl.textContent = pc.skillLevels[idx];
+      }
+      renderResults();
     },
     _setBonus(skill, field, val) {
       if (!state.bonus[skill]) state.bonus[skill] = {base:10,equip:0,devanion:0};
