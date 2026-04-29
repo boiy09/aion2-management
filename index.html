@@ -950,26 +950,18 @@
         </div>
         <div id="shugo-festa-badge" style="display:inline-block;font-size:12px;padding:4px 12px;border-radius:20px;background:var(--surface);border:1px solid var(--border);color:var(--muted);margin-bottom:10px;">대기 중</div>
         <!-- 매 정각 퀘스트 목록 -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <div id="shugo-15-box" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;transition:border-color .3s,background .3s;">
-            <div id="shugo-15-label" style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;">퀘스트 A</div>
-            <div style="display:flex;flex-direction:column;gap:4px;">
-              <span class="shugo-quest">오드 방울 수집</span>
-              <span class="shugo-quest">슈고 상인 보호</span>
-              <span class="shugo-quest">이 타일 아닌가요?</span>
-              <span class="shugo-quest">망령 회피</span>
-              <span class="shugo-quest">점프 점프</span>
-            </div>
-          </div>
-          <div id="shugo-45-box" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;transition:border-color .3s,background .3s;">
-            <div id="shugo-45-label" style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;">퀘스트 B</div>
-            <div style="display:flex;flex-direction:column;gap:4px;">
-              <span class="shugo-quest">높이 높이</span>
-              <span class="shugo-quest">신비로운 트랙</span>
-              <span class="shugo-quest">히든 루기</span>
-              <span class="shugo-quest">골드린의 보물</span>
-              <span class="shugo-quest">팡팡팡</span>
-            </div>
+        <div id="shugo-15-box" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;transition:border-color .3s,background .3s;">
+          <div style="display:flex;flex-wrap:wrap;gap:4px;">
+            <span class="shugo-quest">오드 방울 수집</span>
+            <span class="shugo-quest">슈고 상인 보호</span>
+            <span class="shugo-quest">이 타일 아닌가요?</span>
+            <span class="shugo-quest">망령 회피</span>
+            <span class="shugo-quest">점프 점프</span>
+            <span class="shugo-quest">높이 높이</span>
+            <span class="shugo-quest">신비로운 트랙</span>
+            <span class="shugo-quest">히든 루기</span>
+            <span class="shugo-quest">골드린의 보물</span>
+            <span class="shugo-quest">팡팡팡</span>
           </div>
         </div>
       </div>
@@ -6343,21 +6335,11 @@ function updateShugoFestaDisplay() {
       }
     }
 
-    // 두 박스 모두 매 정각 동시에 활성화
+    // 퀘스트 박스 하이라이트
     const box15 = document.getElementById('shugo-15-box');
-    const lbl15 = document.getElementById('shugo-15-label');
-    const box45 = document.getElementById('shugo-45-box');
-    const lbl45 = document.getElementById('shugo-45-label');
-
     if(box15) {
       box15.style.borderColor = isOpen ? '#38bdf8' : 'var(--gold-d)';
       box15.style.background  = isOpen ? 'rgba(56,189,248,.1)' : 'var(--surface)';
-      if(lbl15) lbl15.style.color = isOpen ? '#38bdf8' : 'var(--gold-l)';
-    }
-    if(box45) {
-      box45.style.borderColor = isOpen ? '#38bdf8' : 'var(--gold-d)';
-      box45.style.background  = isOpen ? 'rgba(56,189,248,.1)' : 'var(--surface)';
-      if(lbl45) lbl45.style.color = isOpen ? '#38bdf8' : 'var(--gold-l)';
     }
   } catch(e) {}
 }
