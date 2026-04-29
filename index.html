@@ -7915,6 +7915,162 @@ const ARC = (function(){
     },
   };
 
+  const CDN_BASE = 'https://fizz-download.playnccdn.com/download/v2/buckets/guidebook/files/';
+  const SKILL_ICONS = {
+    // 치유성
+    '따뜻한 가호':'19ad7bf0ded-93d5235b-b2aa-4923-9b0f-f45a039e4b35',
+    '주신의 은총':'19ad7bf6924-431f3eb9-f194-4c17-ad68-cde690f12d1d',
+    '불사의 장막':'19ad7bfb88b-539df8f6-636f-4193-8317-5b7bb001f2cd',
+    '집중의 기도':'19ad7bffbee-40d13ce6-43c8-42eb-b416-4de3561004c7',
+    '주신의 가호':'19ad7bf43bb-4129746f-4016-4be1-b1cc-925d92e81529',
+    '치유력 강화':'19ad7bf9246-1e64ec1c-a06a-4124-9cb3-8e084270d0d5',
+    '회복 차단':'19ad7bfd52b-ebdc2787-1e09-4567-ad0c-bcd41ca894bd',
+    '찬란한 가호':'19ad7c0801e-7607002e-f177-4fea-9052-34593821fab0',
+    '대지의 은총':'19ad7c0278f-bbded961-1fed-483b-a3bf-33b0c4a4f753',
+    '심판의 번개':'19ad7bca140-c7f3908a-e9ca-46bb-83d6-154cc785c949',
+    '신성한 기운':'19ad7bd2661-69bac46b-19e9-455f-876b-1dcab0581108',
+    '재생의 빛':'19ad7bded85-cb9895f2-2e26-4674-b1ea-9cabe9aa7c78',
+    '치유의 빛':'19ad7be4e8a-365a3f0e-a283-4c4b-bcb8-f1d200092d2f',
+    '벼락 난사':'19ad7bdbcd7-de19efc2-484b-4ee7-8af0-e2e26991946a',
+    '대지의 응보':'19ad7bc8297-bdc9c945-5c2b-449f-b782-6d31aeda00e6',
+    '약화의 낙인':'19ad7bcbc74-55c37c49-b83f-4ff0-8039-5233372272ca',
+    '고통의 연쇄':'19ad7bd8ba3-ee966d67-9b4a-47b6-8337-fa9e1d20c7f2',
+    '단죄':'19ad7be1309-5cb7ec94-a2bf-4a0a-a1cf-2c0cc75b9eb4',
+    '쾌유의 광휘':'19ad7be7700-15098312-68b8-419d-b105-75a5935e4d4a',
+    '벽력':'19ad7be9ee9-b4e8d2d8-9173-48ac-8ec5-f9d610bec35a',
+    '충격 해제':'19ad7becb13-61056cab-898b-4d9d-b8c7-14242795070b',
+    // 수호성
+    '격앙':'19a77cd51e3-666e6d4b-9d05-4749-84f5-54b711f6eac8',
+    '체력 강화':'19a77cbe0a0-8a0f0d27-28b2-4c0b-b1f6-576d1d0e43dd',
+    '단죄의 가호':'19a77cc18d8-90b9a9ef-064b-4199-baf1-9229186f0a6d',
+    '철벽방어':'19a77cc4b53-7d43a69d-7532-458e-8cba-c092fe175561',
+    '고통 차단':'19a77cdc839-cf5d06f3-d000-42bb-bc70-212fc21c30a6',
+    '맹렬한 일격':'19a77c1005c-2e5e02ee-3aec-483b-9de2-a0b54f224596',
+    '연속난타':'19a77c11b10-c59db673-e1b7-44a9-8a34-4b7311e1d581',
+    '심판':'19a91653a5f-2489def5-9003-400e-b802-5c7a3ee30345',
+    '징벌':'19a77c882ad-c37cfc89-d0c0-424a-bcf9-5f7fbc804bd1',
+    '섬멸':'19a9164e991-4da4621f-2f17-4b4e-a8ca-7d0601dd0cc8',
+    '쇠약의 맹타':'19a77c720fc-f1477b8e-fd32-4824-82eb-d08a41f70eb1',
+    '비호의 일격':'19a77c77830-31ac84a4-ffa8-4c1f-ae4f-c7eaafe9b4ad',
+    '섬광 난무':'19a91a9f80b-fdb5c9c8-334f-4c61-987c-6c5531332522',
+    // 마도성
+    '불의 표식':'19ad7afac24-50b09396-0f0a-4622-ab4d-0cca31cd2671',
+    '불꽃의 로브':'19ad7b01e57-418b58cf-e739-43c6-940b-84b2e0667643',
+    '대지의 로브':'19ad7afd48b-481f2d87-45f7-4541-885e-4da28334a675',
+    '냉기 소환':'19ad7affb0f-828661f5-c746-4f81-92e5-96a529c2b438',
+    '강화의 은혜':'19ad7b0bac5-096b9f29-c593-481c-9a01-d2d00ccf0c8f',
+    '정기 흡수':'19ad7b0428b-63c3846a-167c-4b82-bfcd-7417558cef6f',
+    '생기 증발':'19ad7b15113-a8ce74f1-80bb-4011-a9cf-0b9d30072c24',
+    '혹한의 바람':'19ad7ae49ab-164c6e93-1e2a-4a41-9115-90ca8910cbd3',
+    '불꽃 화살':'19ad7aaad53-0e636149-6221-45c2-9cae-32620b0c0663',
+    '얼음 사슬':'19ad7aac95f-c1d70b74-ae17-4ff9-922e-c5c31478d307',
+    '불꽃 폭발':'19ad7ae6b07-f4f6ce50-65be-4bb8-9ef6-ccfcd9e6f6dc',
+    '화염 난사':'19ad7ae9013-9712e1a6-d237-4f9f-be5a-665d0bff5a69',
+    '빙결':'19ad7aeaf17-368557dd-dfff-4d97-8a52-ef4a53063550',
+    '빙결폭발':'19ad7aef8fd-bc1152ef-dd0b-4501-b7da-5f5d4c44cfc1',
+    '지옥의 화염':'19ad7af4450-faba127e-5475-45ee-975b-3f7b4124a6b5',
+    '집중의 기원':'19ad7af2197-0dd738d3-90d2-4a81-bc8c-75500f92de10',
+    '불꽃작살':'19ad7ae26dd-528ce70b-d12e-4435-8d6e-029ffeb108c1',
+    '겨울의 속박':'19ad7aed74b-dd8cd0fa-c2f0-4384-a8d9-d5b5cea0e473',
+    // 정령성
+    '원소 결집':'19ad7b954c6-249b2d5e-56c1-45af-9324-bfe2817899f0',
+    '연속 역류':'19ad7b8cafc-26b772d0-2a32-41d3-875c-648d6628176b',
+    '정령 강림':'19ad7b808c6-6a9802ce-096b-4414-a6c6-a4dea7dd1761',
+    '정령 회생':'19ad7b87887-9cb554a2-6774-41e2-9876-bc1395f14f08',
+    '냉기 충격':'19ad7b4512c-dc4275f1-6922-4443-8047-f53f5b55be11',
+    '화염 전소':'19ad7b47213-cc4789e5-bccc-4d76-87ce-d849159dfb3a',
+    '원소 융합':'19ad7b742d1-5a1746bb-1dbe-47ac-8f2f-c3c9a1ff97bf',
+    '협공: 저주':'19ad7b63b90-0cfdae0c-5c15-414c-b02a-e3341a2cc362',
+    '공간 지배':'19ad7b6a8af-ab26ebe6-d1e8-43fc-97fb-e74c889523cd',
+    '영혼의 절규':'19ad7b70fe5-e2c6028b-ab45-4f8d-a1c8-325075fb6ba3',
+    '연속 사격':'19ad7b66291-56e119ea-253e-47fb-90dc-7be2f00202b5',
+    '불의 정령':'19ad7b4afc8-d646831d-fe43-48f1-8349-030276612f8c',
+    '물의 정령':'19ad7b4cbd6-7fdf9d11-04ce-40a1-99ae-ad333b57a25a',
+    '바람의 정령':'19ad7b6c403-8da92404-9ff2-4d4d-971d-cfcfaa67e30f',
+    '땅의 정령':'19ad7b68678-7cf1e77b-d133-4e22-b667-9721f4027c62',
+    // 살성
+    '육감 극대화':'19ad797e90b-3f2ccf79-3a5f-4373-aa39-f69e241e5dff',
+    '빈틈 노리기':'19ad798103d-9117ad9b-5e75-44d5-8fd7-966395eec26c',
+    '독 바르기':'19ad7983623-59928345-8c29-484d-88e1-f1f8affeb26d',
+    '배후 강타':'19ad7987b7b-86d422ca-a0ee-4452-8290-c83697b5bbec',
+    '강습 자세':'19ad798aabe-d3838016-a038-4ba1-9f0c-f66337aab3b1',
+    '충격 적중':'19ad798f59f-b722ea12-b604-4508-a228-c25a4ad9c71a',
+    '기습 자세':'19ad7992f18-a22a6a62-3db0-4d7a-9491-814ecc2460a8',
+    '방어 균열':'19ad7998f54-c454521d-bf49-4d59-a077-d12df85b59e0',
+    '회생의 계약':'19ad799c00b-45d60da8-6faf-4ca2-a717-c2dc651b4ba3',
+    '각오':'19ad799fa49-b512323c-e608-43cf-a0bc-38941f0ef566',
+    '빠른 베기':'19ad79476f9-3566d1a1-d8f3-425d-9771-55600996722c',
+    '절혼 베기':'19ad79476f9-3566d1a1-d8f3-425d-9771-55600996722c',
+    '쾌속 베기':'19ad79476f9-3566d1a1-d8f3-425d-9771-55600996722c',
+    '맹수의 포효':'19ad795add5-31ca2518-616d-43ff-8c41-8189a56ec051',
+    '문양 폭발':'19ad7977cdf-ab586801-2f19-4ca0-a1d3-a6187f403da7',
+    '암습':'19ad795d069-5e0f9651-0173-4e89-a04d-877a4951597b',
+    '기습':'19ad795ffc5-359c1a56-654c-488b-9297-ce7b340e4a4d',
+    '심장 찌르기':'19ad796562d-8751ae39-e701-4a7e-b09c-fa532ad15d11',
+    '폭풍 난무':'19ad79693e9-9b939e71-cd79-4f3b-9ef0-99d22a70ffd5',
+    '회오리 베기':'19ad796c06a-7bb2a0e3-0bff-4528-91d8-a537e9c136eb',
+    '섬광 베기':'19ad796e1f9-84b2583d-755e-48df-b3fa-e4fcc5670c8d',
+    '침투':'19ad79713ca-3671bac3-9f87-4053-86fc-44dfbc5e1158',
+    '그림자 낙하':'19ad7975ac6-81d8bb76-eb1f-48d3-bbfc-d33f668065a2',
+    '폭풍 베기':'19ad797a476-a9e9b439-91c7-4365-a6bb-0bfe11158cd4',
+    // 검성
+    '공격 준비':'19a691b1316-d595c298-828d-4822-801c-b5d2da063d81',
+    '약점 파악':'19a691b0689-c75128d9-c6f1-4a5a-b3dc-469bc861037c',
+    '노련한 반격':'19a691b3fbd-e7080f9f-555b-499b-8dd6-cb31be338d90',
+    '살기 파열':'19a691b5de7-0a2f4c75-3a26-41f1-91f7-62c25812c466',
+    '생존 자세':'19a691acfbd-873e0322-ed45-4ac3-9bef-f73b4de2f6cb',
+    '분쇄파동':'19a6916a8e3-10cc1218-b587-4bbc-9f0a-5517bcfa67de',
+    '예리한 일격':'19a8f855015-20012a3d-2482-4154-aed9-69025056551a',
+    '파멸의 맹타':'19a69174d7a-fb432557-da2c-4a65-99da-94a75231cd22',
+    '내려찍기':'19a6914f721-8fc2cd96-df39-4a6f-bb59-38308afe1d16',
+    '발목 베기':'19a6915fa1a-198d9033-305e-4a21-9580-fcca7b548aa7',
+    '공중결박':'19a69171f59-440de8af-4176-4de0-a4eb-fcbb554340a1',
+    '유린의 검':'19a6914d6b0-31fade60-17c2-4a0e-82a1-0aa98fff19f0',
+    // 호법성 (공격 준비/충격 적중/생존 의지 shared, overwrite with class-specific icons)
+    '고취의 주문':'19acd1355fa-deef2f65-cc80-44ac-aeed-481ae440b784',
+    '대지의 약속':'19acd141d61-27c6d184-2a2d-4216-a0f6-23a3f10a1f05',
+    '생명의 축복':'19acd12f679-e9ab6ead-f57f-4b61-88fb-966b29caf274',
+    '바람의 약속':'19acd146f21-a2a45d67-ae9c-4d5b-8128-d738dc4d35f3',
+    '보호진':'19acd13376c-3c0bfa2b-d829-4248-96b7-191aa1b50673',
+    '십자 방어':'19acd131668-1f59af3e-e10f-4fbd-994a-df99f0b13f7e',
+    '격노의 주문':'19acd13f97e-77eef740-32f3-46cb-bf65-f569d4e312ad',
+    '격파쇄':'19acd111b88-12e92233-5c58-4578-a152-52bca3704ecb',
+    '백열격':'19acd113e37-90e70e0c-3388-412b-9ad7-d566a5709e75',
+    '돌진 격파':'19a9166f7fb-bcb054ee-fb14-48f9-ad5a-b48e5f25fdcb',
+    '타격쇄':'19acd11622b-58016f94-b255-4bce-ab7f-e2fc008cd25f',
+    '암격쇄':'19acd11afcc-fe4e8077-8a30-41c4-8a69-21edb55f96b8',
+    '질풍 난무':'19acd11ea28-ededf247-460c-41d3-a53e-d19831a0372d',
+    '열파격':'19acd120ed5-3d043158-4e59-462f-a565-36147b788963',
+    '쾌유의 주문':'19acd123094-80d9be0a-f760-4f0c-a1e9-646d1ccf1763',
+    '진동쇄':'19acd125a4f-593575ec-2202-4429-8d5c-1cf3741d33af',
+    '파동격':'19acd127d53-908f87af-7bd3-4a70-9897-2bf1fcb7a3fd',
+    '회전격':'19acd12a1a3-ebcabf46-5559-44c1-8871-b27b40abbd1c',
+    // 궁성
+    '집중 포화':'19ad7a4a00a-a17cf9b2-dc82-4f83-b433-ada1808885e1',
+    '근접 사격':'19ad7a5a3e2-a4d79b28-f364-4a49-947a-c24eb3eab44d',
+    '속박의 눈':'19ad7a580dc-3ccb3f19-b528-437f-840f-21964336e8c9',
+    '사냥꾼의 혼':'19ad7a6102a-9040c73e-3e04-48d8-a3c2-b6728a920f6d',
+    '표적 화살':'19ad7a220a9-377098b9-1e48-402e-9a4d-f91feff88f66',
+    '조준 화살':'19ad7a3f71f-6749b2b7-457d-4689-a04e-443b64fc0a93',
+    '올가미 화살':'19ad7a1ff49-de30505a-a819-4955-9567-434f081725ae',
+    '파열 화살':'19ad7a3307b-fabcafb8-7685-456b-9c0c-625be57d5401',
+    '송곳 화살':'19ad7a23c9e-f5bb7748-06e8-42c1-8649-7fa8bdf2b70a',
+    '광풍 화살':'19ad7a2d05e-6ef8ac1a-b8a9-44bb-b788-20fe28525bf2',
+    '화살 난사':'19ad7a28272-9d22d636-c278-45b8-b063-a1d02dedabfc',
+    '속사':'19ad7a1d16c-cd477fec-a30b-43ab-a602-ea8e8ba21266',
+    '저격':'19ad7a1a7ca-4b126f14-3f65-4e83-a911-cf37e17d0a7c',
+    // 호법성 생존 의지 override
+    '생존 의지':'19acd144348-7902c5bb-7530-4ce2-bc47-481f09fe21aa',
+  };
+
+  function skillIcon(name, type) {
+    const id = SKILL_ICONS[name];
+    if (id) return `<img src="${CDN_BASE}${id}" class="arc-skill-img" onerror="this.style.display='none'">`;
+    const badgeCls = type === 'active' ? 'arc-badge-active' : 'arc-badge-passive';
+    const badgeTxt = type === 'active' ? '액' : '패';
+    return `<span class="arc-badge ${badgeCls}">${badgeTxt}</span>`;
+  }
+
   // ── 상태 ──────────────────────────────────────────────────────
   let state = {
     cls: '',
@@ -7974,6 +8130,7 @@ const ARC = (function(){
       '.arc-badge{display:inline-flex;align-items:center;justify-content:center;width:20px;height:18px;border-radius:4px;font-size:10px;font-weight:700;flex-shrink:0;}',
       '.arc-badge-active{background:#f0a04033;color:#f0a040;}',
       '.arc-badge-passive{background:#5aadff33;color:#5aadff;}',
+      '.arc-skill-img{width:24px;height:24px;border-radius:3px;object-fit:contain;flex-shrink:0;vertical-align:middle;}',
     ].join('');
     document.head.appendChild(st);
   }
@@ -8037,20 +8194,16 @@ const ARC = (function(){
 
   function buildDropdown(wrapId, partId, idx, val, pool) {
     const items = pool.map(s => {
-      const badgeCls = s.type === 'active' ? 'arc-badge-active' : 'arc-badge-passive';
-      const badgeTxt = s.type === 'active' ? '액' : '패';
-      const badge = `<span class="arc-badge ${badgeCls}">${badgeTxt}</span>`;
-      const iconImg = `<span class="arc-skill-icon arc-skill-icon-${badgeCls.replace('arc-badge-','')}">${badgeTxt[0]}</span>`;
+      const icon = skillIcon(s.name, s.type);
       const sel = s.name === val ? ' selected' : '';
-      return `<div class="arc-drop-item${sel}" data-name="${s.name}" data-type="${s.type}" onclick="ARC._setSkillDrop('${partId}',${idx},'${s.name}',this)">${badge}${s.name}</div>`;
+      return `<div class="arc-drop-item${sel}" data-name="${s.name}" data-type="${s.type}" onclick="ARC._setSkillDrop('${partId}',${idx},'${s.name}',this)">${icon}${s.name}</div>`;
     }).join('');
 
     const selItem = pool.find(s => s.name === val);
     let btnInner;
     if (val && selItem) {
-      const badgeCls = selItem.type === 'active' ? 'arc-badge-active' : 'arc-badge-passive';
-      const badgeTxt = selItem.type === 'active' ? '액' : '패';
-      btnInner = `<span style="display:flex;align-items:center;gap:6px;min-width:0;"><span class="arc-badge ${badgeCls}">${badgeTxt}</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${val}</span></span>`;
+      const icon = skillIcon(selItem.name, selItem.type);
+      btnInner = `<span style="display:flex;align-items:center;gap:6px;min-width:0;">${icon}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${val}</span></span>`;
     } else {
       btnInner = `<span style="color:var(--muted);font-size:12px;">슬롯 ${idx+1} — 스킬 선택</span>`;
     }
@@ -8282,10 +8435,20 @@ const ARC = (function(){
       const wrap = itemEl.closest('.arc-drop-wrap');
       if (wrap) {
         const type = itemEl.dataset.type || 'active';
-        const badgeCls = type === 'active' ? 'arc-badge-active' : 'arc-badge-passive';
-        const badgeTxt = type === 'active' ? '액' : '패';
+        const icon = skillIcon(name, type);
         const valEl = wrap.querySelector('.arc-drop-val');
-        if (valEl) valEl.innerHTML = `<span style="display:flex;align-items:center;gap:6px;"><span class="arc-badge ${badgeCls}">${badgeTxt}</span>${name}</span>`;
+        if (valEl) valEl.innerHTML = `<span style="display:flex;align-items:center;gap:6px;">${icon}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${name}</span></span>`;
+        // ensure clear button exists
+        const btn = wrap.querySelector('.arc-drop-btn');
+        if (btn && !btn.querySelector('span[title="초기화"]')) {
+          const clr = document.createElement('span');
+          clr.title = '초기화';
+          clr.style.cssText = 'padding:0 4px;color:var(--muted);font-size:14px;line-height:1;cursor:pointer;';
+          clr.textContent = '✕';
+          clr.onclick = function(e) { e.stopPropagation(); ARC._clearSkill(partId, idx); };
+          const arrow = btn.querySelector('span:last-child');
+          btn.insertBefore(clr, arrow);
+        }
         wrap.querySelectorAll('.arc-drop-item').forEach(el => {
           el.classList.toggle('selected', el.dataset.name === name);
         });
