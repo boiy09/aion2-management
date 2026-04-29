@@ -1,3 +1,11 @@
+/index.html
+  Cache-Control: no-store, no-cache, must-revalidate
+  Pragma: no-cache
+
+/
+  Cache-Control: no-store, no-cache, must-revalidate
+  Pragma: no-cache
+
 /version.json
   Cache-Control: no-store, no-cache, must-revalidate
   Pragma: no-cache
