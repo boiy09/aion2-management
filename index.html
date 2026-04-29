@@ -7886,32 +7886,32 @@ const ARC = (function(){
       active: ['심판의 번개','신성한 기운','재생의 빛','치유의 빛','벼락 난사','충격 해제','대지의 응보','약화의 낙인','고통의 연쇄','단죄','쾌유의 광휘','벽력'],
     },
     '수호성': {
-      passive:['격앙','체력강화','단죄의 가호','철벽방어','충격 적중','고통 차단'],
-      active: ['연속난타','섬광난무','비호의 일격','맹렬한 일격','심판','징벌','섬멸','쇠약의 맹타'],
+      passive:['격앙','체력 강화','단죄의 가호','철벽방어','충격 적중','고통 차단'],
+      active: ['맹렬한 일격','연속난타','심판','징벌','섬멸','쇠약의 맹타','비호의 일격','섬광 난무'],
     },
     '마도성': {
-      passive:['불의 표식','불꽃의 로브','마력 집중','원소 지식','화염 전문가','냉기 전문가'],
-      active: ['혹한의 바람','불폭발','불화살','집기','지화','작살','마력 폭발'],
+      passive:['불의 표식','불꽃의 로브','대지의 로브','냉기 소환','강화의 은혜','정기 흡수','생기 증발'],
+      active: ['혹한의 바람','불꽃 화살','얼음 사슬','불꽃 폭발','화염 난사','빙결','빙결폭발','지옥의 화염','집중의 기원','불꽃작살','겨울의 속박'],
     },
     '정령성': {
-      passive:['정령타격','정신집중','침식','정령 계약','원소 공명'],
-      active: ['화염전소','냉기충격','원소융합','저주','정령 소환'],
+      passive:['원소 결집','연속 역류','정령 강림','정령 회생'],
+      active: ['냉기 충격','화염 전소','원소 융합','협공: 저주','공간 지배','영혼의 절규','연속 사격','충격 해제','불의 정령','물의 정령','바람의 정령','땅의 정령'],
     },
     '살성': {
-      passive:['민첩함','급소 지식','암살 본능','그림자 숙련'],
-      active: ['심장 관통','빠른 찌르기','연속 찌르기','급소 찌르기'],
+      passive:['육감 극대화','빈틈 노리기','독 바르기','배후 강타','강습 자세','충격 적중','기습 자세','방어 균열','회생의 계약','각오'],
+      active: ['빠른 베기','절혼 베기','쾌속 베기','맹수의 포효','문양 폭발','암습','기습','심장 찌르기','폭풍 난무','회오리 베기','섬광 베기','침투','그림자 낙하','폭풍 베기'],
     },
     '검성': {
-      passive:['전사의 기질','강인한 체력','검술 달인','공격 본능'],
-      active: ['예리한 일격','도약 찍기','내려찍기','발목 베기','파멸의 가르기','파멸의 맹타','파쇄파','검기 난무'],
+      passive:['공격 준비','약점 파악','노련한 반격','살기 파열','생존 자세'],
+      active: ['분쇄파동','예리한 일격','파멸의 맹타','내려찍기','발목 베기','공중결박','검기 난무','도약 찍기','절단의 맹타','유린의 검','돌진 일격'],
     },
     '호법성': {
-      passive:['공격 준비','충격 적중','고치의 주문','대지의 약속','생명의 축복'],
-      active: ['불패의 진원','질주의 진원','질풍의 건능','분쇄격'],
+      passive:['공격 준비','충격 적중','고취의 주문','대지의 약속','생명의 축복','바람의 약속','보호진','생존 의지','십자 방어','격노의 주문'],
+      active: ['격파쇄','백열격','돌진 격파','타격쇄','암격쇄','질풍 난무','열파격','쾌유의 주문','진동쇄','파동격','회전격','충격 해제'],
     },
     '궁성': {
-      passive:['정밀 조준','원거리 달인','화살 관통','신속 사격'],
-      active: ['속사','화살난사','저격','관통 화살'],
+      passive:['생명력 흡수','집중 포화','근접 사격','속박의 눈','사냥꾼의 혼'],
+      active: ['표적 화살','조준 화살','올가미 화살','파열 화살','송곳 화살','광풍 화살','화살 난사','속사','저격'],
     },
   };
 
@@ -7963,7 +7963,7 @@ const ARC = (function(){
       '.arc-drop-wrap{position:relative;width:100%;}',
       '.arc-drop-btn{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 9px;border-radius:6px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;min-height:34px;box-sizing:border-box;user-select:none;}',
       '.arc-drop-btn:hover{border-color:var(--gold-d);}',
-      '.arc-drop-menu{position:absolute;top:calc(100% + 2px);left:0;right:0;z-index:999;background:var(--card);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.5);overflow:hidden;flex-direction:column;max-height:240px;display:none;}',
+      '.arc-drop-menu{position:fixed;z-index:9999;background:var(--card);border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.6);overflow:hidden;flex-direction:column;max-height:240px;display:none;}',
       '.arc-drop-menu.open{display:flex;}',
       '.arc-drop-search{margin:8px 8px 4px;padding:5px 8px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:5px;font-size:12px;outline:none;}',
       '.arc-drop-list{overflow-y:auto;flex:1;}',
@@ -7990,10 +7990,18 @@ const ARC = (function(){
   window.arcDropToggle = function(wrapId) {
     const wrap = document.getElementById(wrapId);
     if (!wrap) return;
+    const btn = wrap.querySelector('.arc-drop-btn');
     const menu = wrap.querySelector('.arc-drop-menu');
     const isOpen = menu.classList.contains('open');
     arcDropCloseAll();
     if (!isOpen) {
+      const rect = btn.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const menuH = Math.min(240, spaceBelow - 8);
+      menu.style.top    = (rect.bottom + 2) + 'px';
+      menu.style.left   = rect.left + 'px';
+      menu.style.width  = rect.width + 'px';
+      menu.style.maxHeight = (menuH > 80 ? menuH : 200) + 'px';
       menu.classList.add('open');
       _openDropId = wrapId;
       const search = menu.querySelector('.arc-drop-search');
@@ -8023,6 +8031,9 @@ const ARC = (function(){
   document.addEventListener('mousedown', function(e) {
     if (_openDropId && !e.target.closest('.arc-drop-wrap')) arcDropCloseAll();
   }, true);
+  document.addEventListener('scroll', function() {
+    if (_openDropId) arcDropCloseAll();
+  }, true);
 
   function buildDropdown(wrapId, partId, idx, val, pool) {
     const items = pool.map(s => {
@@ -8030,13 +8041,20 @@ const ARC = (function(){
         ? '<span class="arc-badge arc-badge-active">액</span>'
         : '<span class="arc-badge arc-badge-passive">패</span>';
       const sel = s.name === val ? ' selected' : '';
-      return `<div class="arc-drop-item${sel}" data-name="${s.name}" onclick="ARC._setSkillDrop('${partId}',${idx},'${s.name}',this)">${badge}${s.name}</div>`;
+      return `<div class="arc-drop-item${sel}" data-name="${s.name}" data-type="${s.type}" onclick="ARC._setSkillDrop('${partId}',${idx},'${s.name}',this)">${badge}${s.name}</div>`;
     }).join('');
-    const valText = val || '스킬 선택';
-    const valStyle = val ? '' : 'color:var(--muted)';
+    const selItem = pool.find(s => s.name === val);
+    let btnInner;
+    if (val && selItem) {
+      const badgeCls = selItem.type === 'active' ? 'arc-badge-active' : 'arc-badge-passive';
+      const badgeTxt = selItem.type === 'active' ? '액' : '패';
+      btnInner = `<span style="display:flex;align-items:center;gap:6px;"><span class="arc-badge ${badgeCls}">${badgeTxt}</span>${val}</span>`;
+    } else {
+      btnInner = `<span style="color:var(--muted)">스킬 선택</span>`;
+    }
     return `<div class="arc-drop-wrap" id="${wrapId}">
       <div class="arc-drop-btn" onclick="arcDropToggle('${wrapId}')">
-        <span class="arc-drop-val" style="${valStyle}">${valText}</span>
+        <span class="arc-drop-val">${btnInner}</span>
         <span style="font-size:10px;color:var(--muted);">▼</span>
       </div>
       <div class="arc-drop-menu">
@@ -8238,8 +8256,11 @@ const ARC = (function(){
       pc.skills[idx] = name;
       const wrap = itemEl.closest('.arc-drop-wrap');
       if (wrap) {
+        const type = itemEl.dataset.type || 'active';
+        const badgeCls = type === 'active' ? 'arc-badge-active' : 'arc-badge-passive';
+        const badgeTxt = type === 'active' ? '액' : '패';
         const valEl = wrap.querySelector('.arc-drop-val');
-        if (valEl) { valEl.textContent = name; valEl.style.color = ''; }
+        if (valEl) valEl.innerHTML = `<span style="display:flex;align-items:center;gap:6px;"><span class="arc-badge ${badgeCls}">${badgeTxt}</span>${name}</span>`;
         wrap.querySelectorAll('.arc-drop-item').forEach(el => {
           el.classList.toggle('selected', el.dataset.name === name);
         });
