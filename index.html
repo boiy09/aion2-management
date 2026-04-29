@@ -1162,7 +1162,7 @@
         <div class="hw-section-title">💰 키나 일일 획득 한도 <span style="font-size:11px;color:var(--muted);font-weight:400;">(일일)</span></div>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
           <span style="font-size:20px;font-weight:700;color:var(--gold-l);" id="hw-kina-val">0</span>
-          <span style="color:var(--muted);font-size:13px;">/ 1,000,000</span>
+          <span style="color:var(--muted);font-size:13px;">/ 2,000,000</span>
           <span class="hw-max-badge" id="hw-kina-badge" style="display:none;">한도</span>
           <span style="font-size:12px;color:var(--muted);" id="hw-kina-pct">0%</span>
         </div>
@@ -1177,7 +1177,7 @@
           <button class="hw-counter-btn" onclick="hwAdjustKina(500000)" style="padding:4px 10px;font-size:12px;">+50만</button>
           <button class="hw-counter-btn" onclick="hwSetKina(0)" style="padding:4px 10px;font-size:12px;color:var(--muted);">초기화</button>
         </div>
-        <input class="hw-kina-input" type="number" placeholder="직접 입력 (숫자)" min="0" max="1000000"
+        <input class="hw-kina-input" type="number" placeholder="직접 입력 (숫자)" min="0" max="2000000"
           oninput="hwSetKina(parseInt(this.value)||0)" id="hw-kina-ipt">
       </div>
 
@@ -6363,7 +6363,7 @@ const HW_TICKETS = [
   {id:'ticket_dimension',label:'차원 침공',    max:7,  itemMax:null, charges:['05:00'],               desc:'매일 5시 1회 충전'},
 ];
 const HW_WEEKLY_COUNTERS = [
-  {id:'weekly_sanctuary_rude_ch', label:'성역 도전[루드라]',      max:4,  unit:'회'},
+  {id:'weekly_sanctuary_rude_ch', label:'성역 도전[루드라]',      max:2,  unit:'회'},
   {id:'weekly_sanctuary_rude_rw', label:'성역 보상[루드라]',      max:2,  unit:'회'},
   {id:'weekly_sanctuary2_ch',     label:'성역 도전[2차성역]',     max:4,  unit:'회'},
   {id:'weekly_sanctuary2_rw',     label:'성역 보상[2차성역]',     max:2,  unit:'회'},
@@ -6805,7 +6805,7 @@ function _hwUpdateCountdowns() {
 }
 
 // ─── 키나 일일 한도 ────────────────────────────
-const HW_KINA_MAX = 1000000;
+const HW_KINA_MAX = 2000000;
 function hwSetKina(val) {
   try {
     var data = _hwLoad(_hwDailyKey());
@@ -6966,8 +6966,9 @@ function odIsNewCorridor(iso) {
 function odNormalize(data) {
   var wr=odWeeklyReset();
   data.accounts.forEach(function(acc){
-    if(odIsNewWeek(acc.weeklyResetAt)){acc.weeklyExpeditionCount=0;acc.weeklyTranscendenceCount=0;acc.weeklyResetAt=wr.toISOString();}
+    if(odIsNewWeek(acc.weeklyResetAt)){acc.weeklyExpeditionCount=0;acc.weeklyTranscendenceCount=0;acc.rudraChCount=0;acc.rudraPwCount=0;acc.sanc2ChCount=0;acc.sanc2PwCount=0;acc.gakseongCount=0;acc.tobulCount=0;acc.weeklyAbyssChecked=false;acc.weeklyResetAt=wr.toISOString();}
     if(odIsNewDay(acc.missionResetAt)){acc.missionChecked=false;acc.missionResetAt=new Date().toISOString();}
+    if(odIsNewDay(acc.dailyResetAt)){acc.attendChecked=false;acc.abyssSupplyChecked=false;acc.dailyResetAt=new Date().toISOString();}
   });
   data.characters.forEach(function(ch){
     if(odIsNewWeek(ch.weeklyResetAt)){ch.weeklyExpLeft=OD_RULES.expedition.weeklyMaxPerChar;ch.weeklyTransLeft=OD_RULES.transcendence.weeklyMaxPerChar;ch.awakeningChecked=false;ch.sanctuaryChecked=false;ch.weeklyResetAt=wr.toISOString();}
@@ -6977,7 +6978,7 @@ function odNormalize(data) {
 }
 
 function odNewAcc(name, mbship) {
-  return {uid:odUID(),name:name,hasMembership:!!mbship,shugoBase:OD_RULES.shugo.maxBase,shugoExtra:0,invasionBase:OD_RULES.invasion.maxBase,invasionExtra:0,weeklyExpeditionCount:0,weeklyTranscendenceCount:0,weeklyResetAt:odWeeklyReset().toISOString(),ildeonChecked:false,missionChecked:false,missionResetAt:null,collapsed:false};
+  return {uid:odUID(),name:name,hasMembership:!!mbship,shugoBase:OD_RULES.shugo.maxBase,shugoExtra:0,invasionBase:OD_RULES.invasion.maxBase,invasionExtra:0,weeklyExpeditionCount:0,weeklyTranscendenceCount:0,weeklyResetAt:odWeeklyReset().toISOString(),ildeonChecked:false,missionChecked:false,missionResetAt:null,attendChecked:false,abyssSupplyChecked:false,dailyResetAt:null,rudraChCount:0,rudraPwCount:0,sanc2ChCount:0,sanc2PwCount:0,gakseongCount:0,tobulCount:0,weeklyAbyssChecked:false,collapsed:false};
 }
 function odNewChar(accUid, name, color) {
   return {uid:odUID(),accountUid:accUid,name:name,classColor:color||'green',baseOd:OD_RULES.od.maxBase,extraOd:0,expeditionBase:OD_RULES.expedition.maxBase,expeditionExtra:0,transcendenceBase:OD_RULES.transcendence.maxBase,transcendenceExtra:0,weeklyExpLeft:OD_RULES.expedition.weeklyMaxPerChar,weeklyTransLeft:OD_RULES.transcendence.weeklyMaxPerChar,corridorChecked:false,awakeningChecked:false,sanctuaryChecked:false,corridorResetAt:null,weeklyResetAt:odWeeklyReset().toISOString(),memo:''};
@@ -7151,11 +7152,16 @@ function odRenderAccounts(data) {
     var expWarn=(acc.weeklyExpeditionCount||0)>=OD_RULES.expedition.weeklyAccountWarnAt;
     var transWarn=(acc.weeklyTranscendenceCount||0)>=OD_RULES.transcendence.weeklyAccountWarnAt;
     var repUid=chars.length>0?chars[0].uid:null;
+    // 일일 완료 계산 (출석부, 어비스보급, 일일던전, 사명, 슈고소진, 침공소진)
+    var dailyDone=[!!acc.attendChecked,!!acc.abyssSupplyChecked,!!acc.ildeonChecked,!!acc.missionChecked,(acc.shugoBase+acc.shugoExtra)<=0,(acc.invasionBase+acc.invasionExtra)<=0].filter(Boolean).length;
+    var dailyPct=Math.round(dailyDone/6*100);
+    var dailyColor=dailyDone===6?'#00c88a':dailyDone>=3?'var(--gold-l)':'var(--muted)';
     var h='<div class="od-acc-block">'
       +'<div class="od-acc-hdr" onclick="odMgrCollapse(\''+acc.uid+'\')">'
       +'<span style="font-size:14px;font-weight:700;">'+_escHtml(acc.name)+'</span>'
       +(acc.hasMembership?'<span class="mbship-badge">멤버십</span>':'')
       +'<span style="font-size:11px;color:var(--muted);">'+chars.length+'명</span>'
+      +'<span style="font-size:11px;font-weight:700;color:'+dailyColor+';">일일 '+dailyDone+'/6</span>'
       +'<span style="margin-left:auto;display:flex;gap:10px;align-items:center;font-size:11px;">'
       +'<span class="'+(expWarn?'od-warn-text':'')+'">원정 '+(acc.weeklyExpeditionCount||0)+'<span style="color:var(--muted);opacity:.5;">/'+OD_RULES.expedition.weeklyAccountWarnAt+'</span></span>'
       +'<span class="'+(transWarn?'od-warn-text':'')+'">초월 '+(acc.weeklyTranscendenceCount||0)+'<span style="color:var(--muted);opacity:.5;">/'+OD_RULES.transcendence.weeklyAccountWarnAt+'</span></span>'
@@ -7229,23 +7235,50 @@ function odRenderAccounts(data) {
       }
       h+='</div>';
       // 계정 푸터 (슈고/침공/일일던전/사명)
-      h+='<div class="od-acc-footer">'
-        +'<div style="display:flex;align-items:center;gap:5px;"><span style="font-size:11px;color:var(--muted);font-weight:600;">슈고</span>'
+      // 주간 카운터 헬퍼
+      function _wc(label, field, val, max) {
+        var done=val>=max; var c=done?'#00c88a':val>0?'var(--gold-l)':'var(--muted)';
+        return '<div style="display:flex;align-items:center;gap:3px;white-space:nowrap;">'
+          +'<span style="font-size:10px;color:var(--muted);">'+label+'</span>'
+          +'<button class="od-tc-btn" onclick="odAdj(\''+field+'\',\''+acc.uid+'\',-1,true,0,'+max+')">−</button>'
+          +'<span style="font-size:12px;font-weight:700;color:'+c+';">'+val+'/'+max+'</span>'
+          +'<button class="od-tc-btn" onclick="odAdj(\''+field+'\',\''+acc.uid+'\',1,true,0,'+max+')">+</button>'
+          +'</div>';
+      }
+      h+='<div class="od-acc-footer" style="flex-direction:column;gap:8px;">'
+        // 일일
+        +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'
+        +'<span style="font-size:10px;font-weight:700;color:var(--muted);width:28px;flex-shrink:0;">일일</span>'
+        +'<div style="display:flex;align-items:center;gap:4px;"><span style="font-size:11px;color:var(--muted);">출석</span>'+odChkHtml(!!acc.attendChecked,'odToggle(\'attendChecked\',\''+acc.uid+'\',true)')+'</div>'
+        +'<div style="display:flex;align-items:center;gap:4px;"><span style="font-size:11px;color:var(--muted);">어비스보급</span>'+odChkHtml(!!acc.abyssSupplyChecked,'odToggle(\'abyssSupplyChecked\',\''+acc.uid+'\',true)')+'</div>'
+        +'<div style="display:flex;align-items:center;gap:4px;"><span style="font-size:11px;color:var(--muted);">일일던전</span>'+odChkHtml(!!acc.ildeonChecked,'odToggle(\'ildeonChecked\',\''+acc.uid+'\',true)')+'</div>'
+        +'<div style="display:flex;align-items:center;gap:4px;"><span style="font-size:11px;color:var(--muted);">사명</span>'+odChkHtml(!!acc.missionChecked,'odToggle(\'missionChecked\',\''+acc.uid+'\',true)')+'</div>'
+        +'<div style="display:flex;align-items:center;gap:3px;"><span style="font-size:11px;color:var(--muted);font-weight:600;">슈고</span>'
         +'<button class="od-tc-btn" onclick="odAdj(\'shugoBase\',\''+acc.uid+'\',-1,true,0,'+OD_RULES.shugo.maxBase+')" oncontextmenu="event.preventDefault();odAdj(\'shugoBase\',\''+acc.uid+'\',1,true,0,'+OD_RULES.shugo.maxBase+')">−</button>'
-        +'<span style="font-size:13px;font-weight:700;color:'+(acc.shugoBase<=0?'var(--muted)':'var(--gold-l)')+';">'+acc.shugoBase+'</span>'
+        +'<span style="font-size:12px;font-weight:700;color:'+(acc.shugoBase<=0?'#00c88a':'var(--gold-l)')+';">'+acc.shugoBase+'</span>'
         +(acc.shugoExtra>0?'<span class="od-extra" onclick="odAdj(\'shugoExtra\',\''+acc.uid+'\',-1,true,0,undefined)" oncontextmenu="event.preventDefault();odAdj(\'shugoExtra\',\''+acc.uid+'\',1,true,0,undefined)">+'+acc.shugoExtra+'</span>':'')
         +'<button class="od-tc-btn" onclick="odAdj(\'shugoBase\',\''+acc.uid+'\',1,true,0,'+OD_RULES.shugo.maxBase+')" oncontextmenu="event.preventDefault();odAdj(\'shugoBase\',\''+acc.uid+'\',-1,true,0,'+OD_RULES.shugo.maxBase+')">+</button>'
         +(repUid?odActBtnHtml('슈고',(acc.shugoBase+acc.shugoExtra)>0,odUndoCnt(repUid,'shugo'),'odActShugo(\''+repUid+'\')','odUndoShugo(\''+repUid+'\')'):'')
         +'</div>'
-        +'<div style="display:flex;align-items:center;gap:5px;"><span style="font-size:11px;color:var(--muted);font-weight:600;">침공</span>'
+        +'<div style="display:flex;align-items:center;gap:3px;"><span style="font-size:11px;color:var(--muted);font-weight:600;">침공</span>'
         +'<button class="od-tc-btn" onclick="odAdj(\'invasionBase\',\''+acc.uid+'\',-1,true,0,'+OD_RULES.invasion.maxBase+')" oncontextmenu="event.preventDefault();odAdj(\'invasionBase\',\''+acc.uid+'\',1,true,0,'+OD_RULES.invasion.maxBase+')">−</button>'
-        +'<span style="font-size:13px;font-weight:700;color:'+(acc.invasionBase<=0?'var(--muted)':'var(--gold-l)')+';">'+acc.invasionBase+'</span>'
+        +'<span style="font-size:12px;font-weight:700;color:'+(acc.invasionBase<=0?'#00c88a':'var(--gold-l)')+';">'+acc.invasionBase+'</span>'
         +(acc.invasionExtra>0?'<span class="od-extra" onclick="odAdj(\'invasionExtra\',\''+acc.uid+'\',-1,true,0,undefined)" oncontextmenu="event.preventDefault();odAdj(\'invasionExtra\',\''+acc.uid+'\',1,true,0,undefined)">+'+acc.invasionExtra+'</span>':'')
         +'<button class="od-tc-btn" onclick="odAdj(\'invasionBase\',\''+acc.uid+'\',1,true,0,'+OD_RULES.invasion.maxBase+')" oncontextmenu="event.preventDefault();odAdj(\'invasionBase\',\''+acc.uid+'\',-1,true,0,'+OD_RULES.invasion.maxBase+')">+</button>'
         +(repUid?odActBtnHtml('침공',(acc.invasionBase+acc.invasionExtra)>0,odUndoCnt(repUid,'invasion'),'odActInvasion(\''+repUid+'\')','odUndoInvasion(\''+repUid+'\')'):'')
         +'</div>'
-        +'<div style="display:flex;align-items:center;gap:5px;"><span style="font-size:11px;color:var(--muted);">일일던전</span>'+odChkHtml(!!acc.ildeonChecked,'odToggle(\'ildeonChecked\',\''+acc.uid+'\',true)')+'</div>'
-        +'<div style="display:flex;align-items:center;gap:5px;"><span style="font-size:11px;color:var(--muted);">사명</span>'+odChkHtml(!!acc.missionChecked,'odToggle(\'missionChecked\',\''+acc.uid+'\',true)')+'</div>'
+        +'</div>'
+        // 주간
+        +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'
+        +'<span style="font-size:10px;font-weight:700;color:var(--muted);width:28px;flex-shrink:0;">주간</span>'
+        +_wc('루드라도전','rudraChCount',acc.rudraChCount||0,2)
+        +_wc('루드라보상','rudraPwCount',acc.rudraPwCount||0,2)
+        +_wc('2차성역도전','sanc2ChCount',acc.sanc2ChCount||0,4)
+        +_wc('2차성역보상','sanc2PwCount',acc.sanc2PwCount||0,2)
+        +_wc('각성전','gakseongCount',acc.gakseongCount||0,3)
+        +_wc('토벌전','tobulCount',acc.tobulCount||0,3)
+        +'<div style="display:flex;align-items:center;gap:4px;"><span style="font-size:11px;color:var(--muted);">어비스보급</span>'+odChkHtml(!!acc.weeklyAbyssChecked,'odToggle(\'weeklyAbyssChecked\',\''+acc.uid+'\',true)')+'</div>'
+        +'</div>'
         +'</div>';
     }
     h+='</div>';
