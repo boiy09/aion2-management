@@ -167,8 +167,12 @@
   /* 숙제 도우미 */
   .hw-section { margin-bottom:16px; }
   .hw-section-title { font-size:13px; font-weight:700; color:var(--gold); margin-bottom:10px; display:flex; align-items:center; gap:6px; }
-  .hw-rimo-btn { padding:5px 10px; border-radius:6px; font-size:12px; background:var(--surface); border:1px solid var(--border); color:var(--muted); cursor:pointer; transition:all .15s; }
-  .hw-rimo-btn.used { background:rgba(100,100,100,.3); border-color:var(--border); color:#555; text-decoration:line-through; }
+  .hw-rimo-btn { display:flex; flex-direction:column; align-items:center; padding:6px 12px; border-radius:6px; font-size:12px; background:var(--surface); border:1px solid var(--border); color:var(--text); cursor:pointer; transition:all .15s; gap:2px; user-select:none; }
+  .hw-rimo-btn:hover:not(:disabled) { border-color:var(--gold); color:var(--gold-l); }
+  .hw-rimo-btn .rimo-cnt { font-size:10px; font-weight:700; color:var(--gold-l); }
+  .hw-rimo-btn:disabled { background:rgba(60,60,60,.25); border-color:var(--border); color:#555; cursor:default; }
+  .hw-rimo-btn:disabled .rimo-cnt { color:#666; }
+  .hw-rimo-btn.rimo-undo { border-color:#4a9eff; }
   .hw-counter { display:flex; align-items:center; gap:6px; }
   .hw-counter-btn { width:26px; height:26px; border-radius:5px; border:1px solid var(--border); background:var(--surface); color:var(--text); cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; }
   .hw-counter-val { font-size:13px; font-weight:700; color:var(--gold-l); min-width:28px; text-align:center; }
@@ -6348,12 +6352,23 @@ setInterval(function() { if(!document.hidden){ updateRiftDisplay(); updateShugoF
 updateRiftDisplay(); updateShugoFestaDisplay();
 
 // ─── 숙제 도우미 ────────────────────────────
-const HW_RIMO_LIST = [
-  '정복 보상','정복 2배','초월 보상','초월 2배',
-  '악몽','슈고페스타','차원침공',
-  '루드라도전','루드라보상','루드라2배',
-  '2차성역도전','2차성역보상','2차성역2배',
-  '각성전','토벌전','일일던전'
+const HW_RIMO_CONFIG = [
+  {id:'rc_conquest_rw',  label:'정복 보상',   ticketId:'ticket_conquest',  ticketCost:1, odMember:20, odNoMember:40},
+  {id:'rc_conquest_2x',  label:'정복 2배',    ticketId:'ticket_conquest',  ticketCost:2, odMember:40, odNoMember:80},
+  {id:'rc_chowon_rw',    label:'초월 보상',   ticketId:'ticket_chowon',    ticketCost:1, odMember:20, odNoMember:40},
+  {id:'rc_chowon_2x',    label:'초월 2배',    ticketId:'ticket_chowon',    ticketCost:2, odMember:40, odNoMember:80},
+  {id:'rc_akmon',        label:'악몽',         ticketId:'ticket_akmon',     ticketCost:1, odMember:0,  odNoMember:0},
+  {id:'rc_shugo',        label:'슈고페스타',  ticketId:'ticket_shugo',     ticketCost:1, odMember:0,  odNoMember:0},
+  {id:'rc_dimension',    label:'차원침공',    ticketId:'ticket_dimension',  ticketCost:1, odMember:0,  odNoMember:0},
+  {id:'rc_rudra_ch',     label:'루드라도전',  weeklyId:'weekly_sanctuary_rude_ch', weeklyMax:4, odMember:0,  odNoMember:0},
+  {id:'rc_rudra_rw',     label:'루드라보상',  weeklyId:'weekly_sanctuary_rude_rw', weeklyMax:2, odMember:40, odNoMember:40},
+  {id:'rc_rudra_2x',     label:'루드라2배',   weeklyId:'weekly_sanctuary_rude_rw', weeklyMax:2, odMember:40, odNoMember:40},
+  {id:'rc_sanc2_ch',     label:'2차성역도전', weeklyId:'weekly_sanctuary2_ch',     weeklyMax:4, odMember:0,  odNoMember:0},
+  {id:'rc_sanc2_rw',     label:'2차성역보상', weeklyId:'weekly_sanctuary2_rw',     weeklyMax:2, odMember:40, odNoMember:40},
+  {id:'rc_sanc2_2x',     label:'2차성역2배',  weeklyId:'weekly_sanctuary2_rw',     weeklyMax:2, odMember:40, odNoMember:40},
+  {id:'rc_gakseong',     label:'각성전',      weeklyId:'weekly_gakseong',          weeklyMax:3, odMember:0,  odNoMember:0},
+  {id:'rc_tobul',        label:'토벌전',      weeklyId:'weekly_tobul',             weeklyMax:3, odMember:0,  odNoMember:0},
+  {id:'rc_ildeon',       label:'일일던전',    weeklyId:'weekly_daily_face',        weeklyMax:14, odMember:0, odNoMember:0},
 ];
 const HW_TICKETS = [
   {id:'ticket_conquest', label:'원정 - 정복', max:14, itemMax:10,  charges:['05:00','13:00','21:00'], desc:'5시·13시·21시 충전'},
@@ -6602,20 +6617,34 @@ function _hwRenderAll() {
     _hwRefreshShugo(!!_hwSettings['shugo_membership']);
 
     // 리모권
+    var _hwSettings2 = _hwLoad('hw_settings') || {};
+    var isMember = !!_hwSettings2['shugo_membership'];
+    var rimoUndo = {};
+    try { rimoUndo = JSON.parse(sessionStorage.getItem('hw_rimo_undo')||'{}'); } catch(e2) {}
     const rimoArea = document.getElementById('hw-rimo-area');
-    if(rimoArea && !rimoArea.dataset.rendered) {
-      rimoArea.dataset.rendered = '1';
-      rimoArea.innerHTML = HW_RIMO_LIST.map(function(label) {
-        const id = 'rimo_'+label.replace(/\s/g,'_');
-        const used = !!daily[id];
-        return '<button class="hw-rimo-btn'+(used?' used':'')+'" id="hw-rimo-'+id+'" onclick="hwToggleRimo(\''+id+'\')">'+label+'</button>';
+    if(rimoArea) {
+      rimoArea.innerHTML = HW_RIMO_CONFIG.map(function(cfg, idx) {
+        var remaining, isWeekly = !cfg.ticketId;
+        if(cfg.ticketId) {
+          var tk = null;
+          for(var i=0;i<HW_TICKETS.length;i++){if(HW_TICKETS[i].id===cfg.ticketId){tk=HW_TICKETS[i];break;}}
+          var tv = daily[cfg.ticketId] !== undefined ? daily[cfg.ticketId] : (tk?tk.max:0);
+          remaining = tv;
+        } else {
+          var used = weekly[cfg.weeklyId] || 0;
+          remaining = cfg.weeklyMax - used;
+        }
+        var canUse = isWeekly ? remaining > 0 : remaining >= cfg.ticketCost;
+        var hasUndo = !!rimoUndo[idx];
+        var odCost = isMember ? cfg.odMember : cfg.odNoMember;
+        var cntTxt = isWeekly ? remaining+'/'+cfg.weeklyMax : remaining;
+        var cls = 'hw-rimo-btn'+(hasUndo?' rimo-undo':'');
+        return '<button class="'+cls+'"'+(canUse?'':' disabled')
+          +' onclick="hwExecRimo('+idx+')" oncontextmenu="hwUndoRimo('+idx+',event)">'
+          +cfg.label
+          +'<span class="rimo-cnt">'+cntTxt+(odCost?(' -'+odCost+'⚡'):'')+'</span>'
+          +'</button>';
       }).join('');
-    } else if(rimoArea) {
-      HW_RIMO_LIST.forEach(function(label) {
-        const id = 'rimo_'+label.replace(/\s/g,'_');
-        const btn = document.getElementById('hw-rimo-'+id);
-        if(btn) btn.className = 'hw-rimo-btn'+(daily[id]?' used':'');
-      });
     }
 
     // 충전 타이머 1분마다 갱신
@@ -6748,26 +6777,81 @@ function _hwRenderAll() {
   } catch(e) {}
 }
 
-// 리모권 = 단순 마커. OD 소모 콘텐츠만 에너지 연동.
-const HW_RIMO_OD_EFFECTS = {
-  '루드라보상': -40,
-  '루드라2배':  -40,
-  '2차성역보상':-40,
-  '2차성역2배': -40,
-};
-
-function hwToggleRimo(id) {
+// 리모컨: 실행 (좌클릭) + 실행 취소 (우클릭)
+function hwExecRimo(idx) {
   try {
-    var data = _hwLoad(_hwDailyKey());
-    var wasUsed = !!data[id];
-    data[id] = !wasUsed;
-    _hwSave(_hwDailyKey(), data);
-    var btn = document.getElementById('hw-rimo-'+id);
-    if(btn) btn.className = 'hw-rimo-btn'+(data[id]?' used':'');
-    // OD 에너지 연동 (성역 보상류만)
-    var labelKey = id.slice(5).replace(/_/g, ' ');
-    var odAmount = HW_RIMO_OD_EFFECTS[labelKey];
-    if(odAmount) hwSetOd(odAmount * (data[id] ? 1 : -1));
+    var cfg = HW_RIMO_CONFIG[idx];
+    var daily = _hwLoad(_hwDailyKey());
+    var weekly = _hwLoad(_hwWeeklyKey());
+    var settings = _hwLoad('hw_settings') || {};
+    var isMember = !!settings['shugo_membership'];
+
+    // 가능 여부 확인
+    var tk = null;
+    if(cfg.ticketId) {
+      for(var i=0;i<HW_TICKETS.length;i++){if(HW_TICKETS[i].id===cfg.ticketId){tk=HW_TICKETS[i];break;}}
+      var tv = daily[cfg.ticketId] !== undefined ? daily[cfg.ticketId] : (tk?tk.max:0);
+      if(tv < cfg.ticketCost) return;
+    }
+    if(cfg.weeklyId) {
+      var used = weekly[cfg.weeklyId] || 0;
+      if(used >= cfg.weeklyMax) return;
+    }
+
+    // 실행 취소용 이전 상태 저장
+    var undoStore = {};
+    try { undoStore = JSON.parse(sessionStorage.getItem('hw_rimo_undo')||'{}'); } catch(e2) {}
+    undoStore[idx] = {
+      ticketKey: cfg.ticketId || null,
+      ticketBefore: cfg.ticketId ? (daily[cfg.ticketId] !== undefined ? daily[cfg.ticketId] : (tk?tk.max:0)) : null,
+      weeklyKey: cfg.weeklyId || null,
+      weeklyBefore: cfg.weeklyId ? (weekly[cfg.weeklyId] || 0) : null,
+      odBefore: daily['od_energy'] !== undefined ? daily['od_energy'] : HW_OD_MAX,
+    };
+    sessionStorage.setItem('hw_rimo_undo', JSON.stringify(undoStore));
+
+    // 입장권 차감
+    if(cfg.ticketId && tk) {
+      var cur = daily[cfg.ticketId] !== undefined ? daily[cfg.ticketId] : tk.max;
+      daily[cfg.ticketId] = Math.max(0, cur - cfg.ticketCost);
+    }
+    // 주간 카운터 증가
+    if(cfg.weeklyId) {
+      weekly[cfg.weeklyId] = Math.min(cfg.weeklyMax, (weekly[cfg.weeklyId] || 0) + 1);
+    }
+    // OD 에너지 차감
+    var odCost = isMember ? cfg.odMember : cfg.odNoMember;
+    if(odCost > 0) {
+      var odCur = daily['od_energy'] !== undefined ? daily['od_energy'] : HW_OD_MAX;
+      daily['od_energy'] = Math.max(0, odCur - odCost);
+    }
+
+    _hwSave(_hwDailyKey(), daily);
+    if(cfg.weeklyId) _hwSave(_hwWeeklyKey(), weekly);
+    _hwRenderAll();
+  } catch(e) {}
+}
+
+function hwUndoRimo(idx, e) {
+  e.preventDefault();
+  try {
+    var undoStore = {};
+    try { undoStore = JSON.parse(sessionStorage.getItem('hw_rimo_undo')||'{}'); } catch(e2) {}
+    var u = undoStore[idx];
+    if(!u) return;
+
+    var daily = _hwLoad(_hwDailyKey());
+    var weekly = _hwLoad(_hwWeeklyKey());
+    if(u.ticketKey !== null) daily[u.ticketKey] = u.ticketBefore;
+    daily['od_energy'] = u.odBefore;
+    if(u.weeklyKey !== null) weekly[u.weeklyKey] = u.weeklyBefore;
+
+    _hwSave(_hwDailyKey(), daily);
+    if(u.weeklyKey !== null) _hwSave(_hwWeeklyKey(), weekly);
+
+    delete undoStore[idx];
+    sessionStorage.setItem('hw_rimo_undo', JSON.stringify(undoStore));
+    _hwRenderAll();
   } catch(e) {}
 }
 
@@ -6867,11 +6951,8 @@ function hwQuickDoneDaily() {
     data['daily_mission']      = 5;
     data['daily_abyss_supply'] = true;
     data['od_energy']          = HW_OD_MAX;
-    HW_TICKETS.forEach(function(t) { data[t.id] = t.max; });
+    HW_TICKETS.forEach(function(t) { data[t.id] = 0; });
     HW_ABYSS_CORRIDOR.forEach(function(t) { data[t.id] = t.max; });
-    HW_RIMO_LIST.forEach(function(label) {
-      data['rimo_'+label.replace(/\s/g,'_')] = true;
-    });
     _hwSave(_hwDailyKey(), data);
     var mid = _hwLoad(_hwMidnightKey());
     mid['daily_attend'] = true;
