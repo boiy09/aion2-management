@@ -8154,8 +8154,9 @@ const ARC = (function(){
   document.addEventListener('mousedown', function(e) {
     if (_openDropId && !e.target.closest('.arc-drop-wrap')) arcDropCloseAll();
   }, true);
-  document.addEventListener('scroll', function() {
-    if (_openDropId) arcDropCloseAll();
+  document.addEventListener('scroll', function(e) {
+    // 드롭다운 내부 스크롤은 무시, 페이지 스크롤만 닫기
+    if (_openDropId && !e.target.closest('.arc-drop-menu')) arcDropCloseAll();
   }, true);
 
   function buildDropdown(wrapId, partId, idx, val, pool) {
@@ -8253,9 +8254,10 @@ const ARC = (function(){
           </select>
           <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
             <span style="font-size:11px;color:var(--muted);">강화</span>
-            <input type="number" min="0" max="40" value="${pc.enhance}"
-              style="width:50px;background:var(--card);border:1px solid var(--border);color:var(--text);padding:6px 4px;border-radius:6px;font-size:13px;text-align:center;outline:none;"
-              oninput="ARC._setEnhance('${p.id}',this.value)">
+            <select onchange="ARC._setEnhance('${p.id}',this.value)"
+              style="background:var(--card);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:6px;font-size:13px;cursor:pointer;outline:none;">
+              ${[0,1,2,3,4,5].map(n=>`<option${n===pc.enhance?' selected':''}>${n}</option>`).join('')}
+            </select>
           </div>
         </div>
         ${slotSection}
