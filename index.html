@@ -8163,7 +8163,7 @@ const ARC = (function(){
     const items = pool.map(s => {
       const icon = skillIcon(s.name, s.type);
       const sel = s.name === val ? ' selected' : '';
-      return `<div class="arc-drop-item${sel}" data-name="${s.name}" data-type="${s.type}" onclick="ARC._setSkillDrop('${partId}',${idx},'${s.name}',this)">${icon}${s.name}</div>`;
+      return `<div class="arc-drop-item${sel}" data-name="${s.name}" data-type="${s.type}" onclick="arcDropCloseAll();ARC._setSkillDrop('${partId}',${idx},'${s.name}',this)">${icon}${s.name}</div>`;
     }).join('');
 
     const selItem = pool.find(s => s.name === val);
@@ -8409,6 +8409,8 @@ const ARC = (function(){
           if ((chk.skills[si]||'').trim() === name && !(p.id === partId && si === idx)) return;
         }
       }
+      // 클릭 즉시 드롭다운 닫기
+      arcDropCloseAll();
       const pc = state.pieces[partId];
       while (pc.skills.length <= idx) pc.skills.push('');
       pc.skills[idx] = name;
@@ -8433,7 +8435,6 @@ const ARC = (function(){
           el.classList.toggle('selected', el.dataset.name === name);
         });
       }
-      arcDropCloseAll();
       renderResults();
       updateDropdownAvailability();
     },
