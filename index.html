@@ -8061,24 +8061,25 @@ const ARC = (function(){
     const st = document.createElement('style');
     st.id = 'arc-drop-css';
     st.textContent = [
+      /* 버튼: form-input과 동일한 기준 */
       '.arc-drop-wrap{position:relative;width:100%;}',
-      '.arc-drop-btn{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:6px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;min-height:30px;box-sizing:border-box;user-select:none;transition:border-color .15s,box-shadow .15s;}',
-      '.arc-drop-btn:hover{border-color:var(--gold-d);}',
-      '.arc-drop-btn.open{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold-d);}',
-      '.arc-drop-menu{position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--gold-d);border-radius:8px;box-shadow:0 10px 36px rgba(0,0,0,.85);overflow:hidden;flex-direction:column;max-height:260px;display:none;}',
+      '.arc-drop-btn{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;min-height:34px;box-sizing:border-box;user-select:none;transition:border-color .15s;}',
+      '.arc-drop-btn:hover,.arc-drop-btn.open{border-color:var(--gold-d);}',
+      /* 드롭다운 패널 */
+      '.arc-drop-menu{position:fixed;z-index:9999;background:var(--bg);border:1px solid var(--border);border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.7);overflow:hidden;flex-direction:column;max-height:260px;display:none;}',
       '.arc-drop-menu.open{display:flex;}',
-      '.arc-drop-search{margin:8px 8px 4px;padding:6px 10px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:5px;font-size:12px;outline:none;transition:border-color .15s;}',
+      /* 검색창: form-input 동일 스타일 */
+      '.arc-drop-search{margin:6px 6px 2px;padding:6px 10px;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:12px;outline:none;transition:border-color .15s;}',
       '.arc-drop-search:focus{border-color:var(--gold-d);}',
-      '.arc-drop-list{overflow-y:auto;flex:1;}',
-      '.arc-drop-item{padding:7px 12px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:8px;transition:background .1s;color:var(--text);border-left:2px solid transparent;}',
-      '.arc-drop-item:hover{background:var(--card);}',
-      '.arc-drop-item.selected{background:var(--card);color:var(--gold-l);border-left-color:var(--gold);}',
-      '.arc-drop-item.selected:hover{background:#0d1f17;}',
-      '.arc-drop-none{padding:8px 12px;font-size:12px;color:var(--muted);font-style:italic;}',
-      '.arc-badge{display:inline-flex;align-items:center;justify-content:center;width:20px;height:18px;border-radius:4px;font-size:10px;font-weight:700;flex-shrink:0;}',
+      /* 목록 */
+      '.arc-drop-list{overflow-y:auto;flex:1;padding:4px 0;}',
+      '.arc-drop-item{padding:7px 12px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:8px;color:var(--text);}',
+      '.arc-drop-item:hover{background:var(--surface);}',
+      '.arc-drop-item.selected{background:var(--surface);color:var(--gold-l);}',
+      '.arc-drop-none{padding:8px 12px;font-size:12px;color:var(--muted);}',
+      '.arc-badge{display:inline-flex;align-items:center;justify-content:center;width:18px;height:16px;border-radius:3px;font-size:10px;font-weight:700;flex-shrink:0;}',
       '.arc-badge-active{background:#f0a04022;color:#f0a040;}',
       '.arc-badge-passive{background:#5aadff22;color:#5aadff;}',
-      '.arc-skill-img{width:16px;height:16px;border-radius:3px;object-fit:cover;flex-shrink:0;vertical-align:middle;}',
     ].join('');
     document.head.appendChild(st);
   }
@@ -8246,30 +8247,28 @@ const ARC = (function(){
         slotSection = `<div style="display:flex;flex-direction:column;gap:5px;">${slotInputs}</div>`;
       }
 
-      return `<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
-        <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);">
-          <div style="display:flex;align-items:center;gap:6px;">
-            <span style="width:3px;height:14px;background:${typeColor};border-radius:2px;display:inline-block;flex-shrink:0;"></span>
+      return `<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div style="display:flex;align-items:center;gap:7px;">
+            <span style="width:3px;height:14px;background:${typeColor};border-radius:2px;flex-shrink:0;display:inline-block;"></span>
             <span style="font-size:13px;font-weight:700;color:var(--text);">${p.label}</span>
+            <span style="font-size:10px;color:var(--muted);">· ${p.drop}</span>
           </div>
-          <span style="font-size:10px;color:${typeColor};letter-spacing:.06em;text-transform:uppercase;font-weight:600;">${typeLabel}</span>
+          <span style="font-size:10px;color:${typeColor};font-weight:600;letter-spacing:.04em;">${typeLabel}</span>
         </div>
-        <div style="padding:12px 14px;">
-          <div style="font-size:10px;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:4px;"><span style="color:var(--gold-d);">▸</span>${p.drop}</div>
-          <div style="display:flex;gap:8px;align-items:center;margin-bottom:${slots>0?'10px':'0'};">
-            <select onchange="ARC._setGrade('${p.id}',this.value)"
-              style="flex:1;background:var(--bg);border:1px solid var(--border);color:${gcol};padding:5px 8px;border-radius:6px;font-size:12px;cursor:pointer;outline:none;transition:border-color .15s;">
-              ${GRADES.map(g=>`<option style="color:${GRADE_COLOR[g]||'#aaa'};"${g===pc.grade?' selected':''}>${g}</option>`).join('')}
-            </select>
-            <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">
-              <span style="font-size:10px;color:var(--muted);letter-spacing:.04em;">강화</span>
-              <input type="number" min="0" max="40" value="${pc.enhance}"
-                style="width:48px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 4px;border-radius:6px;font-size:12px;text-align:center;outline:none;"
-                oninput="ARC._setEnhance('${p.id}',this.value)">
-            </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:${slots>0?'10px':'0'};">
+          <select onchange="ARC._setGrade('${p.id}',this.value)"
+            style="flex:1;background:var(--card);border:1px solid var(--border);color:${gcol};padding:6px 10px;border-radius:6px;font-size:13px;cursor:pointer;outline:none;">
+            ${GRADES.map(g=>`<option style="color:${GRADE_COLOR[g]||'#aaa'};"${g===pc.grade?' selected':''}>${g}</option>`).join('')}
+          </select>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+            <span style="font-size:11px;color:var(--muted);">강화</span>
+            <input type="number" min="0" max="40" value="${pc.enhance}"
+              style="width:50px;background:var(--card);border:1px solid var(--border);color:var(--text);padding:6px 4px;border-radius:6px;font-size:13px;text-align:center;outline:none;"
+              oninput="ARC._setEnhance('${p.id}',this.value)">
           </div>
-          ${slotSection}
         </div>
+        ${slotSection}
       </div>`;
     }).join('');
     updateDropdownAvailability();
