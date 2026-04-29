@@ -8056,7 +8056,8 @@ const ARC = (function(){
 
   // ── CSS 주입 ──────────────────────────────────────────────────
   function injectCSS() {
-    if (document.getElementById('arc-drop-css')) return;
+    const old = document.getElementById('arc-drop-css');
+    if (old) old.remove();
     const st = document.createElement('style');
     st.id = 'arc-drop-css';
     st.textContent = [
@@ -8078,7 +8079,7 @@ const ARC = (function(){
       '.arc-badge-active{background:#f0a04033;color:#f0a040;}',
       '.arc-badge-passive{background:#5aadff33;color:#5aadff;}',
       '.arc-skill-img{width:16px;height:16px;border-radius:3px;object-fit:cover;flex-shrink:0;vertical-align:middle;}',
-      '.arc-skill-used{opacity:0.28;pointer-events:none;}',
+      '.arc-skill-used{opacity:0.32;cursor:not-allowed !important;}',
       '.arc-skill-used-tag{font-size:10px;color:var(--muted);margin-left:auto;flex-shrink:0;}',
     ].join('');
     document.head.appendChild(st);
@@ -8412,6 +8413,13 @@ const ARC = (function(){
       updateDropdownAvailability();
     },
     _setSkillDrop(partId, idx, name, itemEl) {
+      // 다른 슬롯에서 이미 사용 중인 스킬 중복 선택 차단
+      for (const p of PARTS) {
+        const chk = state.pieces[p.id];
+        for (let si = 0; si < chk.skills.length; si++) {
+          if ((chk.skills[si]||'').trim() === name && !(p.id === partId && si === idx)) return;
+        }
+      }
       const pc = state.pieces[partId];
       while (pc.skills.length <= idx) pc.skills.push('');
       pc.skills[idx] = name;
