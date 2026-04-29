@@ -8037,29 +8037,37 @@ const ARC = (function(){
 
   function buildDropdown(wrapId, partId, idx, val, pool) {
     const items = pool.map(s => {
-      const badge = s.type === 'active'
-        ? '<span class="arc-badge arc-badge-active">액</span>'
-        : '<span class="arc-badge arc-badge-passive">패</span>';
+      const badgeCls = s.type === 'active' ? 'arc-badge-active' : 'arc-badge-passive';
+      const badgeTxt = s.type === 'active' ? '액' : '패';
+      const badge = `<span class="arc-badge ${badgeCls}">${badgeTxt}</span>`;
+      const iconImg = `<span class="arc-skill-icon arc-skill-icon-${badgeCls.replace('arc-badge-','')}">${badgeTxt[0]}</span>`;
       const sel = s.name === val ? ' selected' : '';
       return `<div class="arc-drop-item${sel}" data-name="${s.name}" data-type="${s.type}" onclick="ARC._setSkillDrop('${partId}',${idx},'${s.name}',this)">${badge}${s.name}</div>`;
     }).join('');
+
     const selItem = pool.find(s => s.name === val);
     let btnInner;
     if (val && selItem) {
       const badgeCls = selItem.type === 'active' ? 'arc-badge-active' : 'arc-badge-passive';
       const badgeTxt = selItem.type === 'active' ? '액' : '패';
-      btnInner = `<span style="display:flex;align-items:center;gap:6px;"><span class="arc-badge ${badgeCls}">${badgeTxt}</span>${val}</span>`;
+      btnInner = `<span style="display:flex;align-items:center;gap:6px;min-width:0;"><span class="arc-badge ${badgeCls}">${badgeTxt}</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${val}</span></span>`;
     } else {
-      btnInner = `<span style="color:var(--muted)">스킬 선택</span>`;
+      btnInner = `<span style="color:var(--muted);font-size:12px;">슬롯 ${idx+1} — 스킬 선택</span>`;
     }
+
+    const clearBtn = val
+      ? `<span onclick="event.stopPropagation();ARC._clearSkill('${partId}',${idx})" style="padding:0 4px;color:var(--muted);font-size:14px;line-height:1;cursor:pointer;" title="초기화">✕</span>`
+      : '';
+
     return `<div class="arc-drop-wrap" id="${wrapId}">
       <div class="arc-drop-btn" onclick="arcDropToggle('${wrapId}')">
-        <span class="arc-drop-val">${btnInner}</span>
-        <span style="font-size:10px;color:var(--muted);">▼</span>
+        <span class="arc-drop-val" style="flex:1;min-width:0;">${btnInner}</span>
+        ${clearBtn}
+        <span style="font-size:10px;color:var(--muted);margin-left:4px;">▼</span>
       </div>
       <div class="arc-drop-menu">
-        <input class="arc-drop-search" placeholder="검색..." oninput="arcDropFilter(this)">
-        <div class="arc-drop-list">${items}</div>
+        <input class="arc-drop-search" placeholder="스킬 검색..." oninput="arcDropFilter(this)">
+        <div class="arc-drop-list">${items || '<div class="arc-drop-none">클래스를 먼저 선택하세요</div>'}</div>
       </div>
     </div>`;
   }
@@ -8098,22 +8106,25 @@ const ARC = (function(){
       const typeColor = p.type==='passive'?'#5aadff':p.type==='active'?'#f0a040':'var(--gold-l)';
       const gcol = GRADE_COLOR[pc.grade]||'var(--muted)';
 
-      const slotInputs = Array.from({length:4},(_,i) => {
-        if (i >= slots) {
-          return `<div style="height:34px;background:var(--bg);border:1px dashed #2a2f3d;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#3a3f4d;font-size:11px;">슬롯 ${i+1}</div>`;
-        }
-        const val = pc.skills[i]||'';
-        const wrapId = `arc-drop-${p.id}-${i}`;
-        return buildDropdown(wrapId, p.id, i, val, pool);
-      }).join('');
+      let slotSection;
+      if (slots === 0) {
+        slotSection = `<div style="text-align:center;padding:10px 0;color:var(--muted);font-size:11px;">등급 선택 시 스킬 슬롯 활성화</div>`;
+      } else {
+        const slotInputs = Array.from({length:slots},(_,i) => {
+          const val = pc.skills[i]||'';
+          const wrapId = `arc-drop-${p.id}-${i}`;
+          return buildDropdown(wrapId, p.id, i, val, pool);
+        }).join('');
+        slotSection = `<div style="display:flex;flex-direction:column;gap:5px;">${slotInputs}</div>`;
+      }
 
-      return `<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;overflow:visible;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      return `<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
           <div style="font-size:14px;font-weight:700;color:var(--text);">${p.icon} ${p.label}</div>
           <span style="font-size:11px;color:${typeColor};background:${typeColor}22;padding:2px 8px;border-radius:10px;">${typeLabel}</span>
         </div>
-        <div style="font-size:10px;color:var(--muted);margin-bottom:10px;">📍 ${p.drop}</div>
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:8px;">📍 ${p.drop}</div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:${slots>0?'10px':'0'};">
           <select onchange="ARC._setGrade('${p.id}',this.value)"
             style="flex:1;background:var(--bg);border:1px solid var(--border);color:${gcol};padding:5px 8px;border-radius:6px;font-size:12px;cursor:pointer;">
             ${GRADES.map(g=>`<option style="color:${GRADE_COLOR[g]||'#aaa'};"${g===pc.grade?' selected':''}>${g}</option>`).join('')}
@@ -8125,7 +8136,7 @@ const ARC = (function(){
               oninput="ARC._setEnhance('${p.id}',this.value)">
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:6px;">${slotInputs}</div>
+        ${slotSection}
       </div>`;
     }).join('');
   }
@@ -8248,6 +8259,20 @@ const ARC = (function(){
       const pc = state.pieces[partId];
       while (pc.skills.length <= idx) pc.skills.push('');
       pc.skills[idx] = val;
+      renderResults();
+    },
+    _clearSkill(partId, idx) {
+      const pc = state.pieces[partId];
+      if (pc.skills[idx] !== undefined) pc.skills[idx] = '';
+      const wrapId = `arc-drop-${partId}-${idx}`;
+      const wrap = document.getElementById(wrapId);
+      if (wrap) {
+        const valEl = wrap.querySelector('.arc-drop-val');
+        if (valEl) valEl.innerHTML = `<span style="color:var(--muted);font-size:12px;">슬롯 ${idx+1} — 스킬 선택</span>`;
+        const clearBtn = wrap.querySelector('.arc-drop-btn > span[onclick]');
+        if (clearBtn && clearBtn.title === '초기화') clearBtn.remove();
+        wrap.querySelectorAll('.arc-drop-item').forEach(el => el.classList.remove('selected'));
+      }
       renderResults();
     },
     _setSkillDrop(partId, idx, name, itemEl) {
