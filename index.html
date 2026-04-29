@@ -8009,7 +8009,7 @@ const ARC = (function(){
 
   function skillIcon(name, type) {
     const fn = SKILL_ICONS[name];
-    if (fn) return `<img src="${CDN}${fn}" class="arc-skill-img" onerror="this.style.display='none'">`;
+    if (fn) return `<img src="${CDN}${fn}" style="width:16px;height:16px;border-radius:3px;object-fit:cover;flex-shrink:0;vertical-align:middle;" onerror="this.style.display='none'">`;
     const badgeCls = type === 'active' ? 'arc-badge-active' : 'arc-badge-passive';
     const badgeTxt = type === 'active' ? '액' : '패';
     return `<span class="arc-badge ${badgeCls}">${badgeTxt}</span>`;
