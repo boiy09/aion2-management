@@ -1850,12 +1850,12 @@ function getNextWarDate() {
   var WAR_GRACE = 21 * 60 + 10; // 21:10
 
   // 쟁 진행중 여부 (21:00~21:10 사이, 쟁 당일)
-  var isWarDay = (day===2||day===4||day===6);
+  var isWarDay = (day===3||day===6);
   var isWarInProgress = isWarDay && totalMin >= WAR_START && totalMin < WAR_GRACE;
 
   // 다음 쟁 날짜 계산
-  // 화(2) 목(4) 토(6) 순서
-  var warDays = [2, 4, 6];
+  // 수(3) 토(6) 순서
+  var warDays = [3, 6];
   var targetDate = new Date(now);
 
   if(isWarInProgress) return {inProgress: true};
@@ -1865,8 +1865,7 @@ function getNextWarDate() {
     // 오늘 날짜 그대로
   } else if(isWarDay && totalMin >= WAR_GRACE) {
     // 21:10 이후 → 다음 쟁
-    var nextWarDays = {2:4, 4:6, 6:2};
-    var daysToNext = {2:2, 4:2, 6:3}; // 화→목(+2), 목→토(+2), 토→화(+3)
+    var daysToNext = {3:3, 6:4}; // 수→토(+3), 토→수(+4)
     targetDate.setDate(targetDate.getDate() + daysToNext[day]);
   } else {
     // 쟁 아닌 날 → 다음 쟁 찾기
