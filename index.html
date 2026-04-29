@@ -1149,10 +1149,10 @@
         <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">소모량 차감</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <button class="hw-counter-btn" onclick="hwSetOd(-10)" style="padding:4px 10px;font-size:12px;">-10</button>
-          <button class="hw-counter-btn" onclick="hwSetOd(-20)" style="padding:4px 10px;font-size:12px;">-20</button>
           <button class="hw-counter-btn" onclick="hwSetOd(-40)" style="padding:4px 10px;font-size:12px;">-40</button>
           <button class="hw-counter-btn" onclick="hwSetOd(-80)" style="padding:4px 10px;font-size:12px;">-80</button>
-          <button class="hw-counter-btn" onclick="hwSetOd(-200)" style="padding:4px 10px;font-size:12px;">-200</button>
+          <button class="hw-counter-btn" onclick="hwSetOd(-320)" style="padding:4px 10px;font-size:12px;">-320</button>
+          <button class="hw-counter-btn" onclick="hwSetOd(-800)" style="padding:4px 10px;font-size:12px;">-800</button>
           <button class="hw-counter-btn" onclick="hwSetOd('full')" style="padding:4px 10px;font-size:12px;color:var(--gold-l);border-color:var(--gold);">FULL</button>
         </div>
       </div>
@@ -6356,29 +6356,36 @@ const HW_RIMO_LIST = [
   '각성전','토벌전','일일던전'
 ];
 const HW_TICKETS = [
-  {id:'ticket_conquest', label:'원정 - 정복', max:21, itemMax:10,  charges:['05:00','13:00','21:00'], desc:'5시·13시·21시 충전'},
-  {id:'ticket_chowon',   label:'초월',        max:14, itemMax:10,  charges:['05:00','17:00'],         desc:'5시·17시 충전'},
+  {id:'ticket_conquest', label:'원정 - 정복', max:14, itemMax:10,  charges:['05:00','13:00','21:00'], desc:'5시·13시·21시 충전'},
+  {id:'ticket_chowon',   label:'초월',        max:7,  itemMax:10,  charges:['05:00','17:00'],         desc:'5시·17시 충전'},
   {id:'ticket_akmon',    label:'악몽',         max:14, itemMax:30, charges:['05:00'],                 desc:'매일 5시 2회 충전'},
   {id:'ticket_shugo',    label:'슈고 페스타',  max:14, itemMax:30, charges:['05:00'],                 desc:'매일 5시 충전'},
   {id:'ticket_dimension',label:'차원 침공',    max:7,  itemMax:null, charges:['05:00'],               desc:'매일 5시 1회 충전'},
 ];
 const HW_WEEKLY_COUNTERS = [
-  {id:'weekly_sanctuary_rude_ch', label:'성역 도전[루드라]',      max:2,  unit:'회'},
-  {id:'weekly_sanctuary_rude_rw', label:'성역 보상[루드라]',      max:2,  unit:'회'},
-  {id:'weekly_sanctuary2_ch',     label:'성역 도전[2차성역]',     max:4,  unit:'회'},
-  {id:'weekly_sanctuary2_rw',     label:'성역 보상[2차성역]',     max:2,  unit:'회'},
+  {id:'weekly_sanctuary_rude_ch', label:'성역 도전[루드라]',      max:4,  unit:'회', itemMax:30},
+  {id:'weekly_sanctuary_rude_rw', label:'성역 보상[루드라]',      max:2,  unit:'회', itemMax:30},
+  {id:'weekly_sanctuary2_ch',     label:'성역 도전[2차성역]',     max:4,  unit:'회', itemMax:30},
+  {id:'weekly_sanctuary2_rw',     label:'성역 보상[2차성역]',     max:2,  unit:'회', itemMax:30},
   {id:'weekly_gakseong',          label:'각성전',                 max:3,  unit:'회', itemMax:30},
   {id:'weekly_tobul',             label:'토벌전',                 max:3,  unit:'회', itemMax:30},
-  {id:'weekly_daily_face',        label:'일일 던전',              max:7,  unit:'회', itemMax:30},
+  {id:'weekly_daily_face',        label:'일일 던전',              max:14, unit:'회', itemMax:30},
   {id:'weekly_abyss_low',         label:'어비스 하층',            max:14, unit:'시간', itemMax:30},
   {id:'weekly_abyss_mid',         label:'어비스 중층',            max:14, unit:'시간', itemMax:30},
-  {id:'weekly_od_buy',            label:'오드에너지 구매',        max:4,  unit:'회'},
-  {id:'weekly_od_make',           label:'오드에너지 제작',        max:4,  unit:'회'},
+  {id:'weekly_od_buy',            label:'오드에너지 구매',        max:21, unit:'회'},
+  {id:'weekly_od_make',           label:'오드에너지 제작',        max:20, unit:'회'},
   {id:'weekly_abyss_low_order',   label:'하층 어비스 지령서',     max:20, unit:'회'},
   {id:'weekly_abyss_mid_order',   label:'중층 어비스 지령서',     max:5,  unit:'회'},
   {id:'weekly_abyss_supply',      label:'어비스 주간 보급 의뢰',  max:1,  unit:'완료', isCheck:true},
   {id:'weekly_normal_order',      label:'일반 지령서',            max:12, unit:'회'},
   {id:'weekly_season_mission',    label:'시즌 미션 주간',         max:1,  unit:'완료', isCheck:true},
+  {id:'weekly_abyss_medal',       label:'어비스 훈장 교환',       max:1,  unit:'완료', isCheck:true},
+  {id:'weekly_ticket_ildeon',     label:'[입장권]일일 던전',      max:21, unit:'개'},
+  {id:'weekly_quick_ildeon',      label:'[즉완권]일일 던전',      max:21, unit:'개'},
+  {id:'weekly_ticket_exp_cho',    label:'[입장권]원정/초월 선택', max:21, unit:'개'},
+  {id:'weekly_soul_crystal',      label:'영혼결정',               max:1000,unit:'개'},
+  {id:'weekly_quick_akmon',       label:'[즉완권]악몽',           max:14, unit:'개'},
+  {id:'weekly_rudra_ticket',      label:'루드라 티켓',            max:1,  unit:'완료', isCheck:true},
   {id:'weekly_od_server1',        label:'오드에너지 구매 [서버]', max:12, unit:'회'},
   {id:'weekly_od_server2',        label:'오드에너지 제작 [서버]', max:12, unit:'회'},
 ];
@@ -7271,7 +7278,7 @@ function odRenderAccounts(data) {
         // 주간
         +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'
         +'<span style="font-size:10px;font-weight:700;color:var(--muted);width:28px;flex-shrink:0;">주간</span>'
-        +_wc('루드라도전','rudraChCount',acc.rudraChCount||0,2)
+        +_wc('루드라도전','rudraChCount',acc.rudraChCount||0,4)
         +_wc('루드라보상','rudraPwCount',acc.rudraPwCount||0,2)
         +_wc('2차성역도전','sanc2ChCount',acc.sanc2ChCount||0,4)
         +_wc('2차성역보상','sanc2PwCount',acc.sanc2PwCount||0,2)
