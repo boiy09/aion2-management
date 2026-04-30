@@ -272,7 +272,12 @@ export async function onRequest(context) {
         if (found && found.gradeName) {
           gradeMap[type] = { gradeName: found.gradeName, gradeIcon: found.gradeIcon || '' };
         }
-        // 직업별 랭킹: NC 공개 API는 rankingType=1 미지원 (로그인 필요, 항상 0개 반환)
+        // 직업별 순위: top 100에서 같은 classId 캐릭터들만 필터 후 위치
+        if (found && found.classId) {
+          var sameClass = list.filter(function(r) { return r.classId === found.classId; });
+          var classIdx = sameClass.findIndex(function(r) { return r.characterId === rawId; });
+          if (classIdx >= 0) classRankMap[type] = classIdx + 1;
+        }
       }));
     } catch(e) {}
 
@@ -289,7 +294,7 @@ export async function onRequest(context) {
       var gradeName = computed.gradeName || computed.name || '';
       var gradeIcon = computed.gradeIcon ? absUrl(computed.gradeIcon)
                     : (computed.icon ? CDN_GRADE + computed.icon : '');
-      var classRank = (type === 1 && classRankMap[1]) ? classRankMap[1] : 0;
+      var classRank = classRankMap[type] || 0;
       var prevRank  = r.prevRank || 0;
       var rankChange = r.rankChange || (prevRank && baseRank ? prevRank - baseRank : 0);
       return {
