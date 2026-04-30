@@ -250,6 +250,25 @@
   .force-slot.filled { border:1px solid var(--gold-d); background:rgba(0,200,138,.05); }
   .force-slot.drag-over { border-color:var(--gold) !important; background:rgba(0,200,138,.12) !important; }
   .force-slot-name { font-weight:700; font-size:12px; color:var(--text); line-height:1.2; word-break:break-all; }
+  .force-slot-cp   { font-size:9px; color:var(--muted); margin-top:1px; }
+  /* 구성 현황바 */
+  .force-comp-bar { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:10px 14px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:10px; }
+  .force-comp-bar-section { display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+  .force-comp-divider { width:1px; height:20px; background:var(--border); flex-shrink:0; }
+  .force-role-tag { font-size:11px; padding:2px 8px; border-radius:10px; white-space:nowrap; }
+  .force-role-tank { background:#0e1f26; color:#5ab4cc; border:1px solid #5ab4cc44; }
+  .force-role-heal { background:#201800; color:#c8a030; border:1px solid #c8a03044; }
+  .force-role-dps  { background:#1a0e26; color:#9966dd; border:1px solid #9966dd44; }
+  /* 파티 배지 */
+  .force-fill-badge { font-size:10px; padding:1px 6px; border-radius:10px; background:rgba(0,200,138,.12); color:var(--gold); border:1px solid rgba(0,200,138,.3); white-space:nowrap; }
+  .force-warn-badge { font-size:10px; padding:1px 6px; border-radius:10px; background:rgba(220,50,50,.15); color:#e06060; border:1px solid rgba(220,50,50,.3); white-space:nowrap; }
+  .force-party-avgcp { font-size:10px; color:var(--muted); }
+  /* 서브파티 레이블 */
+  .force-subparty-hdr { display:flex; align-items:center; justify-content:space-between; padding:3px 10px 1px; background:rgba(0,0,0,.12); border-bottom:1px solid rgba(255,255,255,.04); }
+  .force-subparty-label { font-size:10px; color:var(--muted); font-style:italic; cursor:pointer; }
+  .force-subparty-label:hover { color:var(--text); }
+  /* 멤버 CP */
+  .force-member-cp { font-size:10px; color:var(--muted); margin-left:auto; flex-shrink:0; }
   /* 뷰 토글 */
   .view-toggle { display:flex; gap:3px; background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:3px; }
   .vt { background:none; border:none; color:var(--muted); padding:4px 10px; border-radius:4px; font-size:12px; cursor:pointer; transition:all .15s; }
@@ -1279,11 +1298,16 @@
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <button class="btn btn-sm" onclick="forceOpenRecruitModal()">📢 모집 설정</button>
           <button class="btn btn-sm" onclick="forceAddParty()">+ 파티</button>
+          <button class="btn btn-sm" onclick="forceOpenPreset()">📐 프리셋</button>
+          <button class="btn btn-sm" onclick="forceImportDB()">🗄 멤버 불러오기</button>
+          <button class="btn btn-sm" onclick="forceAutoArrange()">🤖 자동 편성</button>
+          <button class="btn btn-sm" onclick="forceCopyText()">📋 Discord 복사</button>
           <button class="btn btn-sm" onclick="forceSaveHistory()">💾 저장</button>
           <button class="btn btn-sm" onclick="forceShowHistory()">📜 히스토리</button>
         </div>
       </div>
       <div id="force-recruit-banner" style="display:none;" class="force-recruit-banner"></div>
+      <div id="force-comp-bar" style="display:none;" class="force-comp-bar"></div>
       <div class="force-layout">
         <!-- 참여자 패널 -->
         <div class="force-panel" style="position:sticky;top:116px;">
@@ -7561,17 +7585,30 @@ var _dragInfo = null;
 
 var CLS_COLORS = { '검성':'#4ecdc4','수호성':'#4a80c4','살성':'#5ab860','궁성':'#3a9468','마도성':'#7b55cc','정령성':'#9540aa','치유성':'#d4aa30','호법성':'#c48c38' };
 var CLS_LIST = ['검성','수호성','살성','궁성','마도성','정령성','치유성','호법성'];
+var ROLE_MAP = {'수호성':'tank','호법성':'tank','치유성':'heal','검성':'dps','살성':'dps','궁성':'dps','마도성':'dps','정령성':'dps'};
+var ROLE_EMOJI = {tank:'🛡️', heal:'💚', dps:'⚔️'};
 
 function clsStyle(cls) {
   var c = CLS_COLORS[cls] || '#888';
   return 'background:'+c+'22;border:1px solid '+c+'55;color:'+c+';border-radius:3px;padding:1px 5px;font-size:10px;';
 }
 function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
+function forceGetRole(cls) { return ROLE_MAP[cls]||'dps'; }
+function lookupCp(name) {
+  if(!window.members||!name) return 0;
+  var m=window.members.find(function(x){return x.nickname===name;});
+  return m?(+m.combat_power||0):0;
+}
 function forceNewParty(name) {
-  return { id:'p'+uid(), name:name||'파티', subparties:[[null,null,null,null],[null,null,null,null]] };
+  return { id:'p'+uid(), name:name||'파티', subparties:[[null,null,null,null],[null,null,null,null]], subpartyLabels:['',''] };
 }
 function forceDefault() {
   return { recruit:{active:false,contentName:'',recruitStart:null,forceForm:null,contentStart:null,capacity:null}, members:[], parties:[forceNewParty('파티1')], history:[] };
+}
+function forceAllSlots(data) {
+  var slots=[];
+  data.parties.forEach(function(p){ p.subparties.forEach(function(sub){ sub.forEach(function(s){ if(s&&s.name) slots.push(s); }); }); });
+  return slots;
 }
 function forceLoad() { try { var d=JSON.parse(localStorage.getItem(FORCE_KEY)); return d && d.parties ? d : forceDefault(); } catch(e){return forceDefault();} }
 function forceSave(d) { try { localStorage.setItem(FORCE_KEY,JSON.stringify(d)); } catch(e){} }
@@ -7594,6 +7631,7 @@ function fmtTs(ts) {
 function forceRender() {
   var data = forceLoad();
   forceRenderBanner(data);
+  forceRenderComposition(data);
   forceRenderMembers(data);
   forceRenderParties(data);
 }
@@ -7615,6 +7653,36 @@ function forceRenderBanner(data) {
   el.innerHTML = parts.join('<span style="color:#444;margin:0 3px;">·</span>');
 }
 
+// ─── 직업 구성 현황판 ─────────────────────────────────────────────────────────
+function forceRenderComposition(data) {
+  var el = document.getElementById('force-comp-bar'); if(!el) return;
+  var slots = forceAllSlots(data);
+  if(!slots.length) { el.style.display='none'; return; }
+  var clsCount={}, roleCount={tank:0,heal:0,dps:0};
+  slots.forEach(function(s){
+    clsCount[s.cls]=(clsCount[s.cls]||0)+1;
+    roleCount[forceGetRole(s.cls)]++;
+  });
+  var totalSlots=0;
+  data.parties.forEach(function(p){ p.subparties.forEach(function(sub){ totalSlots+=sub.length; }); });
+  var html='';
+  html+='<div class="force-comp-bar-section">'
+    +'<span style="font-size:11px;color:var(--muted);">역할</span>'
+    +'<span class="force-role-tag force-role-tank">탱 '+roleCount.tank+'</span>'
+    +'<span class="force-role-tag force-role-heal">힐 '+roleCount.heal+'</span>'
+    +'<span class="force-role-tag force-role-dps">딜 '+roleCount.dps+'</span>'
+    +'</div><div class="force-comp-divider"></div>';
+  html+='<div class="force-comp-bar-section">';
+  CLS_LIST.forEach(function(cls){
+    if(!clsCount[cls]) return;
+    var c=CLS_COLORS[cls]||'#888';
+    html+='<span style="background:'+c+'22;border:1px solid '+c+'44;color:'+c+';font-size:11px;padding:1px 7px;border-radius:10px;white-space:nowrap;">'+cls+' '+clsCount[cls]+'</span>';
+  });
+  html+='</div><div class="force-comp-divider"></div>';
+  html+='<span style="font-size:11px;color:var(--muted);">배치 <b style="color:var(--text);">'+slots.length+'</b>/'+totalSlots+'</span>';
+  el.innerHTML=html; el.style.display='flex';
+}
+
 function forceRenderMembers(data) {
   var el = document.getElementById('force-members-list');
   var cnt = document.getElementById('force-member-count');
@@ -7630,12 +7698,14 @@ function forceRenderMembers(data) {
   joined.forEach(function(m) {
     var isAsgn = !!assigned[m.name];
     var col = CLS_COLORS[m.cls]||'#888';
+    var cp = m.cp||lookupCp(m.name);
     html += '<div class="force-member-item" draggable="'+(!isAsgn)+'" '
       +(isAsgn?'':' ondragstart="forceMemberDragStart(\''+_esc(m.id)+'\')"')
       +' style="cursor:'+(isAsgn?'default':'grab')+';opacity:'+(isAsgn?.5:1)+'">'
       +'<div style="width:8px;height:8px;border-radius:50%;background:'+col+';flex-shrink:0;"></div>'
       +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'+(isAsgn?'text-decoration:line-through;color:var(--muted);':'')+'">'+_h(m.name)+'</span>'
       +'<span style="'+clsStyle(m.cls)+';white-space:nowrap;">'+_h(m.cls)+'</span>'
+      +(cp?'<span class="force-member-cp">'+cp.toLocaleString()+'</span>':'')
       +'<button onclick="forceMemberJoin(\''+_esc(m.id)+'\')" title="미참여 전환" style="font-size:11px;padding:1px 4px;border:none;background:rgba(52,211,153,.15);color:#34d399;border-radius:3px;cursor:pointer;flex-shrink:0;">✓</button>'
       +'<button onclick="forceDelMember(\''+_esc(m.id)+'\')" title="삭제" style="font-size:11px;padding:1px 4px;border:none;background:none;color:var(--muted);cursor:pointer;flex-shrink:0;">×</button>'
       +'</div>';
@@ -7665,20 +7735,51 @@ function forceRenderParties(data) {
   }
   var html='';
   data.parties.forEach(function(party) {
-    html += '<div class="force-party">'
-      +'<div class="force-party-hdr">'
+    var labels = party.subpartyLabels||party.subparties.map(function(){return '';});
+    var filled=0, total=0, hasTank=false, hasHeal=false, cpSum=0, cpCnt=0;
+    party.subparties.forEach(function(sub){
+      total+=sub.length;
+      sub.forEach(function(s){
+        if(s&&s.name){
+          filled++;
+          var role=forceGetRole(s.cls);
+          if(role==='tank') hasTank=true;
+          if(role==='heal') hasHeal=true;
+          var cp=s.cp||lookupCp(s.name);
+          if(cp){cpSum+=cp;cpCnt++;}
+        }
+      });
+    });
+    var avgCp=cpCnt?Math.round(cpSum/cpCnt):0;
+    html+='<div class="force-party"><div class="force-party-hdr">'
       +'<span style="font-size:13px;font-weight:700;color:var(--gold-l);">⚔️ '+_h(party.name)+'</span>'
+      +'<span class="force-fill-badge">'+filled+'/'+total+'</span>'
+      +(!hasTank&&filled?'<span class="force-warn-badge">탱없음</span>':'')
+      +(!hasHeal&&filled?'<span class="force-warn-badge">힐없음</span>':'')
+      +(avgCp?'<span class="force-party-avgcp">avg '+avgCp.toLocaleString()+'</span>':'')
       +'<button onclick="forceRenameParty(\''+_esc(party.id)+'\')" class="btn btn-sm" style="padding:2px 7px;font-size:11px;margin-left:6px;">이름</button>'
       +'<button onclick="forceAddSubparty(\''+_esc(party.id)+'\')" class="btn btn-sm" style="padding:2px 7px;font-size:11px;margin-left:4px;">+ 서브파티</button>'
       +'<button onclick="forceDelParty(\''+_esc(party.id)+'\')" class="btn btn-sm btn-danger" style="padding:2px 7px;font-size:11px;margin-left:auto;">삭제</button>'
       +'</div>';
     party.subparties.forEach(function(sub, subIdx) {
-      html += '<div class="force-subparty" ondragover="event.preventDefault()" ondrop="forceDropToSubparty(event,\''+_esc(party.id)+'\','+subIdx+')">';
+      var label=labels[subIdx]||'';
+      var sTank=0,sHeal=0,sDps=0;
+      sub.forEach(function(s){if(s&&s.cls){var r=forceGetRole(s.cls);if(r==='tank')sTank++;else if(r==='heal')sHeal++;else sDps++;}});
+      html+='<div class="force-subparty-hdr">'
+        +'<span class="force-subparty-label" onclick="forceSetSubpartyLabel(\''+_esc(party.id)+'\','+subIdx+')" title="클릭하여 레이블 편집">'
+        +(label?_h(label):'<span style="opacity:.3;">서브파티 '+(subIdx+1)+'</span>')+'</span>'
+        +'<span style="display:flex;gap:3px;">'
+        +(sTank?'<span class="force-role-tag force-role-tank" style="font-size:9px;padding:1px 5px;">탱'+sTank+'</span>':'')
+        +(sHeal?'<span class="force-role-tag force-role-heal" style="font-size:9px;padding:1px 5px;">힐'+sHeal+'</span>':'')
+        +(sDps?'<span class="force-role-tag force-role-dps" style="font-size:9px;padding:1px 5px;">딜'+sDps+'</span>':'')
+        +'</span></div>';
+      html+='<div class="force-subparty" ondragover="event.preventDefault()" ondrop="forceDropToSubparty(event,\''+_esc(party.id)+'\','+subIdx+')">';
       sub.forEach(function(slot, slotIdx) {
-        var sid = 'fs_'+party.id+'_'+subIdx+'_'+slotIdx;
-        if(slot && slot.name) {
-          var col = CLS_COLORS[slot.cls]||'#888';
-          html += '<div class="force-slot filled" id="'+sid+'" draggable="true"'
+        var sid='fs_'+party.id+'_'+subIdx+'_'+slotIdx;
+        if(slot&&slot.name) {
+          var col=CLS_COLORS[slot.cls]||'#888';
+          var cp=slot.cp||lookupCp(slot.name);
+          html+='<div class="force-slot filled" id="'+sid+'" draggable="true"'
             +' ondragstart="forceSlotDragStart(\''+_esc(party.id)+'\','+subIdx+','+slotIdx+')"'
             +' ondragover="forceSlotDragOver(event,\''+sid+'\')"'
             +' ondragleave="forceSlotDragLeave(\''+sid+'\')"'
@@ -7686,10 +7787,11 @@ function forceRenderParties(data) {
             +' onclick="forceSlotClick(\''+_esc(party.id)+'\','+subIdx+','+slotIdx+')"'
             +' style="border-color:'+col+'55;background:'+col+'12;">'
             +'<span class="force-slot-name">'+_h(slot.name)+'</span>'
-            +'<span style="'+clsStyle(slot.cls)+';margin-top:3px;">'+_h(slot.cls||'')+'</span>'
+            +'<span style="'+clsStyle(slot.cls)+';margin-top:2px;">'+_h(slot.cls||'')+'</span>'
+            +(cp?'<span class="force-slot-cp">'+cp.toLocaleString()+'</span>':'')
             +'</div>';
         } else {
-          html += '<div class="force-slot empty" id="'+sid+'"'
+          html+='<div class="force-slot empty" id="'+sid+'"'
             +' ondragover="forceSlotDragOver(event,\''+sid+'\')"'
             +' ondragleave="forceSlotDragLeave(\''+sid+'\')"'
             +' ondrop="forceSlotDrop(event,\''+_esc(party.id)+'\','+subIdx+','+slotIdx+')"'
@@ -7698,16 +7800,16 @@ function forceRenderParties(data) {
             +'</div>';
         }
       });
-      html += '</div>'; // subparty
-      if(party.subparties.length > 1) {
-        html += '<div style="display:flex;justify-content:flex-end;padding:2px 10px 4px;">'
+      html+='</div>';
+      if(party.subparties.length>1) {
+        html+='<div style="display:flex;justify-content:flex-end;padding:2px 10px 4px;">'
           +'<button onclick="forceDelSubparty(\''+_esc(party.id)+'\','+subIdx+')" style="font-size:10px;padding:1px 6px;background:none;border:1px solid rgba(180,50,50,.3);color:var(--red);border-radius:3px;cursor:pointer;opacity:.7;">서브파티 삭제</button>'
           +'</div>';
       }
     });
-    html += '</div>'; // force-party
+    html+='</div>';
   });
-  el.innerHTML = html;
+  el.innerHTML=html;
 }
 
 // ─── DRAG & DROP ─────────────────────────────────────────────────────────────
@@ -7854,13 +7956,17 @@ function forceRenameParty(partyId) {
 }
 function forceAddSubparty(partyId) {
   var data=forceLoad(); var party=data.parties.find(function(p){return p.id===partyId;}); if(!party) return;
-  party.subparties.push([null,null,null,null]); forceSave(data); forceRender();
+  party.subparties.push([null,null,null,null]);
+  if(!party.subpartyLabels) party.subpartyLabels=party.subparties.map(function(){return '';});
+  else party.subpartyLabels.push('');
+  forceSave(data); forceRender();
 }
 function forceDelSubparty(partyId, subIdx) {
   if(!confirm('이 서브파티를 삭제하시겠습니까?')) return;
   var data=forceLoad(); var party=data.parties.find(function(p){return p.id===partyId;}); if(!party) return;
   party.subparties.splice(subIdx,1);
-  if(!party.subparties.length) party.subparties.push([null,null,null,null]);
+  if(party.subpartyLabels) party.subpartyLabels.splice(subIdx,1);
+  if(!party.subparties.length) { party.subparties.push([null,null,null,null]); if(party.subpartyLabels) party.subpartyLabels.push(''); }
   forceSave(data); forceRender();
 }
 
@@ -7991,6 +8097,157 @@ function forceModal(html) {
 }
 function forceModalClose() { var ov=document.getElementById('force-modal-overlay'); if(ov) ov.style.display='none'; }
 
+// ─── 서브파티 레이블 ──────────────────────────────────────────────────────────
+function forceSetSubpartyLabel(partyId, subIdx) {
+  var data=forceLoad(); var party=data.parties.find(function(p){return p.id===partyId;}); if(!party) return;
+  if(!party.subpartyLabels) party.subpartyLabels=party.subparties.map(function(){return '';});
+  var cur=party.subpartyLabels[subIdx]||'';
+  var n=prompt('서브파티 레이블 (예: 탱딜조, 힐지원조, 원거리팀):', cur);
+  if(n===null) return;
+  party.subpartyLabels[subIdx]=n.trim();
+  forceSave(data); forceRender();
+}
+
+// ─── DB 멤버 불러오기 ─────────────────────────────────────────────────────────
+function forceImportDB() {
+  if(!window.members||!window.members.length){alert('레기온 멤버 데이터가 없습니다.\n멤버 탭을 먼저 방문해주세요.');return;}
+  var CML={'Gladiator':'검성','Templar':'수호성','Assassin':'살성','Ranger':'궁성','Sorcerer':'마도성','Spiritmaster':'정령성','Cleric':'치유성','Chanter':'호법성'};
+  var data=forceLoad();
+  var existNames={};
+  data.members.forEach(function(m){existNames[m.name]=true;});
+  var dbM=window.members.filter(function(m){return !existNames[m.nickname];});
+  if(!dbM.length){alert('이미 모든 레기온 멤버가 추가되어 있습니다.');return;}
+  var listHtml=dbM.map(function(m){
+    var cls=CML[m.class]||m.class||'?';
+    var col=CLS_COLORS[cls]||'#888';
+    var cp=m.combat_power?(+m.combat_power).toLocaleString():'—';
+    return '<label style="display:flex;align-items:center;gap:6px;padding:5px 0;cursor:pointer;">'
+      +'<input type="checkbox" class="fimp-chk" value="'+_esc(m.nickname)+'" checked style="width:14px;height:14px;accent-color:var(--gold);">'
+      +'<span style="font-weight:600;font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+_h(m.nickname)+'</span>'
+      +'<span style="'+clsStyle(cls)+'">'+cls+'</span>'
+      +'<span style="font-size:11px;color:var(--muted);min-width:52px;text-align:right;">'+cp+'</span>'
+      +'</label>';
+  }).join('');
+  var html='<div style="padding:20px;">'
+    +'<div style="font-size:14px;font-weight:700;color:var(--gold-l);margin-bottom:4px;">🗄 레기온 멤버 불러오기</div>'
+    +'<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">'+dbM.length+'명 · 선택한 멤버를 참여자 목록에 추가합니다</div>'
+    +'<div style="display:flex;gap:6px;margin-bottom:8px;">'
+    +'<button onclick="document.querySelectorAll(\'.fimp-chk\').forEach(function(c){c.checked=true;})" class="btn btn-sm" style="font-size:11px;">전체 선택</button>'
+    +'<button onclick="document.querySelectorAll(\'.fimp-chk\').forEach(function(c){c.checked=false;})" class="btn btn-sm" style="font-size:11px;">전체 해제</button>'
+    +'</div>'
+    +'<div style="max-height:340px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:6px 10px;margin-bottom:14px;">'+listHtml+'</div>'
+    +'<div style="display:flex;gap:8px;">'
+    +'<button onclick="forceConfirmImportDB()" class="btn btn-primary btn-sm">불러오기</button>'
+    +'<button onclick="forceModalClose()" class="btn btn-sm">취소</button>'
+    +'</div></div>';
+  forceModal(html);
+  window._forceImportDbMembers=dbM;
+}
+function forceConfirmImportDB() {
+  var dbM=window._forceImportDbMembers||[];
+  var CML={'Gladiator':'검성','Templar':'수호성','Assassin':'살성','Ranger':'궁성','Sorcerer':'마도성','Spiritmaster':'정령성','Cleric':'치유성','Chanter':'호법성'};
+  var checked=Array.from(document.querySelectorAll('.fimp-chk:checked')).map(function(c){return c.value;});
+  if(!checked.length){alert('선택된 멤버가 없습니다.');return;}
+  var data=forceLoad();
+  checked.forEach(function(nick){
+    var m=dbM.find(function(x){return x.nickname===nick;}); if(!m) return;
+    var cls=CML[m.class]||m.class||'';
+    data.members.push({id:'m'+uid(),name:m.nickname,cls:cls,joined:true,cp:+m.combat_power||0});
+  });
+  forceSave(data); forceModalClose(); forceRender();
+}
+
+// ─── 자동 편성 ────────────────────────────────────────────────────────────────
+function forceAutoArrange() {
+  var data=forceLoad();
+  var assigned=forceAssignedNames(data);
+  var avail=data.members.filter(function(m){return m.joined&&!assigned[m.name];});
+  if(!avail.length){alert('배치할 수 있는 참여자가 없습니다.\n(이미 모두 배치되었거나 참여자가 없습니다.)');return;}
+  if(!confirm('미배치 참여자 '+avail.length+'명을 빈 슬롯에 자동 배치합니다.\n탱→힐→딜 순으로 서브파티당 1탱1힐 우선 배치합니다.\n계속하시겠습니까?')) return;
+  var tanks=[],heals=[],dps=[];
+  avail.forEach(function(m){var r=forceGetRole(m.cls);if(r==='tank')tanks.push(m);else if(r==='heal')heals.push(m);else dps.push(m);});
+  function byCp(a,b){return (b.cp||lookupCp(b.name))-(a.cp||lookupCp(a.name));}
+  tanks.sort(byCp);heals.sort(byCp);dps.sort(byCp);
+  var subCnt=0;
+  data.parties.forEach(function(p){subCnt+=p.subparties.length;});
+  var queue=[];
+  for(var i=0;i<subCnt&&tanks.length;i++) queue.push(tanks.shift());
+  for(var i=0;i<subCnt&&heals.length;i++) queue.push(heals.shift());
+  queue=queue.concat(dps).concat(tanks).concat(heals);
+  var qi=0;
+  data.parties.forEach(function(p){
+    p.subparties.forEach(function(sub){
+      for(var si=0;si<sub.length;si++){
+        if(!sub[si]&&qi<queue.length){sub[si]={name:queue[qi].name,cls:queue[qi].cls};qi++;}
+      }
+    });
+  });
+  forceSave(data); forceRender();
+  if(qi>0) alert(qi+'명이 자동 배치되었습니다.');
+}
+
+// ─── Discord 복사 ─────────────────────────────────────────────────────────────
+function forceCopyText() {
+  var data=forceLoad();
+  if(!data.parties.length){alert('파티가 없습니다.');return;}
+  var RE={tank:'🛡️',heal:'💚',dps:'⚔️'};
+  var lines=[];
+  if(data.recruit.active&&data.recruit.contentName) lines.push('━━━ '+data.recruit.contentName+' 포스 편성 ━━━');
+  data.parties.forEach(function(party){
+    var labels=party.subpartyLabels||[];
+    var fc=0; party.subparties.forEach(function(sub){sub.forEach(function(s){if(s&&s.name)fc++;});});
+    lines.push('');
+    lines.push('⚔️ '+party.name+' ('+fc+'명)');
+    party.subparties.forEach(function(sub,si){
+      var lbl=labels[si]||'';
+      if(lbl) lines.push('  ┌ '+lbl);
+      sub.forEach(function(s){
+        if(s&&s.name) lines.push('  '+RE[forceGetRole(s.cls)]+' '+s.name+(s.cls?' ('+s.cls+')':''));
+      });
+    });
+  });
+  var text=lines.join('\n').trim();
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){alert('📋 클립보드에 복사되었습니다!\nDiscord/카카오톡에 붙여넣기 하세요.');}).catch(function(){prompt('아래 텍스트를 복사하세요:',text);});
+  } else { prompt('아래 텍스트를 복사하세요:',text); }
+}
+
+// ─── 컨텐츠 프리셋 ────────────────────────────────────────────────────────────
+var FORCE_PRESETS=[
+  {name:'소규모 (8인)',    desc:'1파티 × 2서브파티 × 4슬롯', parties:1, sub:2, slots:4},
+  {name:'루드라 (24인)',   desc:'3파티 × 2서브파티 × 4슬롯', parties:3, sub:2, slots:4},
+  {name:'아티쟁 (48인)',   desc:'6파티 × 2서브파티 × 4슬롯', parties:6, sub:2, slots:4},
+  {name:'대규모 쟁 (32인)',desc:'4파티 × 2서브파티 × 4슬롯', parties:4, sub:2, slots:4},
+  {name:'소파티 (6인)',    desc:'1파티 × 2서브파티 × 3슬롯', parties:1, sub:2, slots:3},
+];
+function forceOpenPreset() {
+  var html='<div style="padding:20px;">'
+    +'<div style="font-size:14px;font-weight:700;color:var(--gold-l);margin-bottom:4px;">📐 컨텐츠 프리셋</div>'
+    +'<div style="font-size:12px;color:var(--muted);margin-bottom:14px;">파티 구조를 초기화합니다. 참여자 목록은 유지됩니다.</div>';
+  FORCE_PRESETS.forEach(function(p,i){
+    html+='<button onclick="forceApplyPreset('+i+')" style="width:100%;text-align:left;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:6px;cursor:pointer;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">'
+      +'<span style="font-size:13px;font-weight:600;color:var(--text);">'+_h(p.name)+'</span>'
+      +'<span style="font-size:11px;color:var(--muted);">'+_h(p.desc)+'</span>'
+      +'</button>';
+  });
+  html+='<div style="margin-top:8px;"><button onclick="forceModalClose()" class="btn btn-sm">취소</button></div></div>';
+  forceModal(html);
+}
+function forceApplyPreset(idx) {
+  var p=FORCE_PRESETS[idx]; if(!p) return;
+  if(!confirm('"'+p.name+'" 프리셋을 적용합니다.\n현재 파티 편성이 초기화됩니다. 계속하시겠습니까?')) return;
+  var data=forceLoad(); data.parties=[];
+  for(var pi=0;pi<p.parties;pi++){
+    var party={id:'p'+uid(),name:'파티'+(pi+1),subparties:[],subpartyLabels:[]};
+    for(var si=0;si<p.sub;si++){
+      var sl=[]; for(var k=0;k<p.slots;k++) sl.push(null);
+      party.subparties.push(sl); party.subpartyLabels.push('');
+    }
+    data.parties.push(party);
+  }
+  forceSave(data); forceModalClose(); forceRender();
+}
+
 // expose globals
 window.forceAddParty=forceAddParty; window.forceDelParty=forceDelParty;
 window.forceRenameParty=forceRenameParty; window.forceAddSubparty=forceAddSubparty; window.forceDelSubparty=forceDelSubparty;
@@ -8006,6 +8263,10 @@ window.forceOpenRecruitModal=forceOpenRecruitModal; window.forceSaveRecruit=forc
 window.forceSaveHistory=forceSaveHistory; window.forceShowHistory=forceShowHistory;
 window.forceRestoreHistory=forceRestoreHistory; window.forceDeleteHistory=forceDeleteHistory;
 window.forceModalClose=forceModalClose; window.forcePickCls=forcePickCls;
+window.forceImportDB=forceImportDB; window.forceConfirmImportDB=forceConfirmImportDB;
+window.forceAutoArrange=forceAutoArrange; window.forceCopyText=forceCopyText;
+window.forceOpenPreset=forceOpenPreset; window.forceApplyPreset=forceApplyPreset;
+window.forceSetSubpartyLabel=forceSetSubpartyLabel;
 
 })();
 
