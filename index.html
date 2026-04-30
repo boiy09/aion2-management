@@ -7082,10 +7082,10 @@ function _hwRenderCharTabs() {
   if(!tabsEl) return;
   tabsEl.innerHTML = chars.map(function(ch) {
     var isActive = ch.id === hwActiveCharId;
-    return '<button class="hw-char-tab'+(isActive?' active':'')+'" onclick="hwSelectChar(''+ch.id+'')">'
+    return '<button class="hw-char-tab'+(isActive?' active':'')+'" data-cid="'+ch.id+'" onclick="hwSelectChar(this.dataset.cid)">'
       +'<span class="hw-char-avatar">'+ch.name.charAt(0)+'</span>'
       +ch.name
-      +'<span onclick="hwDeleteChar(event,''+ch.id+'')" style="margin-left:4px;color:var(--muted);font-size:14px;line-height:1;" title="삭제">×</span>'
+      +'<span data-cid="'+ch.id+'" onclick="hwDeleteChar(event,this.dataset.cid)" style="margin-left:4px;color:var(--muted);font-size:14px;line-height:1;" title="삭제">×</span>'
       +'</button>';
   }).join('');
   var hasChars = chars.length > 0;
