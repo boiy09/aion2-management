@@ -8163,7 +8163,9 @@ const ARC = (function(){
     return `<span class="arc-badge ${badgeCls}">${badgeTxt}</span>`;
   }
 
-  const EQUIP_SLOTS = ['무기','상체','하체','반지1','반지2','귀걸이1','귀걸이2','목걸이','팔찌','허리띠'];
+  const EQUIP_SLOTS = ['무기','가더','투구','견갑','흉갑','장갑','각반','신발','망토','목걸이','귀걸이1','귀걸이2','반지1','반지2'];
+  const EQUIP_SKILL_COUNT = 6;
+  const mkEmptyEquip = () => Object.fromEntries(EQUIP_SLOTS.map(s=>[s, Array(EQUIP_SKILL_COUNT).fill('')]));
 
   // ── 상태 ──────────────────────────────────────────────────────
   let state = {
@@ -8171,7 +8173,7 @@ const ARC = (function(){
     pieces: Object.fromEntries(PARTS.map(p => [p.id, { grade:'없음', enhance:0, skills:[], skillLevels:[] }])),
     sklLevels: {},   // skillName -> base level (from 스킬 시뮬레이터, default 10)
     daeLevels: {},   // skillName -> daevanion bonus (from 데바니온 시뮬레이터, default 0)
-    equipSlots: Object.fromEntries(EQUIP_SLOTS.map(s=>[s,''])),
+    equipSlots: mkEmptyEquip(),  // { [equipName]: string[EQUIP_SKILL_COUNT] }
   };
 
   // ── 헬퍼 ──────────────────────────────────────────────────────
@@ -8210,8 +8212,10 @@ const ARC = (function(){
 
   function calcEquipBonus() {
     const map = new Map();
-    for (const sk of Object.values(state.equipSlots)) {
-      if (sk) map.set(sk, (map.get(sk)||0) + 1);
+    for (const skills of Object.values(state.equipSlots)) {
+      for (const sk of skills) {
+        if (sk) map.set(sk, (map.get(sk)||0) + 1);
+      }
     }
     return map;
   }
@@ -8280,18 +8284,27 @@ const ARC = (function(){
     }
     const cls = CLASS_SKILLS[state.cls];
     const allNames = [...cls.active, ...cls.passive];
-    const slots = EQUIP_SLOTS.map(slot => {
-      const sel = state.equipSlots[slot] || '';
-      const opts = '<option value="">— 없음 —</option>' +
-        allNames.map(n => `<option value="${n}"${sel===n?' selected':''}>${n}</option>`).join('');
-      return `<div style="display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid ${sel?'var(--gold-d)':'var(--border)'};border-radius:6px;padding:8px 12px;">
-        <span style="font-size:12px;color:var(--muted);min-width:52px;flex-shrink:0;">${slot}</span>
-        <select onchange="ARC._setEquipSlot('${slot}',this.value)"
-          style="flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:5px;font-size:12px;cursor:pointer;outline:none;">${opts}</select>
-        <span style="font-size:11px;font-weight:700;min-width:20px;text-align:right;color:${sel?'var(--gold-l)':'transparent'};">+1</span>
+    const baseOpts = '<option value="">— 없음 —</option>' + allNames.map(n => `<option value="${n}">${n}</option>`).join('');
+
+    const cards = EQUIP_SLOTS.map(slot => {
+      const skills = state.equipSlots[slot] || Array(EQUIP_SKILL_COUNT).fill('');
+      const hasAny = skills.some(s => s);
+      const selects = Array.from({length: EQUIP_SKILL_COUNT}, (_, i) => {
+        const cur = skills[i] || '';
+        const opts = baseOpts.replace(`value="${cur}"`, `value="${cur}" selected`);
+        return `<select onchange="ARC._setEquipSlot('${slot}',${i},this.value)"
+          style="width:100%;background:var(--surface);border:1px solid ${cur?'var(--gold-d)':'var(--border)'};color:${cur?'var(--text)':'var(--muted)'};padding:4px 6px;border-radius:5px;font-size:11px;cursor:pointer;outline:none;">${opts}</select>`;
+      }).join('');
+      const bonus = skills.filter(s=>s).length;
+      return `<div style="background:var(--card);border:1px solid ${hasAny?'var(--gold-d)':'var(--border)'};border-radius:8px;padding:10px 12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-size:13px;font-weight:700;color:var(--text);">${slot}</span>
+          ${bonus ? `<span style="font-size:11px;font-weight:700;color:var(--gold-l);background:#00c88a1a;padding:1px 8px;border-radius:8px;">+${bonus}</span>` : ''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">${selects}</div>
       </div>`;
     }).join('');
-    el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;">${slots}</div>`;
+    el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;">${cards}</div>`;
   }
 
   function renderSimulators() {
@@ -8591,7 +8604,7 @@ const ARC = (function(){
       state.pieces = Object.fromEntries(PARTS.map(p=>[p.id,{grade:'없음',enhance:0,skills:[],skillLevels:[]}]));
       state.sklLevels = {};
       state.daeLevels = {};
-      state.equipSlots = Object.fromEntries(EQUIP_SLOTS.map(s=>[s,'']));
+      state.equipSlots = mkEmptyEquip();
       const sel = document.getElementById('arc-class');
       if (sel) sel.value = '';
       render();
@@ -8697,8 +8710,9 @@ const ARC = (function(){
       renderDaeSim();
       renderResults();
     },
-    _setEquipSlot(slotId, skill) {
-      state.equipSlots[slotId] = skill;
+    _setEquipSlot(slotId, idx, skill) {
+      if (!state.equipSlots[slotId]) state.equipSlots[slotId] = Array(EQUIP_SKILL_COUNT).fill('');
+      state.equipSlots[slotId][idx] = skill;
       renderEquipSim();
       renderResults();
     },
