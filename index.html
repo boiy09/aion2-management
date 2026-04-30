@@ -450,6 +450,13 @@
 
 }
 
+/* ── 스킬 레벨 계산기 서브탭 ── */
+.skl-tab-nav{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:20px;}
+.skl-tab-btn{background:none;border:none;color:var(--muted);padding:10px 16px;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;transition:color .15s;white-space:nowrap;}
+.skl-tab-btn:hover{color:var(--text);}
+.skl-tab-btn.active{color:var(--gold-l);border-bottom-color:var(--gold);}
+.skl-section{display:none;}
+.skl-section.active{display:block;}
 /* ── 아르카나 계산기 드롭다운 ── */
 .arc-drop-wrap{position:relative;width:100%;}
 .arc-drop-btn{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;min-height:34px;box-sizing:border-box;user-select:none;transition:border-color .15s;}
@@ -607,7 +614,7 @@
   <button class="nav-btn" onclick="showTab('war')">🗡️ 쟁 참여조사</button>
   <button class="nav-btn" onclick="showTab('force')">⚔️ 포스 편성(개발중)</button>
   <button class="nav-btn" onclick="showTab('timer')">⏰ 시공/슈고 알리미</button>
-  <button class="nav-btn" onclick="showTab('arcana')">🧮 아르카나 계산기(개발중)</button>
+  <button class="nav-btn" onclick="showTab('arcana')">📊 스킬 레벨 계산기</button>
   <button class="nav-btn" onclick="showTab('homework')">📋 숙제 도우미(개발중)</button>
   <button class="nav-btn" onclick="showTab('register')">👤 멤버 등록</button>
   <button class="nav-btn" onclick="showTab('charsearch')">🔍 캐릭터 검색</button>
@@ -1034,13 +1041,13 @@
     </div>
   </div>
 
-  <!-- 아르카나 계산기 -->
+  <!-- 스킬 레벨 계산기 -->
   <div id="tab-arcana" class="tab-content">
     <div style="max-width:1280px;">
 
-      <!-- 헤더 -->
+      <!-- 공통 헤더 -->
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
-        <div class="section-title" style="margin-bottom:0;">🧮 아르카나 스킬 레벨 계산기</div>
+        <div class="section-title" style="margin-bottom:0;">📊 스킬 레벨 계산기</div>
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
           <label style="font-size:12px;color:var(--muted);">클래스</label>
           <select id="arc-class" onchange="arcSetClass(this.value)"
@@ -1055,31 +1062,62 @@
         </div>
       </div>
 
-      <!-- 안내 문구 -->
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:12px;color:var(--muted);line-height:1.7;">
-        📖 <strong style="color:var(--text);">사용법</strong>: 클래스 선택 → 각 부위 등급 설정 → 스킬 슬롯에 보유 스킬 입력 → 결과 테이블에서 기본/장비/데바니온 값 조정<br>
-        💡 아르카나 슬롯 수: <strong style="color:var(--gold-l);">일반 1개 · 희귀 2개 · 전승 3개 · 유일 4개</strong> &nbsp;|&nbsp; 스킬 레벨 목표: <strong style="color:#f0a040;">16레벨 (3차 특화)</strong> / <strong style="color:var(--gold-l);">20레벨 (최종 특화)</strong>
+      <!-- 서브탭 네비게이션 -->
+      <div class="skl-tab-nav">
+        <button class="skl-tab-btn active" onclick="sklShowTab('arcana',this)">💎 아르카나 시뮬레이터</button>
+        <button class="skl-tab-btn" onclick="sklShowTab('skill',this)">⚡ 스킬 시뮬레이터</button>
+        <button class="skl-tab-btn" onclick="sklShowTab('daevanion',this)">📚 데바니온 시뮬레이터</button>
+        <button class="skl-tab-btn" onclick="sklShowTab('equip',this)">⚔️ 장비 시뮬레이터</button>
       </div>
 
-      <!-- CP 요약 바 -->
-      <div id="arc-cp-bar" style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:20px;"></div>
-
-      <!-- 아르카나 6부위 그리드 -->
-      <div id="arc-pieces-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;"></div>
-
-      <!-- 결과 테이블 -->
-      <div id="arc-results"></div>
-
-      <!-- 세트효과 참고 -->
-      <div style="margin-top:24px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px;">
-        <div class="section-title" style="font-size:12px;">⚙️ 세트 효과 참고</div>
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;font-size:12px;color:var(--muted);">
-          <div><strong style="color:var(--text);">태초의 활력</strong><br>2세트: HP 70% 이상 시 PVE 공격력 +60<br>4세트: HP 70% 이상 시 PVE 공격력 +150</div>
-          <div><strong style="color:var(--text);">마력 갑옷</strong><br>2세트: MP 20% 이하 시 MP 1,500 즉시 회복 (쿨 30초)<br>4세트: MP 50% 이상 시 PVE 방어력 +1,000</div>
-          <div><strong style="color:var(--text);">광분</strong><br>2세트: 보스 피해 증폭<br>4세트: 피해 저항 증가</div>
-          <div><strong style="color:var(--text);">순수</strong><br>2세트: 치명타 피해 증폭<br>4세트: 방어력 +1,000</div>
+      <!-- ① 아르카나 시뮬레이터 -->
+      <div id="skl-sec-arcana" class="skl-section active">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:12px;color:var(--muted);line-height:1.7;">
+          💎 <strong style="color:var(--text);">아르카나</strong>: 클래스 선택 → 각 부위 등급/강화 설정 → 스킬 슬롯에 스킬 배정 → 슬롯 레벨 조절<br>
+          💡 슬롯 수: <strong style="color:var(--gold-l);">일반 1 · 희귀 2 · 전승 3 · 유일 4</strong> &nbsp;|&nbsp; 목표: <strong style="color:#f0a040;">16레벨 (3차 특화)</strong> / <strong style="color:var(--gold-l);">20레벨 (최종 특화)</strong>
+        </div>
+        <div id="arc-cp-bar" style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:20px;"></div>
+        <div id="arc-pieces-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;"></div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px;">
+          <div class="section-title" style="font-size:12px;">⚙️ 세트 효과 참고</div>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;font-size:12px;color:var(--muted);">
+            <div><strong style="color:var(--text);">태초의 활력</strong><br>2세트: HP 70% 이상 시 PVE 공격력 +60<br>4세트: HP 70% 이상 시 PVE 공격력 +150</div>
+            <div><strong style="color:var(--text);">마력 갑옷</strong><br>2세트: MP 20% 이하 시 MP 1,500 즉시 회복 (쿨 30초)<br>4세트: MP 50% 이상 시 PVE 방어력 +1,000</div>
+            <div><strong style="color:var(--text);">광분</strong><br>2세트: 보스 피해 증폭<br>4세트: 피해 저항 증가</div>
+            <div><strong style="color:var(--text);">순수</strong><br>2세트: 치명타 피해 증폭<br>4세트: 방어력 +1,000</div>
+          </div>
         </div>
       </div>
+
+      <!-- ② 스킬 시뮬레이터 -->
+      <div id="skl-sec-skill" class="skl-section">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:32px;text-align:center;">
+          <div style="font-size:32px;margin-bottom:12px;">⚡</div>
+          <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px;">스킬 시뮬레이터</div>
+          <div style="font-size:13px;color:var(--muted);">스킬 포인트 배분 시뮬레이터 — 준비 중입니다.</div>
+        </div>
+      </div>
+
+      <!-- ③ 데바니온 시뮬레이터 -->
+      <div id="skl-sec-daevanion" class="skl-section">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:32px;text-align:center;">
+          <div style="font-size:32px;margin-bottom:12px;">📚</div>
+          <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px;">데바니온 시뮬레이터</div>
+          <div style="font-size:13px;color:var(--muted);">데바니온 스킬북 레벨 업 시뮬레이터 — 준비 중입니다.</div>
+        </div>
+      </div>
+
+      <!-- ④ 장비 시뮬레이터 -->
+      <div id="skl-sec-equip" class="skl-section">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:32px;text-align:center;">
+          <div style="font-size:32px;margin-bottom:12px;">⚔️</div>
+          <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px;">장비 시뮬레이터</div>
+          <div style="font-size:13px;color:var(--muted);">장비 옵션 스킬 레벨 보너스 시뮬레이터 — 준비 중입니다.</div>
+        </div>
+      </div>
+
+      <!-- 스킬 레벨 총합 (4개 소스 통합) -->
+      <div id="arc-results" style="margin-top:24px;"></div>
 
     </div>
   </div>
@@ -8469,6 +8507,14 @@ const ARC = (function(){
 })();
 
 function arcSetClass(v) { ARC.setClass(v); }
+
+function sklShowTab(id, btn) {
+  document.querySelectorAll('.skl-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.skl-tab-btn').forEach(b => b.classList.remove('active'));
+  const sec = document.getElementById('skl-sec-' + id);
+  if (sec) sec.classList.add('active');
+  if (btn) btn.classList.add('active');
+}
 
 </script>
 </body>
