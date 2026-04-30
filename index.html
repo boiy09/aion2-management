@@ -233,8 +233,9 @@
   .od-clr-btn { width:26px; height:26px; border-radius:50%; border:3px solid transparent; cursor:pointer; transition:border-color .15s; }
   .od-clr-btn.sel { border-color:#fff; }
   /* 포스 편성 */
-  .force-layout { display:grid; grid-template-columns:220px 1fr; gap:14px; align-items:start; }
-  @media(max-width:700px){ .force-layout { grid-template-columns:1fr; } }
+  .force-layout { display:grid; grid-template-columns:190px 190px 1fr; gap:12px; align-items:start; }
+  @media(max-width:960px){ .force-layout { grid-template-columns:1fr 1fr; } }
+  @media(max-width:600px){ .force-layout { grid-template-columns:1fr; } }
   .force-panel { background:var(--card); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
   .force-panel-hdr { padding:8px 12px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; background:rgba(0,0,0,.2); }
   .force-panel-title { font-size:11px; font-weight:700; color:var(--gold); text-transform:uppercase; letter-spacing:.06em; }
@@ -269,6 +270,9 @@
   .force-subparty-label:hover { color:var(--text); }
   /* 멤버 CP */
   .force-member-cp { font-size:10px; color:var(--muted); margin-left:auto; flex-shrink:0; }
+  .force-legion-role-hdr { padding:4px 10px 2px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
+  .force-participants-drop { min-height:40px; }
+  .force-participants-drop.drag-over-panel { background:rgba(0,200,138,.06); }
   /* 뷰 토글 */
   .view-toggle { display:flex; gap:3px; background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:3px; }
   .vt { background:none; border:none; color:var(--muted); padding:4px 10px; border-radius:4px; font-size:12px; cursor:pointer; transition:all .15s; }
@@ -1292,12 +1296,12 @@
 
   <!-- 포스 편성 -->
   <div id="tab-force" class="tab-content">
-    <div style="max-width:1100px;">
+    <div>
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
         <div class="hw-section-title">⚔️ 포스 편성</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <button class="btn btn-sm" onclick="forceOpenRecruitModal()">📢 모집 설정</button>
-          <button class="btn btn-sm" onclick="forceAddParty()">+ 파티</button>
+          <button class="btn btn-sm" onclick="forceAddParty()">+ 포스</button>
           <button class="btn btn-sm" onclick="forceAutoArrange()">🤖 자동 편성</button>
           <button class="btn btn-sm" onclick="forceCopyText()">📋 Discord 복사</button>
           <button class="btn btn-sm" onclick="forceSaveHistory()">💾 저장</button>
@@ -1307,14 +1311,23 @@
       <div id="force-recruit-banner" style="display:none;" class="force-recruit-banner"></div>
       <div id="force-comp-bar" style="display:none;" class="force-comp-bar"></div>
       <div class="force-layout">
+        <!-- 레기온 멤버 패널 -->
+        <div class="force-panel" style="position:sticky;top:116px;max-height:calc(100vh - 140px);display:flex;flex-direction:column;">
+          <div class="force-panel-hdr">
+            <span class="force-panel-title">레기온 멤버</span>
+            <span id="force-legion-count" style="font-size:10px;color:var(--muted);"></span>
+          </div>
+          <div id="force-legion-list" style="overflow-y:auto;flex:1;"></div>
+        </div>
         <!-- 참여자 패널 -->
-        <div class="force-panel" style="position:sticky;top:116px;">
+        <div class="force-panel" style="position:sticky;top:116px;max-height:calc(100vh - 140px);display:flex;flex-direction:column;"
+             ondragover="forcePanelDragOver(event)" ondragleave="forcePanelDragLeave(event)" ondrop="forceDropToParticipants(event)">
           <div class="force-panel-hdr">
             <span class="force-panel-title">참여자</span>
             <button onclick="forceAddMember()" class="btn btn-sm" style="padding:2px 8px;font-size:11px;">+ 추가</button>
           </div>
-          <div id="force-members-list" style="max-height:520px;overflow-y:auto;"></div>
-          <div id="force-member-count" style="padding:6px 10px;border-top:1px solid rgba(255,255,255,.04);font-size:11px;color:var(--muted);"></div>
+          <div id="force-members-list" class="force-participants-drop" style="overflow-y:auto;flex:1;"></div>
+          <div id="force-member-count" style="padding:6px 10px;border-top:1px solid rgba(255,255,255,.04);font-size:11px;color:var(--muted);flex-shrink:0;"></div>
         </div>
         <!-- 파티 블록들 -->
         <div id="force-parties-list"></div>
@@ -7583,8 +7596,10 @@ var _dragInfo = null;
 
 var CLS_COLORS = { '검성':'#4ecdc4','수호성':'#4a80c4','살성':'#5ab860','궁성':'#3a9468','마도성':'#7b55cc','정령성':'#9540aa','치유성':'#d4aa30','호법성':'#c48c38' };
 var CLS_LIST = ['검성','수호성','살성','궁성','마도성','정령성','치유성','호법성'];
-var ROLE_MAP = {'수호성':'tank','호법성':'tank','치유성':'heal','검성':'dps','살성':'dps','궁성':'dps','마도성':'dps','정령성':'dps'};
+var ROLE_MAP = {'검성':'tank','수호성':'tank','치유성':'heal','호법성':'heal','살성':'dps','궁성':'dps','마도성':'dps','정령성':'dps'};
 var ROLE_EMOJI = {tank:'🛡️', heal:'💚', dps:'⚔️'};
+var ROLE_COLOR = {tank:'#4a80c4', heal:'#d4aa30', dps:'#9966dd'};
+var ROLE_LABEL = {tank:'탱커', heal:'힐러', dps:'딜러'};
 
 function clsStyle(cls) {
   var c = CLS_COLORS[cls] || '#888';
@@ -7598,10 +7613,10 @@ function lookupCp(name) {
   try { var m=members.find(function(x){return x.nickname===name;}); return m?(+m.combat_power||0):0; } catch(e){return 0;}
 }
 function forceNewParty(name) {
-  return { id:'p'+uid(), name:name||'파티', subparties:[[null,null,null,null],[null,null,null,null]], subpartyLabels:['',''] };
+  return { id:'p'+uid(), name:name||'포스', subparties:[[null,null,null,null],[null,null,null,null],[null,null,null,null],[null,null,null,null]], subpartyLabels:['','','',''] };
 }
 function forceDefault() {
-  return { recruit:{active:false,contentName:'',recruitStart:null,forceForm:null,contentStart:null,capacity:null}, members:[], parties:[forceNewParty('파티1')], history:[] };
+  return { recruit:{active:false,contentName:'',recruitStart:null,forceForm:null,contentStart:null,capacity:null}, members:[], parties:[forceNewParty('포스1')], history:[] };
 }
 function forceAllSlots(data) {
   var slots=[];
@@ -7625,33 +7640,12 @@ function fmtTs(ts) {
   return (d.getMonth()+1)+'/'+(d.getDate())+' '+ampm+' '+(h===0?12:h>12?h-12:h)+':'+String(m).padStart(2,'0');
 }
 
-// ─── 멤버 자동 동기화 ────────────────────────────────────────────────────────
-function forceSyncMembers(data) {
-  try {
-    if(!members||!members.length) return;
-    var existMap={};
-    data.members.forEach(function(m){existMap[m.name]=m;});
-    members.forEach(function(m){
-      if(!m.nickname) return;
-      var cls=FORCE_CML[m.class]||m.class||'';
-      var cp=+m.combat_power||0;
-      if(!existMap[m.nickname]) {
-        data.members.push({id:'m'+uid(),name:m.nickname,cls:cls,joined:true,cp:cp});
-      } else {
-        if(cls) existMap[m.nickname].cls=cls;
-        if(cp)  existMap[m.nickname].cp=cp;
-      }
-    });
-  } catch(e){}
-}
-
 // ─── RENDER ──────────────────────────────────────────────────────────────────
 function forceRender() {
   var data = forceLoad();
-  forceSyncMembers(data);
-  forceSave(data);
   forceRenderBanner(data);
   forceRenderComposition(data);
+  forceRenderLegion(data);
   forceRenderMembers(data);
   forceRenderParties(data);
 }
@@ -7671,6 +7665,49 @@ function forceRenderBanner(data) {
   if(r.capacity!=null) parts.push('<span style="font-size:12px;color:#aaa;">참여 <b style="color:#34d399;">'+joined+'/'+r.capacity+'</b></span>');
   else if(joined) parts.push('<span style="font-size:12px;color:#aaa;">참여 <b style="color:#34d399;">'+joined+'명</b></span>');
   el.innerHTML = parts.join('<span style="color:#444;margin:0 3px;">·</span>');
+}
+
+// ─── 레기온 멤버 패널 ─────────────────────────────────────────────────────────
+function forceRenderLegion(data) {
+  var el = document.getElementById('force-legion-list');
+  var cntEl = document.getElementById('force-legion-count');
+  if(!el) return;
+  var mainM = [];
+  try { mainM = members.filter(function(m){ return _isMain(m) && m.nickname; }); } catch(e){}
+  if(!mainM.length) {
+    el.innerHTML='<div style="padding:14px;text-align:center;color:var(--muted);font-size:12px;">멤버 데이터 없음<br><span style="font-size:11px;">멤버 탭 접속 후 돌아오세요</span></div>';
+    return;
+  }
+  var partNames={};
+  data.members.forEach(function(m){partNames[m.name]=true;});
+  var groups={tank:[],heal:[],dps:[]};
+  mainM.forEach(function(m){
+    var cls=FORCE_CML[m.class]||m.class||'?';
+    groups[forceGetRole(cls)].push({name:m.nickname, cls:cls, cp:+m.combat_power||0});
+  });
+  ['tank','heal','dps'].forEach(function(role){
+    groups[role].sort(function(a,b){return b.cp-a.cp;});
+  });
+  var html='';
+  ['tank','heal','dps'].forEach(function(role){
+    if(!groups[role].length) return;
+    var rc=ROLE_COLOR[role];
+    html+='<div class="force-legion-role-hdr" style="color:'+rc+';background:'+rc+'18;">'+ROLE_LABEL[role]+' '+groups[role].length+'</div>';
+    groups[role].forEach(function(m){
+      var col=CLS_COLORS[m.cls]||'#888';
+      var inPart=!!partNames[m.name];
+      html+='<div class="force-member-item" draggable="true"'
+        +' ondragstart="forceLegionDragStart(\''+_esc(m.name)+'\',\''+_esc(m.cls)+'\','+m.cp+')"'
+        +' style="opacity:'+(inPart?.45:1)+';cursor:'+(inPart?'default':'grab')+';">'
+        +'<div style="width:7px;height:7px;border-radius:50%;background:'+col+';flex-shrink:0;"></div>'
+        +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;'+(inPart?'text-decoration:line-through;color:var(--muted);':'')+'">'+_h(m.name)+'</span>'
+        +'<span style="'+clsStyle(m.cls)+';font-size:9px;">'+_h(m.cls)+'</span>'
+        +(m.cp?'<span class="force-member-cp" style="font-size:9px;">'+Math.round(m.cp/10000)+'만</span>':'')
+        +'</div>';
+    });
+  });
+  el.innerHTML=html;
+  if(cntEl) cntEl.textContent=mainM.length+'명';
 }
 
 // ─── 직업 구성 현황판 ─────────────────────────────────────────────────────────
@@ -7834,9 +7871,29 @@ function forceRenderParties(data) {
 
 // ─── DRAG & DROP ─────────────────────────────────────────────────────────────
 function forceMemberDragStart(memberId) { _dragInfo = {type:'member', memberId:memberId}; }
+function forceLegionDragStart(name, cls, cp) { _dragInfo = {type:'legion', name:name, cls:cls, cp:cp||0}; }
 function forceSlotDragStart(partyId, subIdx, slotIdx) { _dragInfo = {type:'slot', partyId:partyId, subIdx:subIdx, slotIdx:slotIdx}; }
 function forceSlotDragOver(e, sid) { e.preventDefault(); var el=document.getElementById(sid); if(el) el.classList.add('drag-over'); }
 function forceSlotDragLeave(sid) { var el=document.getElementById(sid); if(el) el.classList.remove('drag-over'); }
+
+// 참여자 패널 dragover/leave
+function forcePanelDragOver(e) { e.preventDefault(); var el=document.getElementById('force-members-list'); if(el) el.classList.add('drag-over-panel'); }
+function forcePanelDragLeave(e) { if(!e.currentTarget.contains(e.relatedTarget)){var el=document.getElementById('force-members-list');if(el)el.classList.remove('drag-over-panel');} }
+
+// 레기온 멤버 → 참여자 패널에 드롭
+function forceDropToParticipants(e) {
+  e.preventDefault();
+  var el=document.getElementById('force-members-list'); if(el) el.classList.remove('drag-over-panel');
+  if(!_dragInfo||_dragInfo.type!=='legion') { _dragInfo=null; return; }
+  var data=forceLoad();
+  var exists=data.members.find(function(m){return m.name===_dragInfo.name;});
+  if(!exists) {
+    data.members.push({id:'m'+uid(), name:_dragInfo.name, cls:_dragInfo.cls, joined:true, cp:_dragInfo.cp});
+    forceSave(data);
+  }
+  _dragInfo=null; forceRender();
+}
+
 function forceSlotDrop(e, partyId, subIdx, slotIdx) {
   e.preventDefault();
   var sid='fs_'+partyId+'_'+subIdx+'_'+slotIdx;
@@ -7851,6 +7908,14 @@ function forceSlotDrop(e, partyId, subIdx, slotIdx) {
     if(!m) return;
     data.parties.forEach(function(p){ p.subparties.forEach(function(sub){ for(var i=0;i<sub.length;i++){ if(sub[i]&&sub[i].name===m.name) sub[i]=null; } }); });
     tParty.subparties[subIdx][slotIdx] = {name:m.name, cls:m.cls};
+  } else if(_dragInfo.type==='legion') {
+    // 레기온 멤버 직접 슬롯에 드롭 → 참여자에도 자동 추가
+    var nm=_dragInfo.name, nc=_dragInfo.cls;
+    var already=data.members.find(function(m){return m.name===nm;});
+    if(!already) data.members.push({id:'m'+uid(),name:nm,cls:nc,joined:true,cp:_dragInfo.cp});
+    // 기존 슬롯에서 제거
+    data.parties.forEach(function(p){ p.subparties.forEach(function(sub){ for(var i=0;i<sub.length;i++){ if(sub[i]&&sub[i].name===nm) sub[i]=null; } }); });
+    tParty.subparties[subIdx][slotIdx]={name:nm,cls:nc};
   } else if(_dragInfo.type==='slot') {
     var sParty = data.parties.find(function(p){return p.id===_dragInfo.partyId;});
     if(!sParty) return;
@@ -7961,7 +8026,7 @@ function forceSlotClear(partyId, subIdx, slotIdx) {
 
 // ─── PARTY MANAGEMENT ────────────────────────────────────────────────────────
 function forceAddParty() {
-  var data=forceLoad(); data.parties.push(forceNewParty('파티'+(data.parties.length+1)));
+  var data=forceLoad(); data.parties.push(forceNewParty('포스'+(data.parties.length+1)));
   forceSave(data); forceRender();
 }
 function forceDelParty(partyId) {
@@ -8131,30 +8196,65 @@ function forceSetSubpartyLabel(partyId, subIdx) {
 // ─── 자동 편성 ────────────────────────────────────────────────────────────────
 function forceAutoArrange() {
   var data=forceLoad();
-  var assigned=forceAssignedNames(data);
-  var avail=data.members.filter(function(m){return m.joined&&!assigned[m.name];});
-  if(!avail.length){alert('배치할 수 있는 참여자가 없습니다.\n(이미 모두 배치되었거나 참여자가 없습니다.)');return;}
-  if(!confirm('미배치 참여자 '+avail.length+'명을 빈 슬롯에 자동 배치합니다.\n탱→힐→딜 순으로 서브파티당 1탱1힐 우선 배치합니다.\n계속하시겠습니까?')) return;
-  var tanks=[],heals=[],dps=[];
-  avail.forEach(function(m){var r=forceGetRole(m.cls);if(r==='tank')tanks.push(m);else if(r==='heal')heals.push(m);else dps.push(m);});
+  var avail=data.members.filter(function(m){return m.joined;});
+  var tanks=avail.filter(function(m){return forceGetRole(m.cls)==='tank';});
+  var heals=avail.filter(function(m){return forceGetRole(m.cls)==='heal';});
+  var dpss =avail.filter(function(m){return forceGetRole(m.cls)==='dps';});
+  var html='<div style="padding:20px;">'
+    +'<div style="font-size:14px;font-weight:700;color:var(--gold-l);margin-bottom:4px;">🤖 자동 편성</div>'
+    +'<div style="font-size:12px;color:var(--muted);margin-bottom:14px;">서브파티당 역할 구성을 선택하세요 (빈 슬롯에만 배치됩니다)</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:6px;">'
+    +farrInput('tank','탱커','#4a80c4',1,tanks.length)
+    +farrInput('heal','힐러','#d4aa30',1,heals.length)
+    +farrInput('dps','딜러','#9966dd',2,dpss.length)
+    +'</div>'
+    +'<div style="font-size:11px;color:var(--muted);margin-bottom:14px;text-align:center;">참여자: 탱 '+tanks.length+'명 / 힐 '+heals.length+'명 / 딜 '+dpss.length+'명</div>'
+    +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">'
+    +'<input type="checkbox" id="farr-clear" style="width:14px;height:14px;accent-color:var(--gold);">'
+    +'<label for="farr-clear" style="font-size:12px;cursor:pointer;color:var(--muted);">기존 배치 초기화 후 재배치</label>'
+    +'</div>'
+    +'<div style="display:flex;gap:8px;">'
+    +'<button onclick="forceConfirmAutoArrange()" class="btn btn-primary btn-sm">배치 시작</button>'
+    +'<button onclick="forceModalClose()" class="btn btn-sm">취소</button>'
+    +'</div></div>';
+  forceModal(html);
+}
+function farrInput(role, label, color, def, total) {
+  var opts='';
+  for(var i=0;i<=4;i++) opts+='<option value="'+i+'"'+(i===def?' selected':'')+'>'+i+'</option>';
+  return '<div style="text-align:center;background:var(--surface);border:1px solid '+color+'33;border-radius:6px;padding:8px 6px;">'
+    +'<div style="font-size:11px;font-weight:700;color:'+color+';margin-bottom:6px;">'+label+'</div>'
+    +'<select id="farr-'+role+'" style="background:var(--card);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;width:54px;font-size:14px;text-align:center;">'+opts+'</select>'
+    +'<div style="font-size:10px;color:var(--muted);margin-top:4px;">보유 '+total+'명</div>'
+    +'</div>';
+}
+function forceConfirmAutoArrange() {
+  var nTank=parseInt(document.getElementById('farr-tank').value)||0;
+  var nHeal=parseInt(document.getElementById('farr-heal').value)||0;
+  var nDps =parseInt(document.getElementById('farr-dps').value)||0;
+  if(!nTank&&!nHeal&&!nDps){alert('최소 1명 이상 선택하세요.');return;}
+  var clear=document.getElementById('farr-clear').checked;
+  var data=forceLoad();
+  if(clear){ data.parties.forEach(function(p){p.subparties.forEach(function(sub){for(var i=0;i<sub.length;i++)sub[i]=null;})}); }
+  var avail=data.members.filter(function(m){return m.joined;});
   function byCp(a,b){return (b.cp||lookupCp(b.name))-(a.cp||lookupCp(a.name));}
-  tanks.sort(byCp);heals.sort(byCp);dps.sort(byCp);
-  var subCnt=0;
-  data.parties.forEach(function(p){subCnt+=p.subparties.length;});
-  var queue=[];
-  for(var i=0;i<subCnt&&tanks.length;i++) queue.push(tanks.shift());
-  for(var i=0;i<subCnt&&heals.length;i++) queue.push(heals.shift());
-  queue=queue.concat(dps).concat(tanks).concat(heals);
-  var qi=0;
+  var tanks=avail.filter(function(m){return forceGetRole(m.cls)==='tank';}).sort(byCp);
+  var heals=avail.filter(function(m){return forceGetRole(m.cls)==='heal';}).sort(byCp);
+  var dpss =avail.filter(function(m){return forceGetRole(m.cls)==='dps';}).sort(byCp);
+  var placed=0;
   data.parties.forEach(function(p){
     p.subparties.forEach(function(sub){
-      for(var si=0;si<sub.length;si++){
-        if(!sub[si]&&qi<queue.length){sub[si]={name:queue[qi].name,cls:queue[qi].cls};qi++;}
+      var ti=0,hi=0,di=0, slotQ=[];
+      for(var i=0;i<nTank&&tanks.length;i++){slotQ.push(tanks.shift());}
+      for(var i=0;i<nHeal&&heals.length;i++){slotQ.push(heals.shift());}
+      for(var i=0;i<nDps&&dpss.length;i++) {slotQ.push(dpss.shift());}
+      for(var si=0;si<sub.length&&slotQ.length;si++){
+        if(!sub[si]){sub[si]={name:slotQ[0].name,cls:slotQ[0].cls};slotQ.shift();placed++;}
       }
     });
   });
-  forceSave(data); forceRender();
-  if(qi>0) alert(qi+'명이 자동 배치되었습니다.');
+  forceSave(data); forceModalClose(); forceRender();
+  alert(placed+'명이 자동 배치되었습니다.');
 }
 
 // ─── Discord 복사 ─────────────────────────────────────────────────────────────
@@ -8199,8 +8299,12 @@ window.forceOpenRecruitModal=forceOpenRecruitModal; window.forceSaveRecruit=forc
 window.forceSaveHistory=forceSaveHistory; window.forceShowHistory=forceShowHistory;
 window.forceRestoreHistory=forceRestoreHistory; window.forceDeleteHistory=forceDeleteHistory;
 window.forceModalClose=forceModalClose; window.forcePickCls=forcePickCls;
-window.forceAutoArrange=forceAutoArrange; window.forceCopyText=forceCopyText;
+window.forceAutoArrange=forceAutoArrange; window.forceConfirmAutoArrange=forceConfirmAutoArrange;
+window.forceCopyText=forceCopyText;
 window.forceSetSubpartyLabel=forceSetSubpartyLabel;
+window.forceLegionDragStart=forceLegionDragStart;
+window.forcePanelDragOver=forcePanelDragOver; window.forcePanelDragLeave=forcePanelDragLeave;
+window.forceDropToParticipants=forceDropToParticipants;
 
 })();
 
