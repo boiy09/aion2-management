@@ -194,11 +194,22 @@ export async function onRequest(context) {
                  || (Array.isArray(rankRaw) ? rankRaw : []);
     // 필드명 정규화 + gradeIcon 절대 URL 변환
     rankList = rankList.map(function(r) {
-      var icon = r.gradeIcon || r.gradeIconUrl || r.rankGradeIcon || r.tierIcon || r.gradeImageUrl || '';
-      if (icon && !icon.startsWith('http')) icon = 'https://aion2.plaync.com' + icon;
-      var contentsName = r.rankingContentsName || r.contentsName || r.contentName || r.rankType || r.type || r.name || '';
-      var gradeName    = r.gradeName || r.grade || r.rankGrade || r.tierName || r.rankName || r.levelName || '';
-      return Object.assign({}, r, { gradeIcon: icon, rankingContentsName: contentsName, gradeName: gradeName });
+      function absUrl(u) { return (u && !String(u).startsWith('http')) ? 'https://aion2.plaync.com' + u : (u||''); }
+      var icon        = absUrl(r.gradeIcon || r.gradeIconUrl || r.rankGradeIcon || r.tierIcon || r.gradeImageUrl || '');
+      var emblemIcon  = absUrl(r.emblemIcon || r.emblemIconUrl || r.emblemImage || r.rankEmblemIcon || r.emblem || '');
+      var serverEmblem= absUrl(r.serverEmblemIcon || r.serverEmblem || r.svEmblemIcon || '');
+      var contentsName= r.rankingContentsName || r.contentsName || r.contentName || r.rankType || r.type || r.name || '';
+      var gradeName   = r.gradeName || r.grade || r.rankGrade || r.tierName || r.rankName || r.levelName || '';
+      var serverRank  = r.serverRank || r.svRank || r.svrRank || r.serverRanking || 0;
+      var classRank   = r.classRank  || r.jobRank || r.clsRank || r.classRanking || 0;
+      var serverPoint = r.serverPoint || r.svPoint || 0;
+      var classPoint  = r.classPoint  || r.jobPoint || 0;
+      return Object.assign({}, r, {
+        gradeIcon: icon, emblemIcon: emblemIcon, serverEmblemIcon: serverEmblem,
+        rankingContentsName: contentsName, gradeName: gradeName,
+        serverRank: serverRank, classRank: classRank,
+        serverPoint: serverPoint, classPoint: classPoint,
+      });
     });
     var titleRaw       = (infoData && infoData.title) ? infoData.title : {};
     var titleList      = titleRaw.titleList      || [];

@@ -807,7 +807,9 @@
   <th><span onclick="setSortBy('rank')" style="cursor:pointer;user-select:none;">계급 <span id="sort-rank"></span></span></th>
   <th style="white-space:nowrap;"><span onclick="setSortBy('combat_power')" style="cursor:pointer;user-select:none;">전투력 <span id="sort-combat_power"></span></span></th>
   <th style="white-space:nowrap;"><span onclick="setSortBy('item_level')" style="cursor:pointer;user-select:none;">아이템레벨 <span id="sort-item_level"></span></span></th>
-  <th style="white-space:nowrap;"><span onclick="setSortBy('abyss_rank')" style="cursor:pointer;user-select:none;">어비스 <span id="sort-abyss_rank"></span></span></th><th>장비</th><th>갱신</th><th>관리</th>
+  <th style="white-space:nowrap;"><span onclick="setSortBy('abyss_rank')" style="cursor:pointer;user-select:none;">어비스 계급 <span id="sort-abyss_rank"></span></span></th>
+  <th style="white-space:nowrap;">어비스 장비</th>
+  <th>장비</th><th>갱신</th><th>관리</th>
 </tr></thead>
         <tbody id="member-body"></tbody>
       </table>
@@ -3113,7 +3115,7 @@ function initDb() {
     if(isFirstLoad){ sessionStorage.setItem("_loginInit","1"); initLoginScreen(); }
     setDbStatus('error', 'network-timeout');
     var _tbody = document.querySelector('#members-tbody');
-    if(_tbody) _tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--red);font-size:14px;">⚠ 서버 연결 실패 — 잠시 후 <button onclick="sessionStorage.removeItem(\'_autoRetry\');location.reload(true)" style="background:none;border:1px solid var(--red);color:var(--red);padding:3px 10px;border-radius:5px;font-size:12px;cursor:pointer;">다시 시도</button></td></tr>';
+    if(_tbody) _tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--red);font-size:14px;">⚠ 서버 연결 실패 — 잠시 후 <button onclick="sessionStorage.removeItem(\'_autoRetry\');location.reload(true)" style="background:none;border:1px solid var(--red);color:var(--red);padding:3px 10px;border-radius:5px;font-size:12px;cursor:pointer;">다시 시도</button></td></tr>';
   }, 30000);
   window.loadingTimeout = _loadTimeout;
 
@@ -3337,7 +3339,7 @@ function initDb() {
           if(isFL){ sessionStorage.setItem("_loginInit","1"); initLoginScreen(); }
           setDbStatus('error', 'stale-cache');
           var _tbody = document.querySelector('#members-tbody');
-          if(_tbody) { var _banner = document.createElement('tr'); _banner.innerHTML = '<td colspan="9" style="text-align:center;padding:8px;background:#2a1800;color:#cc9020;font-size:12px;">⚠ 서버 연결 불안정 — 이전 데이터를 표시 중입니다. <button onclick="sessionStorage.removeItem(\'_autoRetry\');location.reload(true)" style="background:none;border:1px solid #cc9020;color:#cc9020;padding:2px 8px;border-radius:4px;font-size:11px;cursor:pointer;">다시 시도</button></td>'; _tbody.prepend(_banner); }
+          if(_tbody) { var _banner = document.createElement('tr'); _banner.innerHTML = '<td colspan="10" style="text-align:center;padding:8px;background:#2a1800;color:#cc9020;font-size:12px;">⚠ 서버 연결 불안정 — 이전 데이터를 표시 중입니다. <button onclick="sessionStorage.removeItem(\'_autoRetry\');location.reload(true)" style="background:none;border:1px solid #cc9020;color:#cc9020;padding:2px 8px;border-radius:4px;font-size:11px;cursor:pointer;">다시 시도</button></td>'; _tbody.prepend(_banner); }
           _setupRealtimeSubscriptions();
           return;
         }
@@ -3362,7 +3364,7 @@ function initDb() {
           if(isFirstLoad){ sessionStorage.setItem("_loginInit","1"); initLoginScreen(); }
           setDbStatus('error', err.code || err.message);
           var _tbody = document.querySelector('#members-tbody');
-          if(_tbody) _tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--red);font-size:14px;">⚠ 서버 연결 실패 — 잠시 후 <button onclick="sessionStorage.removeItem(\'_autoRetry\');location.reload(true)" style="background:none;border:1px solid var(--red);color:var(--red);padding:3px 10px;border-radius:5px;font-size:12px;cursor:pointer;">다시 시도</button></td></tr>';
+          if(_tbody) _tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--red);font-size:14px;">⚠ 서버 연결 실패 — 잠시 후 <button onclick="sessionStorage.removeItem(\'_autoRetry\');location.reload(true)" style="background:none;border:1px solid var(--red);color:var(--red);padding:3px 10px;border-radius:5px;font-size:12px;cursor:pointer;">다시 시도</button></td></tr>';
         }
       });
 
@@ -4882,23 +4884,32 @@ function openDetail(m) {
   }).join('');
 
   // 랭킹
-  const rankHTML = (m.ranking||[]).map(r => {
-    const icon = r.gradeIcon || '';
-    const iconHtml = icon
-      ? `<img src="${icon}" style="width:44px;height:44px;object-fit:contain;flex-shrink:0;" onerror="this.replaceWith(document.createTextNode(''))">`
-      : '';
+  const rankHTML = !(m.ranking||[]).length
+    ? `<div style="padding:30px;text-align:center;color:var(--muted);">랭킹 데이터 없음 — 갱신 후 확인하세요</div>`
+    : (m.ranking||[]).map(r => {
+    const gradeIcon  = r.gradeIcon||'';
+    const emblemIcon = r.emblemIcon||'';
+    const svrEmblem  = r.serverEmblemIcon||'';
+    const gradeHtml  = gradeIcon  ? `<img src="${gradeIcon}"  style="width:52px;height:52px;object-fit:contain;" onerror="this.style.display='none'">` : '';
+    const emblemHtml = emblemIcon ? `<img src="${emblemIcon}" style="width:36px;height:36px;object-fit:contain;" onerror="this.style.display='none'">` : '';
+    const svrEmblHtml= svrEmblem  ? `<img src="${svrEmblem}"  style="width:28px;height:28px;object-fit:contain;" onerror="this.style.display='none'">` : '';
+    const svRank  = r.serverRank||0;
+    const clsRank = r.classRank||0;
+    const svPt    = r.serverPoint||0;
+    const clsPt   = r.classPoint||0;
+    const baseRank= r.rank||0;
+    const basePt  = r.point||0;
     return `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;">
-      <div style="display:flex;align-items:center;gap:10px;">
-        ${iconHtml}
-        <div>
-          <div style="font-size:13px;font-weight:600;">${r.rankingContentsName||''}</div>
-          <div style="font-size:12px;color:var(--gold-l);font-weight:600;margin-top:2px;">${r.gradeName||''}</div>
-        </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:14px;">
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">${gradeHtml}${emblemHtml}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:14px;font-weight:700;margin-bottom:3px;">${r.rankingContentsName||''}</div>
+        <div style="font-size:13px;color:var(--gold-l);font-weight:600;">${r.gradeName||''}</div>
       </div>
-      <div style="text-align:right;">
-        <div style="font-size:16px;font-weight:700;color:var(--gold-l);">${(r.rank||0).toLocaleString()}위</div>
-        <div style="font-size:11px;color:var(--muted);">${(r.point||0).toLocaleString()}점</div>
+      <div style="display:flex;gap:12px;align-items:center;flex-shrink:0;">
+        ${svRank ? `<div style="text-align:center;">${svrEmblHtml}<div style="font-size:10px;color:var(--muted);margin-bottom:2px;">서버</div><div style="font-size:16px;font-weight:700;color:var(--gold-l);">${svRank.toLocaleString()}위</div>${svPt?`<div style="font-size:10px;color:var(--muted);">${svPt.toLocaleString()}점</div>`:''}</div>` : ''}
+        ${clsRank ? `<div style="text-align:center;"><div style="font-size:10px;color:var(--muted);margin-bottom:2px;">직업</div><div style="font-size:16px;font-weight:700;color:#9966dd;">${clsRank.toLocaleString()}위</div>${clsPt?`<div style="font-size:10px;color:var(--muted);">${clsPt.toLocaleString()}점</div>`:''}</div>` : ''}
+        ${(!svRank && !clsRank && baseRank) ? `<div style="text-align:center;"><div style="font-size:16px;font-weight:700;color:var(--gold-l);">${baseRank.toLocaleString()}위</div><div style="font-size:10px;color:var(--muted);">${basePt.toLocaleString()}점</div></div>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -5400,8 +5411,22 @@ function renderMembers() {
         const r=(m.ranking||[]).find(r=>r.rankingContentsName&&r.rankingContentsName.includes('어비스'));
         if(!r) return '—';
         const name = r.gradeName||'';
-        if(!r.gradeIcon) return name||'—';
-        return '<img src="'+r.gradeIcon+'" style="width:22px;height:22px;vertical-align:middle;margin-right:3px;" onerror="this.style.display=\'none\'">'+name;
+        const icon = r.gradeIcon||'';
+        const emblem = r.emblemIcon||'';
+        const iconHtml = icon ? '<img src="'+icon+'" style="width:20px;height:20px;vertical-align:middle;margin-right:2px;" onerror="this.style.display=\'none\'">' : '';
+        const emblemHtml = emblem ? '<img src="'+emblem+'" style="width:20px;height:20px;vertical-align:middle;margin-right:3px;" onerror="this.style.display=\'none\'">' : '';
+        return emblemHtml+iconHtml+(name||'—');
+      })()}</td>
+      <td style="white-space:nowrap;">${(()=>{
+        const ABYSS_KW = ['별장','부장','원수','어비스'];
+        const items = (m.equipment||[]).filter(e=>{
+          const s=(e.setName||e.set_name||''); const n=(e.name||'');
+          return ABYSS_KW.some(k=>s.includes(k)||n.includes(k));
+        });
+        if(!items.length) return '—';
+        const setName = items[0].setName||items[0].name||'어비스 장비';
+        const iconHtml = items[0].icon ? '<img src="'+items[0].icon+'" style="width:20px;height:20px;vertical-align:middle;margin-right:4px;" onerror="this.style.display=\'none\'">' : '';
+        return iconHtml+'<span style="font-size:11px;">'+setName+'</span><span style="font-size:10px;color:var(--muted);margin-left:3px;">×'+items.length+'</span>';
       })()}</td>
       <td><div class="equip-list">${equips(m.equipment)}</div></td>
       <td style="white-space:nowrap;vertical-align:middle;">${syncBtn}${lastSync}</td>
@@ -5413,7 +5438,7 @@ function renderMembers() {
   };
 
   if(!filtered.length) {
-    document.getElementById('member-body').innerHTML = `<tr><td colspan="8"><div class="empty"><div class="empty-icon">⚔</div><p>검색 결과가 없어요</p></div></td></tr>`;
+    document.getElementById('member-body').innerHTML = `<tr><td colspan="9"><div class="empty"><div class="empty-icon">⚔</div><p>검색 결과가 없어요</p></div></td></tr>`;
     return;
   }
 
@@ -5430,7 +5455,7 @@ function renderMembers() {
       (m.nickname||'').toLowerCase().includes(search)
     ));
     if(subFiltered.length) {
-      rows += `<tr><td colspan="9" style="padding:2px 0;"><div style="display:flex;align-items:center;gap:8px;margin:4px 0;"><div style="flex:1;border-top:1px dashed var(--border);"></div><span style="font-size:11px;color:var(--muted);white-space:nowrap;">부캐</span><div style="flex:1;border-top:1px dashed var(--border);"></div></div></td></tr>`;
+      rows += `<tr><td colspan="10" style="padding:2px 0;"><div style="display:flex;align-items:center;gap:8px;margin:4px 0;"><div style="flex:1;border-top:1px dashed var(--border);"></div><span style="font-size:11px;color:var(--muted);white-space:nowrap;">부캐</span><div style="flex:1;border-top:1px dashed var(--border);"></div></div></td></tr>`;
       subFiltered.forEach(s => { rows += rowHTML(s, true); });
     }
   } else {
@@ -5448,7 +5473,7 @@ function renderMembers() {
       ));
       mainFiltered.forEach(m => { rows += rowHTML(m, false, ''); });
       if(subFiltered.length) {
-        rows += `<tr><td colspan="9" style="padding:2px 0;"><div style="display:flex;align-items:center;gap:8px;margin:4px 0;"><div style="flex:1;border-top:1px dashed var(--border);"></div><span style="font-size:11px;color:var(--muted);white-space:nowrap;">부캐</span><div style="flex:1;border-top:1px dashed var(--border);"></div></div></td></tr>`;
+        rows += `<tr><td colspan="10" style="padding:2px 0;"><div style="display:flex;align-items:center;gap:8px;margin:4px 0;"><div style="flex:1;border-top:1px dashed var(--border);"></div><span style="font-size:11px;color:var(--muted);white-space:nowrap;">부캐</span><div style="flex:1;border-top:1px dashed var(--border);"></div></div></td></tr>`;
         subFiltered.forEach(s => { rows += rowHTML(s, true); });
       }
     } else {
@@ -5479,7 +5504,7 @@ function renderMembers() {
   }
 
   document.getElementById('member-body').innerHTML = rows ||
-    `<tr><td colspan="8"><div class="empty"><div class="empty-icon">⚔</div><p>검색 결과가 없어요</p></div></td></tr>`;
+    `<tr><td colspan="9"><div class="empty"><div class="empty-icon">⚔</div><p>검색 결과가 없어요</p></div></td></tr>`;
 }
 
 
