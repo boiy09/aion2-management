@@ -244,14 +244,14 @@
   .force-recruit-banner { background:linear-gradient(90deg,rgba(239,68,68,.12),rgba(255,140,0,.1)); border:1px solid rgba(239,68,68,.4); border-radius:8px; padding:10px 16px; margin-bottom:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
   .force-party { background:var(--card); border:1px solid var(--border); border-radius:8px; margin-bottom:10px; overflow:hidden; }
   .force-party-hdr { display:flex; align-items:center; gap:6px; padding:8px 12px; background:rgba(0,0,0,.25); border-bottom:1px solid var(--border); flex-wrap:wrap; }
-  .force-subparty { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; padding:8px 10px; border-bottom:1px solid rgba(255,255,255,.04); }
+  .force-subparty { display:grid; grid-template-columns:repeat(4,1fr); gap:4px; padding:5px 8px; border-bottom:1px solid rgba(255,255,255,.04); }
   .force-subparty:last-child { border-bottom:none; }
-  .force-slot { min-height:52px; border-radius:6px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:4px 6px; cursor:pointer; text-align:center; user-select:none; transition:border-color .15s,background .15s; }
-  .force-slot.empty { border:1px dashed var(--border); background:rgba(255,255,255,.01); color:var(--muted); font-size:11px; }
+  .force-slot { min-height:38px; border-radius:5px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:3px 4px; cursor:pointer; text-align:center; user-select:none; transition:border-color .15s,background .15s; }
+  .force-slot.empty { border:1px dashed var(--border); background:rgba(255,255,255,.01); color:var(--muted); font-size:10px; }
   .force-slot.filled { border:1px solid var(--gold-d); background:rgba(0,200,138,.05); }
   .force-slot.drag-over { border-color:var(--gold) !important; background:rgba(0,200,138,.12) !important; }
-  .force-slot-name { font-weight:700; font-size:12px; color:var(--text); line-height:1.2; word-break:break-all; }
-  .force-slot-cp   { font-size:9px; color:var(--muted); margin-top:1px; }
+  .force-slot-name { font-weight:700; font-size:11px; color:var(--text); line-height:1.2; word-break:break-all; }
+  .force-slot-cp   { font-size:8px; color:var(--muted); margin-top:1px; }
   /* 구성 현황바 */
   .force-comp-bar { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:10px 14px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:10px; }
   .force-comp-bar-section { display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
@@ -7591,7 +7591,7 @@ if(document.getElementById('tab-homework') && document.getElementById('tab-homew
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
 'use strict';
-var FORCE_KEY = 'aion2_force_v1';
+var FORCE_KEY = 'aion2_force_v2';
 var _dragInfo = null;
 
 var CLS_COLORS = { '검성':'#4ecdc4','수호성':'#4a80c4','살성':'#5ab860','궁성':'#3a9468','마도성':'#7b55cc','정령성':'#9540aa','치유성':'#d4aa30','호법성':'#c48c38' };
@@ -7844,7 +7844,7 @@ function forceRenderParties(data) {
             +' onclick="forceSlotClick(\''+_esc(party.id)+'\','+subIdx+','+slotIdx+')"'
             +' style="border-color:'+col+'55;background:'+col+'12;">'
             +'<span class="force-slot-name">'+_h(slot.name)+'</span>'
-            +'<span style="'+clsStyle(slot.cls)+';margin-top:2px;">'+_h(slot.cls||'')+'</span>'
+            +'<span style="'+clsStyle(slot.cls)+';margin-top:1px;font-size:9px;padding:0 3px;">'+_h(slot.cls||'')+'</span>'
             +(cp?'<span class="force-slot-cp">'+cp.toLocaleString()+'</span>':'')
             +'</div>';
         } else {
