@@ -272,26 +272,7 @@ export async function onRequest(context) {
         if (found && found.gradeName) {
           gradeMap[type] = { gradeName: found.gradeName, gradeIcon: found.gradeIcon || '' };
         }
-        // 직업별 랭킹: found.classId 우선, 없으면 profile의 className으로 추정
-        if (type === 1) {
-          const classNameToId = {
-            Gladiator:1, Templar:2, Assassin:3, Ranger:4,
-            Sorcerer:5, Spiritmaster:6, Cleric:7, Chanter:9,
-          };
-          var charClassId = (found && found.classId)
-            || classNameToId[profile.className]
-            || 0;
-          if (charClassId) {
-            var cres = await fetch(
-              'https://aion2.plaync.com/api/ranking/list?lang=ko&rankingContentsType=1&rankingType=1&serverId='+serverId+'&classId='+charClassId+'&pageSize=100',
-              { headers }
-            );
-            var cdata = await cres.json();
-            var clist = cdata.rankingList || [];
-            var cfound = clist.find(function(r) { return r.characterId === rawId; });
-            if (cfound) classRankMap[1] = cfound.rank || 0;
-          }
-        }
+        // 직업별 랭킹: NC 공개 API는 rankingType=1 미지원 (로그인 필요, 항상 0개 반환)
       }));
     } catch(e) {}
 
