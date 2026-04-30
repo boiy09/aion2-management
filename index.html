@@ -1298,8 +1298,6 @@
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <button class="btn btn-sm" onclick="forceOpenRecruitModal()">📢 모집 설정</button>
           <button class="btn btn-sm" onclick="forceAddParty()">+ 파티</button>
-          <button class="btn btn-sm" onclick="forceOpenPreset()">📐 프리셋</button>
-          <button class="btn btn-sm" onclick="forceImportDB()">🗄 멤버 불러오기</button>
           <button class="btn btn-sm" onclick="forceAutoArrange()">🤖 자동 편성</button>
           <button class="btn btn-sm" onclick="forceCopyText()">📋 Discord 복사</button>
           <button class="btn btn-sm" onclick="forceSaveHistory()">💾 저장</button>
@@ -7594,10 +7592,10 @@ function clsStyle(cls) {
 }
 function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
 function forceGetRole(cls) { return ROLE_MAP[cls]||'dps'; }
+var FORCE_CML={'Gladiator':'검성','Templar':'수호성','Assassin':'살성','Ranger':'궁성','Sorcerer':'마도성','Spiritmaster':'정령성','Cleric':'치유성','Chanter':'호법성'};
 function lookupCp(name) {
-  if(!window.members||!name) return 0;
-  var m=window.members.find(function(x){return x.nickname===name;});
-  return m?(+m.combat_power||0):0;
+  if(!name) return 0;
+  try { var m=members.find(function(x){return x.nickname===name;}); return m?(+m.combat_power||0):0; } catch(e){return 0;}
 }
 function forceNewParty(name) {
   return { id:'p'+uid(), name:name||'파티', subparties:[[null,null,null,null],[null,null,null,null]], subpartyLabels:['',''] };
@@ -7627,9 +7625,31 @@ function fmtTs(ts) {
   return (d.getMonth()+1)+'/'+(d.getDate())+' '+ampm+' '+(h===0?12:h>12?h-12:h)+':'+String(m).padStart(2,'0');
 }
 
+// ─── 멤버 자동 동기화 ────────────────────────────────────────────────────────
+function forceSyncMembers(data) {
+  try {
+    if(!members||!members.length) return;
+    var existMap={};
+    data.members.forEach(function(m){existMap[m.name]=m;});
+    members.forEach(function(m){
+      if(!m.nickname) return;
+      var cls=FORCE_CML[m.class]||m.class||'';
+      var cp=+m.combat_power||0;
+      if(!existMap[m.nickname]) {
+        data.members.push({id:'m'+uid(),name:m.nickname,cls:cls,joined:true,cp:cp});
+      } else {
+        if(cls) existMap[m.nickname].cls=cls;
+        if(cp)  existMap[m.nickname].cp=cp;
+      }
+    });
+  } catch(e){}
+}
+
 // ─── RENDER ──────────────────────────────────────────────────────────────────
 function forceRender() {
   var data = forceLoad();
+  forceSyncMembers(data);
+  forceSave(data);
   forceRenderBanner(data);
   forceRenderComposition(data);
   forceRenderMembers(data);
@@ -8108,55 +8128,6 @@ function forceSetSubpartyLabel(partyId, subIdx) {
   forceSave(data); forceRender();
 }
 
-// ─── DB 멤버 불러오기 ─────────────────────────────────────────────────────────
-function forceImportDB() {
-  if(!window.members||!window.members.length){alert('레기온 멤버 데이터가 없습니다.\n멤버 탭을 먼저 방문해주세요.');return;}
-  var CML={'Gladiator':'검성','Templar':'수호성','Assassin':'살성','Ranger':'궁성','Sorcerer':'마도성','Spiritmaster':'정령성','Cleric':'치유성','Chanter':'호법성'};
-  var data=forceLoad();
-  var existNames={};
-  data.members.forEach(function(m){existNames[m.name]=true;});
-  var dbM=window.members.filter(function(m){return !existNames[m.nickname];});
-  if(!dbM.length){alert('이미 모든 레기온 멤버가 추가되어 있습니다.');return;}
-  var listHtml=dbM.map(function(m){
-    var cls=CML[m.class]||m.class||'?';
-    var col=CLS_COLORS[cls]||'#888';
-    var cp=m.combat_power?(+m.combat_power).toLocaleString():'—';
-    return '<label style="display:flex;align-items:center;gap:6px;padding:5px 0;cursor:pointer;">'
-      +'<input type="checkbox" class="fimp-chk" value="'+_esc(m.nickname)+'" checked style="width:14px;height:14px;accent-color:var(--gold);">'
-      +'<span style="font-weight:600;font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+_h(m.nickname)+'</span>'
-      +'<span style="'+clsStyle(cls)+'">'+cls+'</span>'
-      +'<span style="font-size:11px;color:var(--muted);min-width:52px;text-align:right;">'+cp+'</span>'
-      +'</label>';
-  }).join('');
-  var html='<div style="padding:20px;">'
-    +'<div style="font-size:14px;font-weight:700;color:var(--gold-l);margin-bottom:4px;">🗄 레기온 멤버 불러오기</div>'
-    +'<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">'+dbM.length+'명 · 선택한 멤버를 참여자 목록에 추가합니다</div>'
-    +'<div style="display:flex;gap:6px;margin-bottom:8px;">'
-    +'<button onclick="document.querySelectorAll(\'.fimp-chk\').forEach(function(c){c.checked=true;})" class="btn btn-sm" style="font-size:11px;">전체 선택</button>'
-    +'<button onclick="document.querySelectorAll(\'.fimp-chk\').forEach(function(c){c.checked=false;})" class="btn btn-sm" style="font-size:11px;">전체 해제</button>'
-    +'</div>'
-    +'<div style="max-height:340px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:6px 10px;margin-bottom:14px;">'+listHtml+'</div>'
-    +'<div style="display:flex;gap:8px;">'
-    +'<button onclick="forceConfirmImportDB()" class="btn btn-primary btn-sm">불러오기</button>'
-    +'<button onclick="forceModalClose()" class="btn btn-sm">취소</button>'
-    +'</div></div>';
-  forceModal(html);
-  window._forceImportDbMembers=dbM;
-}
-function forceConfirmImportDB() {
-  var dbM=window._forceImportDbMembers||[];
-  var CML={'Gladiator':'검성','Templar':'수호성','Assassin':'살성','Ranger':'궁성','Sorcerer':'마도성','Spiritmaster':'정령성','Cleric':'치유성','Chanter':'호법성'};
-  var checked=Array.from(document.querySelectorAll('.fimp-chk:checked')).map(function(c){return c.value;});
-  if(!checked.length){alert('선택된 멤버가 없습니다.');return;}
-  var data=forceLoad();
-  checked.forEach(function(nick){
-    var m=dbM.find(function(x){return x.nickname===nick;}); if(!m) return;
-    var cls=CML[m.class]||m.class||'';
-    data.members.push({id:'m'+uid(),name:m.nickname,cls:cls,joined:true,cp:+m.combat_power||0});
-  });
-  forceSave(data); forceModalClose(); forceRender();
-}
-
 // ─── 자동 편성 ────────────────────────────────────────────────────────────────
 function forceAutoArrange() {
   var data=forceLoad();
@@ -8212,41 +8183,6 @@ function forceCopyText() {
   } else { prompt('아래 텍스트를 복사하세요:',text); }
 }
 
-// ─── 컨텐츠 프리셋 ────────────────────────────────────────────────────────────
-var FORCE_PRESETS=[
-  {name:'소규모 (8인)',    desc:'1파티 × 2서브파티 × 4슬롯', parties:1, sub:2, slots:4},
-  {name:'루드라 (24인)',   desc:'3파티 × 2서브파티 × 4슬롯', parties:3, sub:2, slots:4},
-  {name:'아티쟁 (48인)',   desc:'6파티 × 2서브파티 × 4슬롯', parties:6, sub:2, slots:4},
-  {name:'대규모 쟁 (32인)',desc:'4파티 × 2서브파티 × 4슬롯', parties:4, sub:2, slots:4},
-  {name:'소파티 (6인)',    desc:'1파티 × 2서브파티 × 3슬롯', parties:1, sub:2, slots:3},
-];
-function forceOpenPreset() {
-  var html='<div style="padding:20px;">'
-    +'<div style="font-size:14px;font-weight:700;color:var(--gold-l);margin-bottom:4px;">📐 컨텐츠 프리셋</div>'
-    +'<div style="font-size:12px;color:var(--muted);margin-bottom:14px;">파티 구조를 초기화합니다. 참여자 목록은 유지됩니다.</div>';
-  FORCE_PRESETS.forEach(function(p,i){
-    html+='<button onclick="forceApplyPreset('+i+')" style="width:100%;text-align:left;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:6px;cursor:pointer;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">'
-      +'<span style="font-size:13px;font-weight:600;color:var(--text);">'+_h(p.name)+'</span>'
-      +'<span style="font-size:11px;color:var(--muted);">'+_h(p.desc)+'</span>'
-      +'</button>';
-  });
-  html+='<div style="margin-top:8px;"><button onclick="forceModalClose()" class="btn btn-sm">취소</button></div></div>';
-  forceModal(html);
-}
-function forceApplyPreset(idx) {
-  var p=FORCE_PRESETS[idx]; if(!p) return;
-  if(!confirm('"'+p.name+'" 프리셋을 적용합니다.\n현재 파티 편성이 초기화됩니다. 계속하시겠습니까?')) return;
-  var data=forceLoad(); data.parties=[];
-  for(var pi=0;pi<p.parties;pi++){
-    var party={id:'p'+uid(),name:'파티'+(pi+1),subparties:[],subpartyLabels:[]};
-    for(var si=0;si<p.sub;si++){
-      var sl=[]; for(var k=0;k<p.slots;k++) sl.push(null);
-      party.subparties.push(sl); party.subpartyLabels.push('');
-    }
-    data.parties.push(party);
-  }
-  forceSave(data); forceModalClose(); forceRender();
-}
 
 // expose globals
 window.forceAddParty=forceAddParty; window.forceDelParty=forceDelParty;
@@ -8263,9 +8199,7 @@ window.forceOpenRecruitModal=forceOpenRecruitModal; window.forceSaveRecruit=forc
 window.forceSaveHistory=forceSaveHistory; window.forceShowHistory=forceShowHistory;
 window.forceRestoreHistory=forceRestoreHistory; window.forceDeleteHistory=forceDeleteHistory;
 window.forceModalClose=forceModalClose; window.forcePickCls=forcePickCls;
-window.forceImportDB=forceImportDB; window.forceConfirmImportDB=forceConfirmImportDB;
 window.forceAutoArrange=forceAutoArrange; window.forceCopyText=forceCopyText;
-window.forceOpenPreset=forceOpenPreset; window.forceApplyPreset=forceApplyPreset;
 window.forceSetSubpartyLabel=forceSetSubpartyLabel;
 
 })();
