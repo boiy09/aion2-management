@@ -246,12 +246,12 @@
   .force-party-hdr { display:flex; align-items:center; gap:6px; padding:4px 8px; background:rgba(0,0,0,.25); border-bottom:1px solid var(--border); flex-wrap:wrap; }
   .force-subparty { display:grid; grid-template-columns:repeat(4,1fr); gap:2px; padding:3px 6px; border-bottom:1px solid rgba(255,255,255,.04); align-items:start; }
   .force-subparty:last-child { border-bottom:none; }
-  .force-slot { border-radius:4px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:1px 3px; height:32px; overflow:hidden; cursor:pointer; text-align:center; user-select:none; transition:border-color .15s,background .15s; }
-  .force-slot.empty { border:1px dashed var(--border); background:rgba(255,255,255,.01); color:var(--muted); font-size:8px; }
+  .force-slot { border-radius:3px; display:flex; flex-direction:row; align-items:center; justify-content:center; gap:3px; padding:0 3px; height:16px; overflow:hidden; cursor:pointer; text-align:center; user-select:none; transition:border-color .15s,background .15s; }
+  .force-slot.empty { border:1px dashed var(--border); background:rgba(255,255,255,.01); color:var(--muted); font-size:7px; }
   .force-slot.filled { border:1px solid var(--gold-d); background:rgba(0,200,138,.05); }
   .force-slot.drag-over { border-color:var(--gold) !important; background:rgba(0,200,138,.12) !important; }
-  .force-slot-name { font-weight:700; font-size:10px; color:var(--text); line-height:1.2; word-break:break-all; }
-  .force-slot-cp   { font-size:7px; color:var(--muted); margin-top:0; }
+  .force-slot-name { font-weight:700; font-size:9px; color:var(--text); line-height:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+  .force-slot-cp   { font-size:7px; color:var(--muted); white-space:nowrap; }
   /* 구성 현황바 */
   .force-comp-bar { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:10px 14px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:10px; }
   .force-comp-bar-section { display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
@@ -7843,8 +7843,8 @@ function forceRenderParties(data) {
             +' ondrop="forceSlotDrop(event,\''+_esc(party.id)+'\','+subIdx+','+slotIdx+')"'
             +' onclick="forceSlotClick(\''+_esc(party.id)+'\','+subIdx+','+slotIdx+')"'
             +' style="border-color:'+col+'55;background:'+col+'12;">'
-            +'<span class="force-slot-name" style="line-height:1.1;">'+_h(slot.name)+'</span>'
-            +'<span style="'+clsStyle(slot.cls)+';font-size:8px;padding:0 2px;line-height:1.1;">'+_h(slot.cls||'')+'</span>'
+            +'<span class="force-slot-name">'+_h(slot.name)+'</span>'
+            +'<span style="'+clsStyle(slot.cls)+';font-size:7px;padding:0 2px;line-height:1;border-radius:3px;white-space:nowrap;">'+_h(slot.cls||'')+'</span>'
             +(cp?'<span class="force-slot-cp">'+cp.toLocaleString()+'</span>':'')
             +'</div>';
         } else {
