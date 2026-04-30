@@ -203,10 +203,57 @@ export async function onRequest(context) {
 
     // NC ranking list API에서 grade/icon 데이터 보강
     // character info의 gradeName/gradeIcon은 null → 별도 ranking list API 호출 필요
+    const CDN_GRADE = 'https://assets.playnccdn.com/static-aion2-gamedata/resources/';
+
+    // 어비스(type 1) rank → grade (rank-based 구간 경계)
+    function abyssGradeByRank(rank) {
+      if (!rank) return null;
+      if (rank === 1)              return { name:'총사령관', icon:'UT_Ranking_Grade_Abyss_Chief_Commander_02.png' };
+      if (rank === 2)              return { name:'사령관',   icon:'UT_Ranking_Grade_Abyss_Chief_Commander_01.png' };
+      if (rank <= 4)               return { name:'대장군',   icon:'UT_Ranking_Grade_Abyss_General_02.png' };
+      if (rank <= 6)               return { name:'장군',     icon:'UT_Ranking_Grade_Abyss_General_01.png' };
+      if (rank <= 20)              return { name:'5성장교',  icon:'UT_Ranking_Grade_Abyss_Officer_05.png' };
+      if (rank <= 40)              return { name:'4성장교',  icon:'UT_Ranking_Grade_Abyss_Officer_04.png' };
+      if (rank <= 70)              return { name:'3성장교',  icon:'UT_Ranking_Grade_Abyss_Officer_03.png' };
+      if (rank <= 100)             return { name:'2성장교',  icon:'UT_Ranking_Grade_Abyss_Officer_02.png' };
+      if (rank <= 130)             return { name:'1성장교',  icon:'UT_Ranking_Grade_Abyss_Officer_01.png' };
+      return null; // 병사/훈련병은 아이콘 없음
+    }
+
+    // 악몽(type 3) rank → grade
+    function nightmareGradeByRank(rank) {
+      if (!rank) return null;
+      if (rank === 1)  return { name:'챌린저1',    icon:'UT_Arena_Ranking_Grade_Challenger_01.png' };
+      if (rank <= 3)   return { name:'챌린저2',    icon:'UT_Arena_Ranking_Grade_Challenger_02.png' };
+      if (rank <= 5)   return { name:'챌린저3',    icon:'UT_Arena_Ranking_Grade_Challenger_03.png' };
+      if (rank <= 10)  return { name:'그랜드마스터',icon:'UT_Arena_Ranking_Grade_GrandMaster.png' };
+      if (rank <= 20)  return { name:'마스터',     icon:'UT_Arena_Ranking_Grade_Master.png' };
+      if (rank <= 50)  return { name:'다이아몬드', icon:'UT_Arena_Ranking_Grade_Diamond.png' };
+      if (rank <= 100) return { name:'플래티넘',   icon:'UT_Arena_Ranking_Grade_Platinum.png' };
+      return null;
+    }
+
+    // 초월(type 4) / 각성전(type 21): point-based, top 100에서만 정확한 grade 획득
+    function arenaGradeByRank(rank) {
+      if (!rank) return null;
+      if (rank === 1)  return { name:'그랜드마스터',icon:'UT_Arena_Ranking_Grade_GrandMaster.png' };
+      if (rank <= 5)   return { name:'마스터',     icon:'UT_Arena_Ranking_Grade_Master.png' };
+      if (rank <= 20)  return { name:'다이아몬드', icon:'UT_Arena_Ranking_Grade_Diamond.png' };
+      if (rank <= 50)  return { name:'플래티넘',   icon:'UT_Arena_Ranking_Grade_Platinum.png' };
+      if (rank <= 100) return { name:'골드',       icon:'UT_Arena_Ranking_Grade_Gold.png' };
+      return null;
+    }
+
+    function fallbackGrade(type, rank) {
+      if (type === 1)  return abyssGradeByRank(rank);
+      if (type === 3)  return nightmareGradeByRank(rank);
+      if (type === 4 || type === 21) return arenaGradeByRank(rank);
+      return null;
+    }
+
     var gradeMap = {};
     var classRankMap = {};
     try {
-      // 각 콘텐츠 타입별로 NC 랭킹 리스트 병렬 조회
       var contentTypes = [];
       rankList.forEach(function(r) {
         if (r.rankingContentsType && contentTypes.indexOf(r.rankingContentsType) === -1) {
@@ -214,8 +261,7 @@ export async function onRequest(context) {
         }
       });
 
-      var gradeResults = await Promise.allSettled(contentTypes.map(async function(type) {
-        // 서버 전체 랭킹 (top 100)
+      await Promise.allSettled(contentTypes.map(async function(type) {
         var res = await fetch(
           'https://aion2.plaync.com/api/ranking/list?lang=ko&rankingContentsType='+type+'&rankingType=0&serverId='+serverId+'&pageSize=100',
           { headers }
@@ -223,16 +269,13 @@ export async function onRequest(context) {
         var data = await res.json();
         var list = data.rankingList || [];
         var found = list.find(function(r) { return r.characterId === rawId; });
-        if (found) {
-          gradeMap[type] = {
-            gradeName: found.gradeName || '',
-            gradeIcon: found.gradeIcon || '',
-            rank: found.rank || 0,
-          };
+        if (found && found.gradeName) {
+          gradeMap[type] = { gradeName: found.gradeName, gradeIcon: found.gradeIcon || '' };
         }
-        // 직업별 랭킹 — classId 기반 (어비스 type=1만)
+        // 직업별 랭킹 (어비스 type=1)
         if (type === 1) {
-          var charClassId = rankList[0] && rankList[0].classId;
+          var charClassId = rankList.find(function(r){return r.rankingContentsType===1;});
+          charClassId = charClassId && charClassId.classId;
           if (charClassId) {
             var cres = await fetch(
               'https://aion2.plaync.com/api/ranking/list?lang=ko&rankingContentsType=1&rankingType=1&serverId='+serverId+'&classId='+charClassId+'&pageSize=100',
@@ -251,12 +294,15 @@ export async function onRequest(context) {
 
     rankList = rankList.map(function(r) {
       var type = r.rankingContentsType;
-      var grade = gradeMap[type] || {};
+      var apiGrade = gradeMap[type];
       var baseRank  = r.rank  || r.totalRank  || r.overallRank || 0;
       var basePoint = r.point || r.rankPoint  || r.totalPoint  || r.score || 0;
       var contentsName = r.rankingContentsName || '';
-      var gradeName = grade.gradeName || r.gradeName || '';
-      var gradeIcon = absUrl(grade.gradeIcon  || r.gradeIcon  || '');
+      // top 100 grade 우선, 없으면 rank-based 추정
+      var computed = apiGrade || fallbackGrade(type, baseRank) || {};
+      var gradeName = computed.gradeName || computed.name || '';
+      var gradeIcon = computed.gradeIcon ? absUrl(computed.gradeIcon)
+                    : (computed.icon ? CDN_GRADE + computed.icon : '');
       var classRank = (type === 1 && classRankMap[1]) ? classRankMap[1] : 0;
       var prevRank  = r.prevRank || 0;
       var rankChange = r.rankChange || (prevRank && baseRank ? prevRank - baseRank : 0);
