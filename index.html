@@ -4108,11 +4108,11 @@ async function syncAllMembers() {
   const status = document.getElementById('sync-all-status');
   btn.disabled = true;
 
-  let done = 0, fail = 0;
+  let done = 0, failList = [];
   const total = members.length;
 
   for (const m of members) {
-    status.textContent = `갱신 중... ${done+fail+1}/${total} (${m.nickname})`;
+    status.textContent = `갱신 중... ${done+failList.length+1}/${total} (${m.nickname})`;
     try {
       // character_id가 있으면 검색 단계 건너뜀
       const storedCharId = m.character_id || null;
@@ -4144,15 +4144,16 @@ async function syncAllMembers() {
       await db.from('members').update(updatePayload).eq('id', m.id);
       done++;
     } catch(e) {
-      fail++;
+      failList.push(m.nickname);
     }
     // 요청 간격 (API 제한 방지)
     await new Promise(r => setTimeout(r, 500));
   }
 
   btn.disabled = false;
-  status.textContent = `완료: ${done}명 성공 ${fail>0?'/ '+fail+'명 실패':''}`;
-  toast(`전체 갱신 완료! ${done}명 성공${fail>0?' / '+fail+'명 실패':''}`);
+  const failMsg = failList.length > 0 ? ` / 실패 ${failList.length}명: ${failList.join(', ')}` : '';
+  status.textContent = `완료: ${done}명 성공${failMsg}`;
+  toast(`전체 갱신 완료! ${done}명 성공${failMsg}`);
   try { localStorage.removeItem(_CACHE_KEY); } catch(e) {} // 갱신 후 캐시 무효화
 }
 
