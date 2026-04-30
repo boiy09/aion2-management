@@ -7825,10 +7825,11 @@ function forceRenderParties(data) {
       html+='<div class="force-subparty-hdr">'
         +'<span class="force-subparty-label" onclick="forceSetSubpartyLabel(\''+_esc(party.id)+'\','+subIdx+')" title="클릭하여 레이블 편집">'
         +(label?_h(label):'<span style="opacity:.3;">서브파티 '+(subIdx+1)+'</span>')+'</span>'
-        +'<span style="display:flex;gap:3px;">'
+        +'<span style="display:flex;gap:3px;align-items:center;margin-left:auto;">'
         +(sTank?'<span class="force-role-tag force-role-tank" style="font-size:9px;padding:1px 5px;">탱'+sTank+'</span>':'')
         +(sHeal?'<span class="force-role-tag force-role-heal" style="font-size:9px;padding:1px 5px;">힐'+sHeal+'</span>':'')
         +(sDps?'<span class="force-role-tag force-role-dps" style="font-size:9px;padding:1px 5px;">딜'+sDps+'</span>':'')
+        +(party.subparties.length>1?'<button onclick="forceDelSubparty(\''+_esc(party.id)+'\','+subIdx+')" style="font-size:9px;padding:0 5px;background:none;border:1px solid rgba(180,50,50,.3);color:var(--red);border-radius:3px;cursor:pointer;opacity:.7;line-height:16px;">삭제</button>':'')
         +'</span></div>';
       html+='<div class="force-subparty" ondragover="event.preventDefault()" ondrop="forceDropToSubparty(event,\''+_esc(party.id)+'\','+subIdx+')">';
       sub.forEach(function(slot, slotIdx) {
@@ -7853,16 +7854,11 @@ function forceRenderParties(data) {
             +' ondragleave="forceSlotDragLeave(\''+sid+'\')"'
             +' ondrop="forceSlotDrop(event,\''+_esc(party.id)+'\','+subIdx+','+slotIdx+')"'
             +' onclick="forceSlotClick(\''+_esc(party.id)+'\','+subIdx+','+slotIdx+')">'
-            +'<span style="opacity:.35;font-size:8px;">빈 슬롯</span>'
+            +'<span style="opacity:.55;font-size:8px;">빈 슬롯</span>'
             +'</div>';
         }
       });
       html+='</div>';
-      if(party.subparties.length>1) {
-        html+='<div style="display:flex;justify-content:flex-end;padding:2px 10px 4px;">'
-          +'<button onclick="forceDelSubparty(\''+_esc(party.id)+'\','+subIdx+')" style="font-size:10px;padding:1px 6px;background:none;border:1px solid rgba(180,50,50,.3);color:var(--red);border-radius:3px;cursor:pointer;opacity:.7;">서브파티 삭제</button>'
-          +'</div>';
-      }
     });
     html+='</div>';
   });
