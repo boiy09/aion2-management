@@ -798,7 +798,7 @@
         <span id="sync-all-status" style="font-size:12px;color:var(--muted);"></span>
         <button class="btn btn-primary btn-sm" id="sync-all-btn" onclick="syncAllMembers()">⟳ 전체 갱신</button>
         <span style="width:1px;height:16px;background:var(--border);"></span>
-        <input id="region-legion-input" placeholder="aion2-region.com 레기온 ID" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);width:190px;" oninput="saveRegionLegionId(this.value)">
+        <input id="region-legion-input" placeholder="aion2-region.com 레기온 URL 또는 ID" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);width:220px;" oninput="saveRegionLegionId(this.value);_regionAutoLoadTimer&&clearTimeout(_regionAutoLoadTimer);_regionAutoLoadTimer=setTimeout(loadRegionData,600)">
         <button class="btn btn-sm" onclick="loadRegionData()" title="어비스 계급/서버순위 불러오기">🔗 어비스 연동</button>
         <span id="region-status" style="font-size:11px;"></span>
       </div>
@@ -1900,6 +1900,7 @@ let sortBy  = 'rank';
 let sortAsc = true;
 let _regionData = null; // aion2-region.com 연동 캐시 (nickname.toLowerCase() → member 객체)
 let _regionLoading = false;
+let _regionAutoLoadTimer = null;
 
 // ─── DB 구독 ────────────────────────────
 // 구버전 계급 마이그레이션 (일반→군단병, 부마스터→엘리트장교, 마스터→군단장)
@@ -5420,6 +5421,11 @@ function renderRecentRecruit() {
 function renderMembers() {
   const ls = document.getElementById('leave-scan-section');
   if (ls) ls.style.display = isAdmin() ? '' : 'none';
+  // 저장된 ID가 있는데 아직 데이터가 없으면 자동 로드 (탭 전환·페이지 로드 후 첫 렌더 시)
+  if (_regionData === null && !_regionLoading) {
+    const sid = localStorage.getItem('regionLegionId') || '';
+    if (sid) { loadRegionData(); return; }
+  }
   const search = (document.getElementById('member-search')||{value:''}).value.toLowerCase();
   const filtered = sortMembers(members.filter(m =>
     (mFilter==='all'||(CLASS_MAP[m.class]||m.class)===mFilter) &&
