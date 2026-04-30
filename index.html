@@ -244,9 +244,9 @@
   .force-recruit-banner { background:linear-gradient(90deg,rgba(239,68,68,.12),rgba(255,140,0,.1)); border:1px solid rgba(239,68,68,.4); border-radius:8px; padding:10px 16px; margin-bottom:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
   .force-party { background:var(--card); border:1px solid var(--border); border-radius:8px; margin-bottom:10px; overflow:hidden; }
   .force-party-hdr { display:flex; align-items:center; gap:6px; padding:4px 8px; background:rgba(0,0,0,.25); border-bottom:1px solid var(--border); flex-wrap:wrap; }
-  .force-subparty { display:grid; grid-template-columns:repeat(4,1fr); gap:2px; padding:3px 6px; border-bottom:1px solid rgba(255,255,255,.04); align-items:start; }
+  .force-subparty { display:grid; grid-template-columns:repeat(4,1fr); grid-auto-rows:32px; gap:2px; padding:3px 6px; border-bottom:1px solid rgba(255,255,255,.04); }
   .force-subparty:last-child { border-bottom:none; }
-  .force-slot { border-radius:4px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:1px 3px; height:32px; min-height:32px; max-height:32px; box-sizing:border-box; overflow:hidden; cursor:pointer; text-align:center; user-select:none; transition:border-color .15s,background .15s; }
+  .force-slot { border-radius:4px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:1px 3px; box-sizing:border-box; overflow:hidden; cursor:pointer; text-align:center; user-select:none; transition:border-color .15s,background .15s; }
   .force-slot.empty { border:1px dashed var(--border); background:rgba(255,255,255,.01); color:var(--muted); font-size:8px; }
   .force-slot.filled { border:1px solid var(--gold-d); background:rgba(0,200,138,.05); }
   .force-slot.drag-over { border-color:var(--gold) !important; background:rgba(0,200,138,.12) !important; }
