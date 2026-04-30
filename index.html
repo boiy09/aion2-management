@@ -1087,29 +1087,30 @@
 
       <!-- ② 스킬 시뮬레이터 -->
       <div id="skl-sec-skill" class="skl-section">
-        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:32px;text-align:center;">
-          <div style="font-size:32px;margin-bottom:12px;">⚡</div>
-          <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px;">스킬 시뮬레이터</div>
-          <div style="font-size:13px;color:var(--muted);">스킬 포인트 배분 시뮬레이터 — 준비 중입니다.</div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <div style="font-size:12px;color:var(--muted);">⚡ <strong style="color:var(--text);">스킬 시뮬레이터</strong> — 스킬포인트 배분으로 얻은 스킬 레벨 설정 (기본값 10, 범위 1–20)</div>
+          <a href="https://aion2.inven.co.kr/db/skillsimulator/" target="_blank" rel="noopener"
+             style="font-size:12px;color:var(--gold-l);text-decoration:none;padding:4px 10px;border:1px solid var(--gold-d);border-radius:5px;white-space:nowrap;">→ 인벤 스킬 시뮬레이터 ↗</a>
         </div>
+        <div id="skl-skill-content" style="color:var(--muted);text-align:center;padding:32px;font-size:13px;">클래스를 먼저 선택하세요.</div>
       </div>
 
       <!-- ③ 데바니온 시뮬레이터 -->
       <div id="skl-sec-daevanion" class="skl-section">
-        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:32px;text-align:center;">
-          <div style="font-size:32px;margin-bottom:12px;">📚</div>
-          <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px;">데바니온 시뮬레이터</div>
-          <div style="font-size:13px;color:var(--muted);">데바니온 스킬북 레벨 업 시뮬레이터 — 준비 중입니다.</div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <div style="font-size:12px;color:var(--muted);">📚 <strong style="color:var(--text);">데바니온 시뮬레이터</strong> — 데바니온 스킬북 보너스 레벨 설정 (+0~+5)</div>
+          <a href="https://aion2.inven.co.kr/db/daevanion/" target="_blank" rel="noopener"
+             style="font-size:12px;color:var(--gold-l);text-decoration:none;padding:4px 10px;border:1px solid var(--gold-d);border-radius:5px;white-space:nowrap;">→ 인벤 데바니온 시뮬레이터 ↗</a>
         </div>
+        <div id="skl-dae-content" style="color:var(--muted);text-align:center;padding:32px;font-size:13px;">클래스를 먼저 선택하세요.</div>
       </div>
 
       <!-- ④ 장비 시뮬레이터 -->
       <div id="skl-sec-equip" class="skl-section">
-        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:32px;text-align:center;">
-          <div style="font-size:32px;margin-bottom:12px;">⚔️</div>
-          <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px;">장비 시뮬레이터</div>
-          <div style="font-size:13px;color:var(--muted);">장비 옵션 스킬 레벨 보너스 시뮬레이터 — 준비 중입니다.</div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--muted);">
+          ⚔️ <strong style="color:var(--text);">장비 시뮬레이터</strong> — 영혼 각인 조율 등 장비 옵션으로 얻는 스킬 레벨 +1 보너스 설정 (슬롯당 1개 스킬 선택)
         </div>
+        <div id="skl-equip-content" style="color:var(--muted);text-align:center;padding:32px;font-size:13px;">클래스를 먼저 선택하세요.</div>
       </div>
 
       <!-- 스킬 레벨 총합 (4개 소스 통합) -->
@@ -8162,11 +8163,15 @@ const ARC = (function(){
     return `<span class="arc-badge ${badgeCls}">${badgeTxt}</span>`;
   }
 
+  const EQUIP_SLOTS = ['무기','상체','하체','반지1','반지2','귀걸이1','귀걸이2','목걸이','팔찌','허리띠'];
+
   // ── 상태 ──────────────────────────────────────────────────────
   let state = {
     cls: '',
     pieces: Object.fromEntries(PARTS.map(p => [p.id, { grade:'없음', enhance:0, skills:[], skillLevels:[] }])),
-    bonus: {},  // skillName -> { base:10, equip:0, devanion:0 }
+    sklLevels: {},   // skillName -> base level (from 스킬 시뮬레이터, default 10)
+    daeLevels: {},   // skillName -> daevanion bonus (from 데바니온 시뮬레이터, default 0)
+    equipSlots: Object.fromEntries(EQUIP_SLOTS.map(s=>[s,''])),
   };
 
   // ── 헬퍼 ──────────────────────────────────────────────────────
@@ -8201,6 +8206,98 @@ const ARC = (function(){
       const pc = state.pieces[p.id];
       return s + (GRADE_CP[pc.grade]||0) + (parseInt(pc.enhance)||0);
     }, 0);
+  }
+
+  function calcEquipBonus() {
+    const map = new Map();
+    for (const sk of Object.values(state.equipSlots)) {
+      if (sk) map.set(sk, (map.get(sk)||0) + 1);
+    }
+    return map;
+  }
+
+  function renderSklSim() {
+    const el = document.getElementById('skl-skill-content');
+    if (!el) return;
+    if (!state.cls || !CLASS_SKILLS[state.cls]) {
+      el.innerHTML = '<div style="color:var(--muted);text-align:center;padding:32px;font-size:13px;">클래스를 먼저 선택하세요.</div>';
+      return;
+    }
+    const cls = CLASS_SKILLS[state.cls];
+    const mkGroup = (skillArr, label, col) => {
+      if (!skillArr.length) return '';
+      const items = skillArr.map(([name, type]) => {
+        const lv = state.sklLevels[name] ?? 10;
+        const ico = skillIcon(name, type);
+        return `<div style="display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:7px 10px;">
+          ${ico}
+          <span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${name}">${name}</span>
+          <div style="display:flex;align-items:center;gap:3px;flex-shrink:0;">
+            <span onclick="ARC._adjSklLv('${name}',-1)" style="width:20px;height:20px;background:var(--surface);border:1px solid var(--border);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);">−</span>
+            <span style="min-width:24px;text-align:center;font-size:13px;font-weight:700;color:var(--text);">${lv}</span>
+            <span onclick="ARC._adjSklLv('${name}',1)" style="width:20px;height:20px;background:var(--surface);border:1px solid var(--border);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);">+</span>
+          </div>
+        </div>`;
+      }).join('');
+      return `<div style="margin-bottom:16px;"><div style="font-size:11px;font-weight:700;color:${col};letter-spacing:.05em;margin-bottom:8px;">${label}</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px;">${items}</div></div>`;
+    };
+    el.innerHTML =
+      mkGroup(cls.active.map(n=>[n,'active']), '⚡ 액티브 스킬', 'var(--gold)') +
+      mkGroup(cls.passive.map(n=>[n,'passive']), '🛡️ 패시브 스킬', 'var(--muted)');
+  }
+
+  function renderDaeSim() {
+    const el = document.getElementById('skl-dae-content');
+    if (!el) return;
+    if (!state.cls || !CLASS_SKILLS[state.cls]) {
+      el.innerHTML = '<div style="color:var(--muted);text-align:center;padding:32px;font-size:13px;">클래스를 먼저 선택하세요.</div>';
+      return;
+    }
+    const cls = CLASS_SKILLS[state.cls];
+    const all = [...cls.active.map(n=>[n,'active']), ...cls.passive.map(n=>[n,'passive'])];
+    const items = all.map(([name, type]) => {
+      const lv = state.daeLevels[name] || 0;
+      const ico = skillIcon(name, type);
+      return `<div style="display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid ${lv>0?'var(--gold-d)':'var(--border)'};border-radius:6px;padding:7px 10px;">
+        ${ico}
+        <span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${name}">${name}</span>
+        <div style="display:flex;align-items:center;gap:3px;flex-shrink:0;">
+          <span onclick="ARC._adjDaeLv('${name}',-1)" style="width:20px;height:20px;background:var(--surface);border:1px solid var(--border);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);">−</span>
+          <span style="min-width:28px;text-align:center;font-size:13px;font-weight:700;color:${lv>0?'var(--gold-l)':'var(--muted)'};">+${lv}</span>
+          <span onclick="ARC._adjDaeLv('${name}',1)" style="width:20px;height:20px;background:var(--surface);border:1px solid var(--border);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);">+</span>
+        </div>
+      </div>`;
+    }).join('');
+    el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px;">${items}</div>`;
+  }
+
+  function renderEquipSim() {
+    const el = document.getElementById('skl-equip-content');
+    if (!el) return;
+    if (!state.cls || !CLASS_SKILLS[state.cls]) {
+      el.innerHTML = '<div style="color:var(--muted);text-align:center;padding:32px;font-size:13px;">클래스를 먼저 선택하세요.</div>';
+      return;
+    }
+    const cls = CLASS_SKILLS[state.cls];
+    const allNames = [...cls.active, ...cls.passive];
+    const slots = EQUIP_SLOTS.map(slot => {
+      const sel = state.equipSlots[slot] || '';
+      const opts = '<option value="">— 없음 —</option>' +
+        allNames.map(n => `<option value="${n}"${sel===n?' selected':''}>${n}</option>`).join('');
+      return `<div style="display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid ${sel?'var(--gold-d)':'var(--border)'};border-radius:6px;padding:8px 12px;">
+        <span style="font-size:12px;color:var(--muted);min-width:52px;flex-shrink:0;">${slot}</span>
+        <select onchange="ARC._setEquipSlot('${slot}',this.value)"
+          style="flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:5px;font-size:12px;cursor:pointer;outline:none;">${opts}</select>
+        <span style="font-size:11px;font-weight:700;min-width:20px;text-align:right;color:${sel?'var(--gold-l)':'transparent'};">+1</span>
+      </div>`;
+    }).join('');
+    el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;">${slots}</div>`;
+  }
+
+  function renderSimulators() {
+    renderSklSim();
+    renderDaeSim();
+    renderEquipSim();
   }
 
   // ── CSS 주입 ──────────────────────────────────────────────────
@@ -8404,44 +8501,41 @@ const ARC = (function(){
     const el = document.getElementById('arc-results');
     if (!el) return;
     const arcMap = calcArcBonus();
+    const equipMap = calcEquipBonus();
 
-    if (arcMap.size === 0) { el.innerHTML = ''; return; }
+    // Collect all skills with any non-default contribution
+    const skillSet = new Set(arcMap.keys());
+    for (const [sk, lv] of Object.entries(state.sklLevels)) { if (lv !== 10) skillSet.add(sk); }
+    for (const [sk, lv] of Object.entries(state.daeLevels)) { if (lv > 0) skillSet.add(sk); }
+    for (const sk of equipMap.keys()) skillSet.add(sk);
 
-    // Collect all known skills for selected class too
-    const allSkills = state.cls ? [...(CLASS_SKILLS[state.cls]?.passive||[]), ...(CLASS_SKILLS[state.cls]?.active||[])] : [];
-    // Only show skills that have arcana contribution
-    const entries = [...arcMap.entries()].sort((a,b)=>b[1]-a[1]);
+    if (skillSet.size === 0) { el.innerHTML = ''; return; }
 
-    let rows = entries.map(([sk, arcBonus]) => {
-      const sb = state.bonus[sk] || { base:10, equip:0, devanion:0 };
-      const total = sb.base + sb.equip + sb.devanion + arcBonus;
+    const entries = [...skillSet].map(sk => {
+      const arcBonus  = arcMap.get(sk) || 0;
+      const base      = state.sklLevels[sk] ?? 10;
+      const equip     = equipMap.get(sk) || 0;
+      const devanion  = state.daeLevels[sk] || 0;
+      return { sk, arcBonus, base, equip, devanion, total: base + equip + devanion + arcBonus };
+    }).sort((a,b) => b.total - a.total);
+
+    const rows = entries.map(({sk, arcBonus, base, equip, devanion, total}) => {
       let totalColor = 'var(--muted)';
       let badge = '';
       if (total >= 20) { totalColor='var(--gold-l)'; badge='<span style="font-size:10px;background:#00c88a33;color:var(--gold-l);padding:1px 6px;border-radius:8px;margin-left:4px;">MAX ✨</span>'; }
       else if (total >= 16) { totalColor='#00c88a'; badge='<span style="font-size:10px;background:#00c88a22;color:#00c88a;padding:1px 6px;border-radius:8px;margin-left:4px;">3차 특화 ✅</span>'; }
       else if (total >= 12) { totalColor='#f0a040'; }
-
       const barWidth = Math.min(100, (total/20)*100);
       const barColor = total>=20?'var(--gold)':total>=16?'#00c88a':total>=12?'#f0a040':'#c14a4a';
-
+      const fmt = (v, highlight) => v > 0
+        ? `<span style="color:${highlight};font-weight:700;">+${v}</span>`
+        : `<span style="color:var(--muted);">${v}</span>`;
       return `<tr style="border-bottom:1px solid var(--border);">
         <td style="padding:9px 12px;font-weight:600;font-size:13px;">${sk}</td>
-        <td style="padding:9px 6px;text-align:center;">
-          <input type="number" min="0" max="10" value="${sb.base}"
-            style="width:46px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:5px;text-align:center;font-size:12px;outline:none;"
-            oninput="ARC._setBonus('${sk.replace(/'/g,"\\'")}','base',this.value)">
-        </td>
-        <td style="padding:9px 6px;text-align:center;">
-          <input type="number" min="0" max="10" value="${sb.equip}"
-            style="width:46px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:5px;text-align:center;font-size:12px;outline:none;"
-            oninput="ARC._setBonus('${sk.replace(/'/g,"\\'")}','equip',this.value)">
-        </td>
-        <td style="padding:9px 6px;text-align:center;">
-          <input type="number" min="0" max="10" value="${sb.devanion}"
-            style="width:46px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:5px;text-align:center;font-size:12px;outline:none;"
-            oninput="ARC._setBonus('${sk.replace(/'/g,"\\'")}','devanion',this.value)">
-        </td>
-        <td style="padding:9px 6px;text-align:center;font-weight:700;color:var(--gold-l);">${arcBonus}</td>
+        <td style="padding:9px 6px;text-align:center;font-size:13px;">${base}</td>
+        <td style="padding:9px 6px;text-align:center;font-size:13px;">${fmt(equip,'var(--gold-l)')}</td>
+        <td style="padding:9px 6px;text-align:center;font-size:13px;">${fmt(devanion,'#7ee8c0')}</td>
+        <td style="padding:9px 6px;text-align:center;font-size:13px;">${fmt(arcBonus,'var(--gold-l)')}</td>
         <td style="padding:9px 12px;">
           <div style="display:flex;align-items:center;gap:8px;">
             <span style="font-size:18px;font-weight:800;color:${totalColor};min-width:28px;">${total}</span>
@@ -8456,29 +8550,27 @@ const ARC = (function(){
 
     el.innerHTML = `<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
       <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-        <div class="section-title" style="margin-bottom:0;">📊 스킬 레벨 시뮬레이션</div>
-        <span style="font-size:11px;color:var(--muted);">기본/장비/데바니온 값을 직접 수정 가능</span>
+        <div class="section-title" style="margin-bottom:0;">📊 스킬 레벨 총합</div>
+        <span style="font-size:11px;color:var(--muted);">기본 + 장비 + 데바니온 + 아르카나</span>
       </div>
       <div style="overflow-x:auto;">
-        <table style="width:100%;border-collapse:collapse;min-width:560px;">
+        <table style="width:100%;border-collapse:collapse;min-width:480px;">
           <thead>
             <tr style="background:var(--surface);">
               <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);">스킬</th>
-              <th style="padding:8px 6px;text-align:center;font-size:11px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);">기본<br><span style="font-weight:400;">(스킬포인트)</span></th>
-              <th style="padding:8px 6px;text-align:center;font-size:11px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);">장비<br><span style="font-weight:400;">(옵션)</span></th>
-              <th style="padding:8px 6px;text-align:center;font-size:11px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);">데바니온<br><span style="font-weight:400;">(스킬북)</span></th>
-              <th style="padding:8px 6px;text-align:center;font-size:11px;color:var(--gold);font-weight:600;border-bottom:1px solid var(--border);">아르카나<br><span style="font-weight:400;">(계산)</span></th>
-              <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);">합계 레벨</th>
+              <th style="padding:8px 6px;text-align:center;font-size:11px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);">기본<br><span style="font-weight:400;font-size:10px;">스킬 시뮬</span></th>
+              <th style="padding:8px 6px;text-align:center;font-size:11px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);">장비<br><span style="font-weight:400;font-size:10px;">각인 조율</span></th>
+              <th style="padding:8px 6px;text-align:center;font-size:11px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);">데바니온<br><span style="font-weight:400;font-size:10px;">스킬북</span></th>
+              <th style="padding:8px 6px;text-align:center;font-size:11px;color:var(--gold);font-weight:600;border-bottom:1px solid var(--border);">아르카나<br><span style="font-weight:400;font-size:10px;">계산</span></th>
+              <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);">합계</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
         </table>
       </div>
       <div style="padding:10px 16px;border-top:1px solid var(--border);display:flex;gap:20px;flex-wrap:wrap;font-size:11px;color:var(--muted);">
-        <span>🔴 12 미만</span>
-        <span style="color:#f0a040;">🟠 12–15</span>
-        <span style="color:#00c88a;">🟢 16–19 (3차 특화)</span>
-        <span style="color:var(--gold-l);">✨ 20 (최종 특화)</span>
+        <span>🔴 12 미만</span><span style="color:#f0a040;">🟠 12–15</span>
+        <span style="color:#00c88a;">🟢 16–19 (3차 특화)</span><span style="color:var(--gold-l);">✨ 20 (최종 특화)</span>
       </div>
     </div>`;
   }
@@ -8492,15 +8584,18 @@ const ARC = (function(){
   // ── 공개 API ─────────────────────────────────────────────────
   return {
     _inited: false,
-    init() { injectCSS(); render(); },
-    setClass(cls) { state.cls = cls; render(); },
+    init() { injectCSS(); render(); renderSimulators(); },
+    setClass(cls) { state.cls = cls; render(); renderSimulators(); },
     reset() {
       state.cls = '';
       state.pieces = Object.fromEntries(PARTS.map(p=>[p.id,{grade:'없음',enhance:0,skills:[],skillLevels:[]}]));
-      state.bonus = {};
+      state.sklLevels = {};
+      state.daeLevels = {};
+      state.equipSlots = Object.fromEntries(EQUIP_SLOTS.map(s=>[s,'']));
       const sel = document.getElementById('arc-class');
       if (sel) sel.value = '';
       render();
+      renderSimulators();
     },
     _setGrade(partId, grade) {
       const pc = state.pieces[partId];
@@ -8590,9 +8685,21 @@ const ARC = (function(){
       }
       renderResults();
     },
-    _setBonus(skill, field, val) {
-      if (!state.bonus[skill]) state.bonus[skill] = {base:10,equip:0,devanion:0};
-      state.bonus[skill][field] = parseInt(val)||0;
+    _adjSklLv(skill, delta) {
+      const cur = state.sklLevels[skill] ?? 10;
+      state.sklLevels[skill] = Math.max(1, Math.min(20, cur + delta));
+      renderSklSim();
+      renderResults();
+    },
+    _adjDaeLv(skill, delta) {
+      const cur = state.daeLevels[skill] || 0;
+      state.daeLevels[skill] = Math.max(0, Math.min(5, cur + delta));
+      renderDaeSim();
+      renderResults();
+    },
+    _setEquipSlot(slotId, skill) {
+      state.equipSlots[slotId] = skill;
+      renderEquipSim();
       renderResults();
     },
   };
