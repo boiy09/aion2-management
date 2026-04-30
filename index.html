@@ -4884,9 +4884,12 @@ function openDetail(m) {
   }).join('');
 
   // 랭킹
+  const _rankDebugHtml = (m.ranking||[]).length
+    ? `<details style="margin-bottom:10px;"><summary style="font-size:10px;color:var(--muted);cursor:pointer;">[debug] 첫 번째 랭킹 항목 raw 데이터 보기</summary><pre style="font-size:9px;text-align:left;overflow:auto;background:var(--surface);padding:8px;border-radius:6px;color:#aaa;margin-top:4px;">${JSON.stringify((m.ranking[0]&&m.ranking[0]._raw)||m.ranking[0]||{},null,2)}</pre></details>`
+    : '';
   const rankHTML = !(m.ranking||[]).length
     ? `<div style="padding:20px;text-align:center;color:var(--muted);">랭킹 데이터 없음 — 갱신 후 확인하세요${m.ranking_debug?`<pre style="margin-top:12px;font-size:10px;text-align:left;overflow:auto;background:var(--surface);padding:10px;border-radius:6px;color:#aaa;">[debug raw] ${JSON.stringify(m.ranking_debug,null,2)}</pre>`:''}</div>`
-    : (m.ranking||[]).map(r => {
+    : _rankDebugHtml + (m.ranking||[]).map(r => {
     const gradeIcon  = r.gradeIcon||'';
     const emblemIcon = r.emblemIcon||'';
     const svrEmblem  = r.serverEmblemIcon||'';
