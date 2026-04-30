@@ -4885,7 +4885,7 @@ function openDetail(m) {
 
   // 랭킹
   const rankHTML = !(m.ranking||[]).length
-    ? `<div style="padding:30px;text-align:center;color:var(--muted);">랭킹 데이터 없음 — 갱신 후 확인하세요</div>`
+    ? `<div style="padding:20px;text-align:center;color:var(--muted);">랭킹 데이터 없음 — 갱신 후 확인하세요${m.ranking_debug?`<pre style="margin-top:12px;font-size:10px;text-align:left;overflow:auto;background:var(--surface);padding:10px;border-radius:6px;color:#aaa;">[debug raw] ${JSON.stringify(m.ranking_debug,null,2)}</pre>`:''}</div>`
     : (m.ranking||[]).map(r => {
     const gradeIcon  = r.gradeIcon||'';
     const emblemIcon = r.emblemIcon||'';

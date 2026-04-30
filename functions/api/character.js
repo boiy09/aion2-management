@@ -187,30 +187,62 @@ export async function onRequest(context) {
     var itemLevel = itemLevelStat ? (itemLevelStat.value || 0) : 0;
     var arcanaList = equip.filter(function(e) { return (e.slotPosName||'').indexOf('Arcana') !== -1; }).map(mapEquip);
     var daevList   = (infoData && infoData.daevanion && infoData.daevanion.boardList) ? infoData.daevanion.boardList : [];
-    var rankRaw  = (infoData && infoData.ranking) ? infoData.ranking
-                 : (infoData && infoData.abyssRanking) ? infoData.abyssRanking : {};
-    var rankList = rankRaw.rankingList || rankRaw.rankingContentsList || rankRaw.contents
-                 || rankRaw.content   || rankRaw.list
-                 || (Array.isArray(rankRaw) ? rankRaw : []);
-    // 필드명 정규화 + gradeIcon 절대 URL 변환
+    // ranking 원본 키 전체를 탐색
+    var rankRaw  = infoData && (infoData.ranking || infoData.abyssRanking
+                  || infoData.rankingInfo || infoData.pvpRanking || {});
+    // rankingList 위치를 모든 가능한 키에서 탐색
+    var rankList = [];
+    if (Array.isArray(rankRaw)) {
+      rankList = rankRaw;
+    } else if (rankRaw) {
+      rankList = rankRaw.rankingList || rankRaw.rankingContentsList
+              || rankRaw.contents    || rankRaw.content
+              || rankRaw.list        || rankRaw.items || [];
+    }
+    function absUrl(u) { return (u && typeof u==='string' && !u.startsWith('http')) ? 'https://aion2.plaync.com'+u : (u||''); }
+    // 모든 이미지 URL을 재귀적으로 절대 URL로 변환
+    function normalizeUrls(obj) {
+      if (!obj || typeof obj !== 'object') return obj;
+      var out = Object.assign({}, obj);
+      Object.keys(out).forEach(function(k) {
+        if (typeof out[k] === 'string' && out[k] && (k.toLowerCase().includes('icon') || k.toLowerCase().includes('image') || k.toLowerCase().includes('img'))) {
+          out[k] = absUrl(out[k]);
+        } else if (Array.isArray(out[k])) {
+          out[k] = out[k].map(normalizeUrls);
+        }
+      });
+      return out;
+    }
     rankList = rankList.map(function(r) {
-      function absUrl(u) { return (u && !String(u).startsWith('http')) ? 'https://aion2.plaync.com' + u : (u||''); }
-      var icon        = absUrl(r.gradeIcon || r.gradeIconUrl || r.rankGradeIcon || r.tierIcon || r.gradeImageUrl || '');
-      var emblemIcon  = absUrl(r.emblemIcon || r.emblemIconUrl || r.emblemImage || r.rankEmblemIcon || r.emblem || '');
-      var serverEmblem= absUrl(r.serverEmblemIcon || r.serverEmblem || r.svEmblemIcon || '');
-      var contentsName= r.rankingContentsName || r.contentsName || r.contentName || r.rankType || r.type || r.name || '';
-      var gradeName   = r.gradeName || r.grade || r.rankGrade || r.tierName || r.rankName || r.levelName || '';
-      var serverRank  = r.serverRank || r.svRank || r.svrRank || r.serverRanking || 0;
-      var classRank   = r.classRank  || r.jobRank || r.clsRank || r.classRanking || 0;
-      var serverPoint = r.serverPoint || r.svPoint || 0;
-      var classPoint  = r.classPoint  || r.jobPoint || 0;
+      r = normalizeUrls(r);
+      // 필드명 정규화 — 실제 NC API 필드명을 최대한 포괄
+      var icon        = r.gradeIcon || r.gradeIconUrl || r.rankGradeIcon || r.tierIcon || r.gradeImageUrl || r.gradeImg || '';
+      var emblemIcon  = r.emblemIcon || r.emblemIconUrl || r.emblemImage || r.rankEmblemIcon || r.emblem || r.emblemImg || '';
+      // emblems 배열 지원 (aion2-region.com 방식)
+      if (!emblemIcon && Array.isArray(r.emblems) && r.emblems.length) {
+        emblemIcon = r.emblems[0].icon || r.emblems[0].iconUrl || r.emblems[0].img || '';
+      }
+      var serverEmblem= r.serverEmblemIcon || r.serverEmblem || r.svEmblemIcon || r.serverEmblemImg || '';
+      var contentsName= r.rankingContentsName || r.contentsName || r.contentName
+                      || r.rankContentsName   || r.rankType    || r.type || r.category || '';
+      var gradeName   = r.gradeName || r.grade || r.rankGrade || r.tierName || r.rankName || r.levelName || r.gradeTypeName || '';
+      var serverRank  = r.serverRank  || r.svRank  || r.svrRank  || r.serverRanking || 0;
+      var classRank   = r.classRank   || r.jobRank  || r.clsRank  || r.classRanking  || 0;
+      var serverPoint = r.serverPoint || r.svPoint  || r.serverRankPoint || 0;
+      var classPoint  = r.classPoint  || r.jobPoint || r.classRankPoint  || 0;
+      var baseRank    = r.rank || r.totalRank || r.overallRank || 0;
+      var basePoint   = r.point || r.rankPoint || r.totalPoint || r.score || 0;
       return Object.assign({}, r, {
         gradeIcon: icon, emblemIcon: emblemIcon, serverEmblemIcon: serverEmblem,
         rankingContentsName: contentsName, gradeName: gradeName,
         serverRank: serverRank, classRank: classRank,
         serverPoint: serverPoint, classPoint: classPoint,
+        rank: baseRank, point: basePoint,
+        _raw: r,  // 디버그용 원본 보존
       });
     });
+    // rankList가 비어있으면 rankRaw 전체를 debug로 포함
+    var rankingDebug = rankList.length === 0 ? rankRaw : null;
     var titleRaw       = (infoData && infoData.title) ? infoData.title : {};
     var titleList      = titleRaw.titleList      || [];
     var titleGroupList = titleRaw.titleGroupList || titleRaw.groupList || [];
@@ -231,6 +263,7 @@ export async function onRequest(context) {
       stats:        statList,
       daevanion:    daevList,
       ranking:      rankList,
+      ranking_debug: rankingDebug,  // rankList 비었을 때 원본 구조 확인용
       titles:       titleGroupList.length ? titleGroupList : titleList,
       stigma:       skillList,
       arcana:       arcanaList,
