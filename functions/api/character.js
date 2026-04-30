@@ -198,8 +198,8 @@ export async function onRequest(context) {
               || rankRaw.contents    || rankRaw.content
               || rankRaw.list        || rankRaw.items || [];
     }
-    // filter: only items with rank data
-    rankList = rankList.filter(function(r) { return r.rank || r.point; });
+    // 유효한 콘텐츠 타입만 포함 (rank/point가 null이어도 투기장 등 포함)
+    rankList = rankList.filter(function(r) { return r.rankingContentsType; });
 
     // NC ranking list API에서 grade/icon 데이터 보강
     // character info의 gradeName/gradeIcon은 null → 별도 ranking list API 호출 필요
@@ -247,7 +247,7 @@ export async function onRequest(context) {
     function fallbackGrade(type, rank) {
       if (type === 1)  return abyssGradeByRank(rank);
       if (type === 3)  return nightmareGradeByRank(rank);
-      if (type === 4 || type === 21) return arenaGradeByRank(rank);
+      if (type === 4 || type === 5 || type === 6 || type === 21) return arenaGradeByRank(rank);
       return null;
     }
 

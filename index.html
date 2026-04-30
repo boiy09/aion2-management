@@ -4901,6 +4901,7 @@ function openDetail(m) {
     const rank  = r.rank||0;
     const point = r.point||0;
     const change= r.rankChange||0;
+    const noData = !rank && !point;
     const changeHtml = change > 0
       ? `<span style="font-size:10px;color:#4caf50;">▲${change}</span>`
       : change < 0
@@ -4911,11 +4912,11 @@ function openDetail(m) {
     const svRank = rank ? `<div style="text-align:center;"><div style="font-size:10px;color:var(--muted);">서버</div><div style="font-size:17px;font-weight:700;color:var(--gold-l);">${rank.toLocaleString()}위</div></div>` : '';
     const clRank = r.classRank ? `<div style="text-align:center;"><div style="font-size:10px;color:var(--muted);">직업</div><div style="font-size:17px;font-weight:700;color:#9966dd;">${r.classRank.toLocaleString()}위</div></div>` : '';
     return `
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:12px;">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:12px;${noData?'opacity:0.5;':''}">
       ${gradeIcon}
       <div style="flex:1;min-width:0;">
         <div style="font-size:11px;color:var(--muted);">${r.rankingContentsName||''}</div>
-        ${grade}
+        ${noData ? `<div style="font-size:12px;color:var(--muted);margin-top:2px;">참여 기록 없음</div>` : grade}
         ${point ? `<div style="font-size:11px;color:var(--muted);">${point.toLocaleString()}점</div>` : ''}
       </div>
       <div style="display:flex;gap:14px;">${svRank}${clRank}</div>
