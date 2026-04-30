@@ -794,9 +794,13 @@
       <button class="chip" onclick="setFilter('정령성',this)">정령성</button>
       <button class="chip" onclick="setFilter('치유성',this)">치유성</button>
       <button class="chip" onclick="setFilter('호법성',this)">호법성</button>
-      <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+      <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <span id="sync-all-status" style="font-size:12px;color:var(--muted);"></span>
         <button class="btn btn-primary btn-sm" id="sync-all-btn" onclick="syncAllMembers()">⟳ 전체 갱신</button>
+        <span style="width:1px;height:16px;background:var(--border);"></span>
+        <input id="region-legion-input" placeholder="aion2-region.com 레기온 ID" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);width:190px;" oninput="saveRegionLegionId(this.value)">
+        <button class="btn btn-sm" onclick="loadRegionData()" title="어비스 계급/서버순위 불러오기">🔗 어비스 연동</button>
+        <span id="region-status" style="font-size:11px;"></span>
       </div>
     </div>
     <div class="table-wrap">
@@ -1894,6 +1898,8 @@ let distView = 'pie';
 let syncingIds = new Set();
 let sortBy  = 'rank';
 let sortAsc = true;
+let _regionData = null; // aion2-region.com 연동 캐시 (nickname.toLowerCase() → member 객체)
+let _regionLoading = false;
 
 // ─── DB 구독 ────────────────────────────
 // 구버전 계급 마이그레이션 (일반→군단병, 부마스터→엘리트장교, 마스터→군단장)
@@ -3495,7 +3501,11 @@ function sortMembers(arr) {
       av = (a.nickname||'').localeCompare(b.nickname||'', 'ko');
       return sortAsc ? av : -av;
     } else if(sortBy === 'abyss_rank') {
-      const getAbyss = m => { const r=(m.ranking||[]).find(r=>r.rankingContentsName&&r.rankingContentsName.includes('어비스')); return r?r.rank:99999; };
+      const getAbyss = m => {
+        const rm = _regionData && _regionData[(m.nickname||'').toLowerCase()];
+        if(rm && rm.abyssServerRank) return rm.abyssServerRank;
+        const r=(m.ranking||[]).find(r=>r.rankingContentsName&&r.rankingContentsName.includes('어비스')); return r?r.rank:99999;
+      };
       av = getAbyss(a); bv = getAbyss(b);
     } else if(sortBy === 'class') {
       av = (CLASS_MAP[a.class]||a.class||'').localeCompare(CLASS_MAP[b.class]||b.class||'', 'ko');
@@ -4054,6 +4064,45 @@ async function removeAllLeft() {
   if(r) r.innerHTML = '<div style="color:#6acd8a;padding:8px 0;">제거 완료되었습니다.</div>';
 }
 
+
+// ─── aion2-region.com 연동 ───────────────
+async function loadRegionData() {
+  const legionId = (localStorage.getItem('regionLegionId') || '').trim();
+  const statusEl = document.getElementById('region-status');
+  if (!legionId) {
+    _regionData = {};
+    if (statusEl) statusEl.textContent = '';
+    renderMembers();
+    return;
+  }
+  if (_regionLoading) return;
+  _regionLoading = true;
+  if (statusEl) statusEl.innerHTML = '<span style="color:var(--muted);">불러오는 중...</span>';
+  try {
+    const res = await fetch(`https://aion2-region.com/api/legions/${legionId}/members`);
+    if (!res.ok) throw new Error(res.status);
+    const list = await res.json();
+    _regionData = {};
+    for (const m of list) {
+      const key = (m.name || '').toLowerCase().trim();
+      if (key) _regionData[key] = m;
+    }
+    if (statusEl) statusEl.innerHTML = `<span style="color:#6acd8a;">✓ ${list.length}명 연동됨</span>`;
+  } catch(e) {
+    _regionData = {};
+    if (statusEl) statusEl.innerHTML = '<span style="color:#f55;">연동 실패 (ID 확인)</span>';
+  }
+  _regionLoading = false;
+  renderMembers();
+}
+function saveRegionLegionId(val) {
+  // URL에서 ID만 추출 (예: https://aion2-region.com/legion/b2677934863d → b2677934863d)
+  const m = val.match(/legion\/([a-zA-Z0-9]+)/);
+  const id = m ? m[1] : val.trim();
+  localStorage.setItem('regionLegionId', id);
+  const inp = document.getElementById('region-legion-input');
+  if (inp) inp.value = id;
+}
 
 // ─── 갱신 버튼 (멤버 테이블) ───────────
 async function syncMember(id, nickname, serverId) {
@@ -4883,13 +4932,31 @@ function openDetail(m) {
     </div>`;
   }).join('');
 
-  // 랭킹
-  const rankHTML = !(m.ranking||[]).length
+  // 랭킹 — region 연동 어비스 정보
+  const _rm = _regionData && _regionData[(m.nickname||'').toLowerCase()];
+  const abyssCardHTML = _rm && _rm.abyssRank ? (() => {
+    const ic = _rm.abyssRankIcon ? `<img src="${_rm.abyssRankIcon}" style="width:40px;height:40px;object-fit:contain;flex-shrink:0;" onerror="this.style.display='none'">` : '';
+    const col = /장군|사령관/.test(_rm.abyssRank) ? '#e05555' : /장교/.test(_rm.abyssRank) ? '#fbbf24' : '#ddd';
+    const sv = _rm.abyssServerRank || 0;
+    const cl = _rm.abyssClassRank || 0;
+    return `<div style="background:var(--surface);border:1px solid var(--gold-d);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:14px;margin-bottom:4px;">
+      ${ic}
+      <div style="flex:1;">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:2px;">어비스 계급</div>
+        <div style="font-size:16px;font-weight:700;color:${col};">${_rm.abyssRank}</div>
+        ${_rm.abyssPoint ? `<div style="font-size:11px;color:var(--muted);">${_rm.abyssPoint.toLocaleString()}점</div>` : ''}
+      </div>
+      <div style="display:flex;gap:16px;text-align:center;">
+        ${sv ? `<div><div style="font-size:10px;color:var(--muted);">서버</div><div style="font-size:16px;font-weight:700;color:var(--gold-l);">${sv.toLocaleString()}위</div></div>` : ''}
+        ${cl ? `<div><div style="font-size:10px;color:var(--muted);">직업</div><div style="font-size:16px;font-weight:700;color:#9966dd;">${cl.toLocaleString()}위</div></div>` : ''}
+      </div>
+    </div>`;
+  })() : '';
+  const rankHTML = abyssCardHTML + (!(m.ranking||[]).length
     ? `<div style="padding:20px;text-align:center;color:var(--muted);">랭킹 데이터 없음 — 갱신 후 확인하세요</div>`
     : (m.ranking||[]).map(r => {
     const rank  = r.rank||0;
     const point = r.point||0;
-    const prev  = r.prevRank||0;
     const change= r.rankChange||0;
     const changeHtml = change > 0
       ? `<span style="font-size:10px;color:#4caf50;">▲${change}</span>`
@@ -4906,7 +4973,7 @@ function openDetail(m) {
         ${point?`<div style="font-size:11px;color:var(--muted);">${point.toLocaleString()}점</div>`:''}
       </div>
     </div>`;
-  }).join('');
+  }).join(''));
 
   // 스킬 — 타입별 그룹 분리
   const SKILL_TYPE_LABEL = {
@@ -5401,25 +5468,39 @@ function renderMembers() {
       <td style="white-space:nowrap;">${isSub ? '' : `<span class="rank ${rankCls(m.rank||'군단병')}">${rankLabel(m.rank||'군단병')}</span>`}</td>
       <td>${cpBar(m.combat_power)}</td>
       <td style="white-space:nowrap;">${m.item_level?(+m.item_level).toLocaleString():'—'}</td>
-      <td style="white-space:nowrap;">${(()=>{
+      <td style="vertical-align:middle;">${(()=>{
+        const rm=_regionData&&_regionData[(m.nickname||'').toLowerCase()];
+        if(rm&&rm.abyssRank){
+          const ic=rm.abyssRankIcon?'<img src="'+rm.abyssRankIcon+'" style="width:18px;height:18px;vertical-align:middle;margin-right:4px;" onerror="this.style.display=\'none\'">':'';
+          const col=/장군|사령관/.test(rm.abyssRank)?'#e05555':/장교/.test(rm.abyssRank)?'#fbbf24':'#ddd';
+          const sv=rm.abyssServerRank?'<span style="font-size:10px;color:var(--muted);margin-left:4px;">서버 '+rm.abyssServerRank+'위</span>':'';
+          const cl=rm.abyssClassRank?'<span style="font-size:10px;color:var(--muted);margin-left:2px;">직업 '+rm.abyssClassRank+'위</span>':'';
+          return ic+'<span style="font-weight:700;font-size:11px;color:'+col+';">'+rm.abyssRank+'</span>'+sv+cl;
+        }
         const r=(m.ranking||[]).find(r=>r.rankingContentsName&&r.rankingContentsName.includes('어비스'));
         if(!r||!r.rank) return '—';
         return '<span style="font-weight:700;color:var(--gold-l);">'+r.rank.toLocaleString()+'위</span>';
       })()}</td>
       <td style="vertical-align:middle;">${(()=>{
-        const TIERS=[
-          {key:'군단장',color:'#ff9800'},
-          {key:'천부장',color:'#9c27b0'},
-          {key:'백부장',color:'#2196f3'},
-          {key:'십부장',color:'#607d8b'},
-        ];
+        const TIERS=[{key:'군단장',color:'#ff9800'},{key:'천부장',color:'#9c27b0'},{key:'백부장',color:'#2196f3'},{key:'십부장',color:'#607d8b'}];
+        const rm=_regionData&&_regionData[(m.nickname||'').toLowerCase()];
+        // region 데이터의 maxAbyssPieces 우선 사용
+        if(rm&&rm.maxAbyssPieces){
+          const rows=TIERS.map(t=>{
+            const cnt=(rm.maxAbyssPieces[t.key]||[]).length;
+            if(!cnt) return '';
+            return '<div style="font-size:10px;line-height:1.5;white-space:nowrap;"><span style="color:'+t.color+';font-weight:600;">'+t.key+'</span><span style="color:var(--muted);margin-left:3px;">×'+cnt+'</span></div>';
+          }).filter(Boolean);
+          return rows.length?rows.join(''):'—';
+        }
+        // fallback: 장비 목록에서 키워드 검색
         const eq=m.equipment||[];
         const rows=TIERS.map(t=>{
           const cnt=eq.filter(e=>(e.name||'').includes(t.key)||(e.setName||'').includes(t.key)).length;
           if(!cnt) return '';
           return '<div style="font-size:10px;line-height:1.5;white-space:nowrap;"><span style="color:'+t.color+';font-weight:600;">'+t.key+'</span><span style="color:var(--muted);margin-left:3px;">×'+cnt+'</span></div>';
         }).filter(Boolean);
-        return rows.length ? rows.join('') : '—';
+        return rows.length?rows.join(''):'—';
       })()}</td>
       <td><div class="equip-list">${equips(m.equipment)}</div></td>
       <td style="white-space:nowrap;vertical-align:middle;">${syncBtn}${lastSync}</td>
@@ -5924,6 +6005,12 @@ function showTab(id) {
     const ls=document.getElementById('leave-scan-section'); if(ls) ls.style.display=isAdmin()?'':'none';
     const bs=document.getElementById('bulk-register-section'); if(bs) bs.style.display=isAdmin()?'':'none';
     const ds=document.getElementById('dedup-section'); if(ds) ds.style.display=isAdmin()?'':'none';
+    // 저장된 레기온 ID 복원
+    const savedId = localStorage.getItem('regionLegionId') || '';
+    const inp = document.getElementById('region-legion-input');
+    if (inp) inp.value = savedId;
+    // 데이터가 없으면 자동 로드
+    if (savedId && !_regionData) loadRegionData();
   }
   try { localStorage.setItem('activeTab', id); } catch(e) {}
 }
