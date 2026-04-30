@@ -243,15 +243,15 @@
   .force-member-item:hover { background:rgba(255,255,255,.03); }
   .force-recruit-banner { background:linear-gradient(90deg,rgba(239,68,68,.12),rgba(255,140,0,.1)); border:1px solid rgba(239,68,68,.4); border-radius:8px; padding:10px 16px; margin-bottom:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
   .force-party { background:var(--card); border:1px solid var(--border); border-radius:8px; margin-bottom:10px; overflow:hidden; }
-  .force-party-hdr { display:flex; align-items:center; gap:6px; padding:8px 12px; background:rgba(0,0,0,.25); border-bottom:1px solid var(--border); flex-wrap:wrap; }
-  .force-subparty { display:grid; grid-template-columns:repeat(4,1fr); gap:4px; padding:5px 8px; border-bottom:1px solid rgba(255,255,255,.04); }
+  .force-party-hdr { display:flex; align-items:center; gap:6px; padding:4px 8px; background:rgba(0,0,0,.25); border-bottom:1px solid var(--border); flex-wrap:wrap; }
+  .force-subparty { display:grid; grid-template-columns:repeat(4,1fr); gap:2px; padding:3px 6px; border-bottom:1px solid rgba(255,255,255,.04); }
   .force-subparty:last-child { border-bottom:none; }
-  .force-slot { min-height:38px; border-radius:5px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:3px 4px; cursor:pointer; text-align:center; user-select:none; transition:border-color .15s,background .15s; }
-  .force-slot.empty { border:1px dashed var(--border); background:rgba(255,255,255,.01); color:var(--muted); font-size:10px; }
+  .force-slot { min-height:18px; border-radius:4px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:1px 3px; cursor:pointer; text-align:center; user-select:none; transition:border-color .15s,background .15s; }
+  .force-slot.empty { border:1px dashed var(--border); background:rgba(255,255,255,.01); color:var(--muted); font-size:8px; }
   .force-slot.filled { border:1px solid var(--gold-d); background:rgba(0,200,138,.05); }
   .force-slot.drag-over { border-color:var(--gold) !important; background:rgba(0,200,138,.12) !important; }
-  .force-slot-name { font-weight:700; font-size:11px; color:var(--text); line-height:1.2; word-break:break-all; }
-  .force-slot-cp   { font-size:8px; color:var(--muted); margin-top:1px; }
+  .force-slot-name { font-weight:700; font-size:10px; color:var(--text); line-height:1.2; word-break:break-all; }
+  .force-slot-cp   { font-size:7px; color:var(--muted); margin-top:0; }
   /* 구성 현황바 */
   .force-comp-bar { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:10px 14px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:10px; }
   .force-comp-bar-section { display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
@@ -265,7 +265,7 @@
   .force-warn-badge { font-size:10px; padding:1px 6px; border-radius:10px; background:rgba(220,50,50,.15); color:#e06060; border:1px solid rgba(220,50,50,.3); white-space:nowrap; }
   .force-party-avgcp { font-size:10px; color:var(--muted); }
   /* 서브파티 레이블 */
-  .force-subparty-hdr { display:flex; align-items:center; justify-content:space-between; padding:3px 10px 1px; background:rgba(0,0,0,.12); border-bottom:1px solid rgba(255,255,255,.04); }
+  .force-subparty-hdr { display:flex; align-items:center; justify-content:space-between; padding:1px 8px; background:rgba(0,0,0,.12); border-bottom:1px solid rgba(255,255,255,.04); }
   .force-subparty-label { font-size:10px; color:var(--muted); font-style:italic; cursor:pointer; }
   .force-subparty-label:hover { color:var(--text); }
   /* 멤버 CP */
