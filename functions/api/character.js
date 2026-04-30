@@ -272,10 +272,15 @@ export async function onRequest(context) {
         if (found && found.gradeName) {
           gradeMap[type] = { gradeName: found.gradeName, gradeIcon: found.gradeIcon || '' };
         }
-        // 직업별 랭킹 (어비스 type=1)
+        // 직업별 랭킹: found.classId 우선, 없으면 profile의 className으로 추정
         if (type === 1) {
-          var charClassId = rankList.find(function(r){return r.rankingContentsType===1;});
-          charClassId = charClassId && charClassId.classId;
+          const classNameToId = {
+            Gladiator:1, Templar:2, Assassin:3, Ranger:4,
+            Sorcerer:5, Spiritmaster:6, Cleric:7, Chanter:9,
+          };
+          var charClassId = (found && found.classId)
+            || classNameToId[profile.className]
+            || 0;
           if (charClassId) {
             var cres = await fetch(
               'https://aion2.plaync.com/api/ranking/list?lang=ko&rankingContentsType=1&rankingType=1&serverId='+serverId+'&classId='+charClassId+'&pageSize=100',
