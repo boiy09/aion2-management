@@ -4907,9 +4907,8 @@ function openDetail(m) {
         ? `<span style="font-size:10px;color:#f44336;">▼${Math.abs(change)}</span>`
         : '';
     const gradeIcon = r.gradeIcon ? `<img src="${r.gradeIcon}" style="width:44px;height:44px;object-fit:contain;flex-shrink:0;" onerror="this.style.display='none'">` : '';
-    const emblem = r.emblemIcon ? `<img src="${r.emblemIcon}" style="width:28px;height:28px;object-fit:contain;flex-shrink:0;" onerror="this.style.display='none'">` : '';
     const grade = r.gradeName ? `<div style="font-size:13px;font-weight:700;color:#e05555;margin-top:2px;">${r.gradeName}</div>` : '';
-    const svRank = r.serverRank ? `<div style="text-align:center;"><div style="font-size:10px;color:var(--muted);">서버</div><div style="font-size:17px;font-weight:700;color:var(--gold-l);">${r.serverRank.toLocaleString()}위</div></div>` : '';
+    const svRank = rank ? `<div style="text-align:center;"><div style="font-size:10px;color:var(--muted);">서버</div><div style="font-size:17px;font-weight:700;color:var(--gold-l);">${rank.toLocaleString()}위</div></div>` : '';
     const clRank = r.classRank ? `<div style="text-align:center;"><div style="font-size:10px;color:var(--muted);">직업</div><div style="font-size:17px;font-weight:700;color:#9966dd;">${r.classRank.toLocaleString()}위</div></div>` : '';
     return `
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:12px;">
@@ -4917,10 +4916,8 @@ function openDetail(m) {
       <div style="flex:1;min-width:0;">
         <div style="font-size:11px;color:var(--muted);">${r.rankingContentsName||''}</div>
         ${grade}
-        ${rank ? `<div style="font-size:15px;font-weight:700;color:var(--gold-l);">${rank.toLocaleString()}위 ${changeHtml}</div>` : ''}
         ${point ? `<div style="font-size:11px;color:var(--muted);">${point.toLocaleString()}점</div>` : ''}
       </div>
-      ${emblem}
       <div style="display:flex;gap:14px;">${svRank}${clRank}</div>
     </div>`;
   }).join('');
@@ -5425,15 +5422,15 @@ function renderMembers() {
       <td style="white-space:nowrap;">${m.item_level?(+m.item_level).toLocaleString():'—'}</td>
       <td style="vertical-align:middle;">${(()=>{
         const rankList=m.ranking||[];
-        const r=rankList.find(function(r){return r.gradeName;})||rankList.find(function(r){return r.rankingContentsName&&r.rankingContentsName.includes('어비스');});
+        // 어비스(type=1) 우선, 없으면 점수가 있는 첫번째 항목
+        const r=rankList.find(function(r){return r.rankingContentsType===1;})||rankList.find(function(r){return r.rank||r.point;});
         if(!r) return '—';
-        const ic=r.gradeIcon?'<img src="'+r.gradeIcon+'" style="width:20px;height:20px;vertical-align:middle;margin-right:4px;object-fit:contain;" onerror="this.style.display=\'none\'">':'';
-        const em=r.emblemIcon?'<img src="'+r.emblemIcon+'" style="width:14px;height:14px;vertical-align:middle;margin-left:2px;object-fit:contain;" onerror="this.style.display=\'none\'">':'';
+        const ic=r.gradeIcon?'<img src="'+r.gradeIcon+'" style="width:22px;height:22px;vertical-align:middle;margin-right:4px;object-fit:contain;" onerror="this.style.display=\'none\'">':'';
         const grade=r.gradeName||'';
         const col=/장군|사령관/.test(grade)?'#e05555':/장교/.test(grade)?'#fbbf24':'#ddd';
-        const sv=r.serverRank?'<span style="font-size:10px;color:var(--muted);margin-left:4px;">서버 '+r.serverRank.toLocaleString()+'위</span>':'';
+        const sv=r.rank?'<span style="font-size:10px;color:var(--muted);margin-left:4px;">서버 '+r.rank.toLocaleString()+'위</span>':'';
         const cl=r.classRank?'<span style="font-size:10px;color:var(--muted);margin-left:2px;">직업 '+r.classRank.toLocaleString()+'위</span>':'';
-        return ic+(grade?'<span style="font-weight:700;font-size:11px;color:'+col+';">'+grade+'</span>':'')+em+sv+cl;
+        return ic+(grade?'<span style="font-weight:700;font-size:11px;color:'+col+';">'+grade+'</span>':'')+sv+cl;
       })()}</td>
       <td style="vertical-align:middle;">${(()=>{
         const TIERS=[{key:'군단장',color:'#ff9800'},{key:'천부장',color:'#9c27b0'},{key:'백부장',color:'#2196f3'},{key:'십부장',color:'#607d8b'}];

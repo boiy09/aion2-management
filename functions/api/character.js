@@ -187,10 +187,9 @@ export async function onRequest(context) {
     var itemLevel = itemLevelStat ? (itemLevelStat.value || 0) : 0;
     var arcanaList = equip.filter(function(e) { return (e.slotPosName||'').indexOf('Arcana') !== -1; }).map(mapEquip);
     var daevList   = (infoData && infoData.daevanion && infoData.daevanion.boardList) ? infoData.daevanion.boardList : [];
-    // ranking 원본 키 전체를 탐색
+    // ranking — character info API (rank, point per content)
     var rankRaw  = infoData && (infoData.ranking || infoData.abyssRanking
                   || infoData.rankingInfo || infoData.pvpRanking || {});
-    // rankingList 위치를 모든 가능한 키에서 탐색
     var rankList = [];
     if (Array.isArray(rankRaw)) {
       rankList = rankRaw;
@@ -199,49 +198,82 @@ export async function onRequest(context) {
               || rankRaw.contents    || rankRaw.content
               || rankRaw.list        || rankRaw.items || [];
     }
-    function absUrl(u) { return (u && typeof u==='string' && !u.startsWith('http')) ? 'https://aion2.plaync.com'+u : (u||''); }
-    // 모든 이미지 URL을 재귀적으로 절대 URL로 변환
-    function normalizeUrls(obj) {
-      if (!obj || typeof obj !== 'object') return obj;
-      var out = Object.assign({}, obj);
-      Object.keys(out).forEach(function(k) {
-        if (typeof out[k] === 'string' && out[k] && (k.toLowerCase().includes('icon') || k.toLowerCase().includes('image') || k.toLowerCase().includes('img'))) {
-          out[k] = absUrl(out[k]);
-        } else if (Array.isArray(out[k])) {
-          out[k] = out[k].map(normalizeUrls);
+    // filter: only items with rank data
+    rankList = rankList.filter(function(r) { return r.rank || r.point; });
+
+    // NC ranking list API에서 grade/icon 데이터 보강
+    // character info의 gradeName/gradeIcon은 null → 별도 ranking list API 호출 필요
+    var gradeMap = {};
+    var classRankMap = {};
+    try {
+      // 각 콘텐츠 타입별로 NC 랭킹 리스트 병렬 조회
+      var contentTypes = [];
+      rankList.forEach(function(r) {
+        if (r.rankingContentsType && contentTypes.indexOf(r.rankingContentsType) === -1) {
+          contentTypes.push(r.rankingContentsType);
         }
       });
-      return out;
-    }
+
+      var gradeResults = await Promise.allSettled(contentTypes.map(async function(type) {
+        // 서버 전체 랭킹 (top 100)
+        var res = await fetch(
+          'https://aion2.plaync.com/api/ranking/list?lang=ko&rankingContentsType='+type+'&rankingType=0&serverId='+serverId+'&pageSize=100',
+          { headers }
+        );
+        var data = await res.json();
+        var list = data.rankingList || [];
+        var found = list.find(function(r) { return r.characterId === rawId; });
+        if (found) {
+          gradeMap[type] = {
+            gradeName: found.gradeName || '',
+            gradeIcon: found.gradeIcon || '',
+            rank: found.rank || 0,
+          };
+        }
+        // 직업별 랭킹 — classId 기반 (어비스 type=1만)
+        if (type === 1) {
+          var charClassId = rankList[0] && rankList[0].classId;
+          if (charClassId) {
+            var cres = await fetch(
+              'https://aion2.plaync.com/api/ranking/list?lang=ko&rankingContentsType=1&rankingType=1&serverId='+serverId+'&classId='+charClassId+'&pageSize=100',
+              { headers }
+            );
+            var cdata = await cres.json();
+            var clist = cdata.rankingList || [];
+            var cfound = clist.find(function(r) { return r.characterId === rawId; });
+            if (cfound) classRankMap[1] = cfound.rank || 0;
+          }
+        }
+      }));
+    } catch(e) {}
+
+    function absUrl(u) { return (u && typeof u==='string' && !u.startsWith('http')) ? 'https://aion2.plaync.com'+u : (u||''); }
+
     rankList = rankList.map(function(r) {
-      r = normalizeUrls(r);
-      // 필드명 정규화 — 실제 NC API 필드명을 최대한 포괄
-      var icon        = r.gradeIcon || r.gradeIconUrl || r.rankGradeIcon || r.tierIcon || r.gradeImageUrl || r.gradeImg || '';
-      var emblemIcon  = r.emblemIcon || r.emblemIconUrl || r.emblemImage || r.rankEmblemIcon || r.emblem || r.emblemImg || '';
-      // emblems 배열 지원 (aion2-region.com 방식)
-      if (!emblemIcon && Array.isArray(r.emblems) && r.emblems.length) {
-        emblemIcon = r.emblems[0].icon || r.emblems[0].iconUrl || r.emblems[0].img || '';
-      }
-      var serverEmblem= r.serverEmblemIcon || r.serverEmblem || r.svEmblemIcon || r.serverEmblemImg || '';
-      var contentsName= r.rankingContentsName || r.contentsName || r.contentName
-                      || r.rankContentsName   || r.rankType    || r.type || r.category || '';
-      var gradeName   = r.gradeName || r.grade || r.rankGrade || r.tierName || r.rankName || r.levelName || r.gradeTypeName || '';
-      var serverRank  = r.serverRank  || r.svRank  || r.svrRank  || r.serverRanking || 0;
-      var classRank   = r.classRank   || r.jobRank  || r.clsRank  || r.classRanking  || 0;
-      var serverPoint = r.serverPoint || r.svPoint  || r.serverRankPoint || 0;
-      var classPoint  = r.classPoint  || r.jobPoint || r.classRankPoint  || 0;
-      var baseRank    = r.rank || r.totalRank || r.overallRank || 0;
-      var basePoint   = r.point || r.rankPoint || r.totalPoint || r.score || 0;
-      return Object.assign({}, r, {
-        gradeIcon: icon, emblemIcon: emblemIcon, serverEmblemIcon: serverEmblem,
-        rankingContentsName: contentsName, gradeName: gradeName,
-        serverRank: serverRank, classRank: classRank,
-        serverPoint: serverPoint, classPoint: classPoint,
-        rank: baseRank, point: basePoint,
-        _raw: r,  // 디버그용 원본 보존
-      });
+      var type = r.rankingContentsType;
+      var grade = gradeMap[type] || {};
+      var baseRank  = r.rank  || r.totalRank  || r.overallRank || 0;
+      var basePoint = r.point || r.rankPoint  || r.totalPoint  || r.score || 0;
+      var contentsName = r.rankingContentsName || '';
+      var gradeName = grade.gradeName || r.gradeName || '';
+      var gradeIcon = absUrl(grade.gradeIcon  || r.gradeIcon  || '');
+      var classRank = (type === 1 && classRankMap[1]) ? classRankMap[1] : 0;
+      var prevRank  = r.prevRank || 0;
+      var rankChange = r.rankChange || (prevRank && baseRank ? prevRank - baseRank : 0);
+      return {
+        rankingContentsType: type,
+        rankingContentsName: contentsName,
+        rank:        baseRank,
+        point:       basePoint,
+        gradeName:   gradeName,
+        gradeIcon:   gradeIcon,
+        classRank:   classRank,
+        classId:     r.classId || 0,
+        rankChange:  rankChange,
+        extraDataMap: r.extraDataMap || null,
+      };
     });
-    // rankList가 비어있으면 rankRaw 전체를 debug로 포함
+
     var rankingDebug = rankList.length === 0 ? rankRaw : null;
     var titleRaw       = (infoData && infoData.title) ? infoData.title : {};
     var titleList      = titleRaw.titleList      || [];
