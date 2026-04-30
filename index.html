@@ -763,10 +763,6 @@
       <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <span id="sync-all-status" style="font-size:12px;color:var(--muted);"></span>
         <button class="btn btn-primary btn-sm" id="sync-all-btn" onclick="syncAllMembers()">⟳ 전체 갱신</button>
-        <span style="width:1px;height:16px;background:var(--border);"></span>
-        <input id="region-legion-input" placeholder="aion2-region.com 레기온 URL 또는 ID" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);width:220px;" oninput="saveRegionLegionId(this.value);_regionAutoLoadTimer&&clearTimeout(_regionAutoLoadTimer);_regionAutoLoadTimer=setTimeout(loadRegionData,600)">
-        <button class="btn btn-sm" onclick="loadRegionData()" title="어비스 계급/서버순위 불러오기">🔗 어비스 연동</button>
-        <span id="region-status" style="font-size:11px;"></span>
       </div>
     </div>
     <div class="table-wrap">
@@ -3469,9 +3465,8 @@ function sortMembers(arr) {
       return sortAsc ? av : -av;
     } else if(sortBy === 'abyss_rank') {
       const getAbyss = m => {
-        const rm = _regionData && _regionData[(m.nickname||'').toLowerCase()];
-        if(rm && rm.abyssServerRank) return rm.abyssServerRank;
-        const r=(m.ranking||[]).find(r=>r.rankingContentsName&&r.rankingContentsName.includes('어비스')); return r?r.rank:99999;
+        const r=(m.ranking||[]).find(function(r){return r.serverRank;})||(m.ranking||[]).find(function(r){return r.rank;});
+        return r?(r.serverRank||r.rank||99999):99999;
       };
       av = getAbyss(a); bv = getAbyss(b);
     } else if(sortBy === 'class') {
@@ -4899,28 +4894,9 @@ function openDetail(m) {
     </div>`;
   }).join('');
 
-  // 랭킹 — region 연동 어비스 정보
-  const _rm = _regionData && _regionData[(m.nickname||'').toLowerCase()];
-  const abyssCardHTML = _rm && _rm.abyssRank ? (() => {
-    const ic = _rm.abyssRankIcon ? `<img src="${_rm.abyssRankIcon}" style="width:40px;height:40px;object-fit:contain;flex-shrink:0;" onerror="this.style.display='none'">` : '';
-    const col = /장군|사령관/.test(_rm.abyssRank) ? '#e05555' : /장교/.test(_rm.abyssRank) ? '#fbbf24' : '#ddd';
-    const sv = _rm.abyssServerRank || 0;
-    const cl = _rm.abyssClassRank || 0;
-    return `<div style="background:var(--surface);border:1px solid var(--gold-d);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:14px;margin-bottom:4px;">
-      ${ic}
-      <div style="flex:1;">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:2px;">어비스 계급</div>
-        <div style="font-size:16px;font-weight:700;color:${col};">${_rm.abyssRank}</div>
-        ${_rm.abyssPoint ? `<div style="font-size:11px;color:var(--muted);">${_rm.abyssPoint.toLocaleString()}점</div>` : ''}
-      </div>
-      <div style="display:flex;gap:16px;text-align:center;">
-        ${sv ? `<div><div style="font-size:10px;color:var(--muted);">서버</div><div style="font-size:16px;font-weight:700;color:var(--gold-l);">${sv.toLocaleString()}위</div></div>` : ''}
-        ${cl ? `<div><div style="font-size:10px;color:var(--muted);">직업</div><div style="font-size:16px;font-weight:700;color:#9966dd;">${cl.toLocaleString()}위</div></div>` : ''}
-      </div>
-    </div>`;
-  })() : '';
-  const rankHTML = abyssCardHTML + (!(m.ranking||[]).length
-    ? `<div style="padding:20px;text-align:center;color:var(--muted);">랭킹 데이터 없음 — 갱신 후 확인하세요</div>`
+  // 랭킹 — NC 공홈 데이터 (grade icon, emblem, server/class rank)
+  const rankHTML = !(m.ranking||[]).length
+    ? `<div style="padding:20px;text-align:center;color:var(--muted);grid-column:1/-1;">랭킹 데이터 없음 — 갱신 후 확인하세요</div>`
     : (m.ranking||[]).map(r => {
     const rank  = r.rank||0;
     const point = r.point||0;
@@ -4930,17 +4906,24 @@ function openDetail(m) {
       : change < 0
         ? `<span style="font-size:10px;color:#f44336;">▼${Math.abs(change)}</span>`
         : '';
+    const gradeIcon = r.gradeIcon ? `<img src="${r.gradeIcon}" style="width:44px;height:44px;object-fit:contain;flex-shrink:0;" onerror="this.style.display='none'">` : '';
+    const emblem = r.emblemIcon ? `<img src="${r.emblemIcon}" style="width:28px;height:28px;object-fit:contain;flex-shrink:0;" onerror="this.style.display='none'">` : '';
+    const grade = r.gradeName ? `<div style="font-size:13px;font-weight:700;color:#e05555;margin-top:2px;">${r.gradeName}</div>` : '';
+    const svRank = r.serverRank ? `<div style="text-align:center;"><div style="font-size:10px;color:var(--muted);">서버</div><div style="font-size:17px;font-weight:700;color:var(--gold-l);">${r.serverRank.toLocaleString()}위</div></div>` : '';
+    const clRank = r.classRank ? `<div style="text-align:center;"><div style="font-size:10px;color:var(--muted);">직업</div><div style="font-size:17px;font-weight:700;color:#9966dd;">${r.classRank.toLocaleString()}위</div></div>` : '';
     return `
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:14px;">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:12px;">
+      ${gradeIcon}
       <div style="flex:1;min-width:0;">
-        <div style="font-size:14px;font-weight:700;">${r.rankingContentsName||''}</div>
+        <div style="font-size:11px;color:var(--muted);">${r.rankingContentsName||''}</div>
+        ${grade}
+        ${rank ? `<div style="font-size:15px;font-weight:700;color:var(--gold-l);">${rank.toLocaleString()}위 ${changeHtml}</div>` : ''}
+        ${point ? `<div style="font-size:11px;color:var(--muted);">${point.toLocaleString()}점</div>` : ''}
       </div>
-      <div style="text-align:right;">
-        <div style="font-size:18px;font-weight:700;color:var(--gold-l);">${rank?rank.toLocaleString()+'위':'—'} ${changeHtml}</div>
-        ${point?`<div style="font-size:11px;color:var(--muted);">${point.toLocaleString()}점</div>`:''}
-      </div>
+      ${emblem}
+      <div style="display:flex;gap:14px;">${svRank}${clRank}</div>
     </div>`;
-  }).join(''));
+  }).join('');
 
   // 스킬 — 타입별 그룹 분리
   const SKILL_TYPE_LABEL = {
@@ -5441,17 +5424,16 @@ function renderMembers() {
       <td>${cpBar(m.combat_power)}</td>
       <td style="white-space:nowrap;">${m.item_level?(+m.item_level).toLocaleString():'—'}</td>
       <td style="vertical-align:middle;">${(()=>{
-        const rm=_regionData&&_regionData[(m.nickname||'').toLowerCase()];
-        if(rm&&rm.abyssRank){
-          const ic=rm.abyssRankIcon?'<img src="'+rm.abyssRankIcon+'" style="width:18px;height:18px;vertical-align:middle;margin-right:4px;" onerror="this.style.display=\'none\'">':'';
-          const col=/장군|사령관/.test(rm.abyssRank)?'#e05555':/장교/.test(rm.abyssRank)?'#fbbf24':'#ddd';
-          const sv=rm.abyssServerRank?'<span style="font-size:10px;color:var(--muted);margin-left:4px;">서버 '+rm.abyssServerRank+'위</span>':'';
-          const cl=rm.abyssClassRank?'<span style="font-size:10px;color:var(--muted);margin-left:2px;">직업 '+rm.abyssClassRank+'위</span>':'';
-          return ic+'<span style="font-weight:700;font-size:11px;color:'+col+';">'+rm.abyssRank+'</span>'+sv+cl;
-        }
-        const r=(m.ranking||[]).find(r=>r.rankingContentsName&&r.rankingContentsName.includes('어비스'));
-        if(!r||!r.rank) return '—';
-        return '<span style="font-weight:700;color:var(--gold-l);">'+r.rank.toLocaleString()+'위</span>';
+        const rankList=m.ranking||[];
+        const r=rankList.find(function(r){return r.gradeName;})||rankList.find(function(r){return r.rankingContentsName&&r.rankingContentsName.includes('어비스');});
+        if(!r) return '—';
+        const ic=r.gradeIcon?'<img src="'+r.gradeIcon+'" style="width:20px;height:20px;vertical-align:middle;margin-right:4px;object-fit:contain;" onerror="this.style.display=\'none\'">':'';
+        const em=r.emblemIcon?'<img src="'+r.emblemIcon+'" style="width:14px;height:14px;vertical-align:middle;margin-left:2px;object-fit:contain;" onerror="this.style.display=\'none\'">':'';
+        const grade=r.gradeName||'';
+        const col=/장군|사령관/.test(grade)?'#e05555':/장교/.test(grade)?'#fbbf24':'#ddd';
+        const sv=r.serverRank?'<span style="font-size:10px;color:var(--muted);margin-left:4px;">서버 '+r.serverRank.toLocaleString()+'위</span>':'';
+        const cl=r.classRank?'<span style="font-size:10px;color:var(--muted);margin-left:2px;">직업 '+r.classRank.toLocaleString()+'위</span>':'';
+        return ic+(grade?'<span style="font-weight:700;font-size:11px;color:'+col+';">'+grade+'</span>':'')+em+sv+cl;
       })()}</td>
       <td style="vertical-align:middle;">${(()=>{
         const TIERS=[{key:'군단장',color:'#ff9800'},{key:'천부장',color:'#9c27b0'},{key:'백부장',color:'#2196f3'},{key:'십부장',color:'#607d8b'}];
